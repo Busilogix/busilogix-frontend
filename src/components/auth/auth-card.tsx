@@ -1,6 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
 
-import { AppLogo } from "@/components/layout/app-logo";
 import {
   Card,
   CardContent,
@@ -28,17 +28,30 @@ export function AuthCard({
 }: AuthCardProps) {
   return (
     <div className={cn("w-full max-w-md", className)}>
-      <div className="mb-8 flex justify-center lg:hidden">
-        <AppLogo href="/login" showTagline />
+      {/* Logo shown only on mobile (hidden on lg where the brand panel is visible) */}
+      <div className="mb-7 flex flex-col items-center gap-2 lg:hidden">
+        <Image
+          src="/Busilogix.png"
+          alt="Busilogix"
+          width={180}
+          height={150}
+          className="object-contain"
+          priority
+        />
       </div>
-      <Card className="shadow-sm">
-        <CardHeader className="border-b pb-4">
-          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+
+      <Card className="shadow-lg shadow-slate-950/8 ring-1 ring-black/5">
+        <CardHeader className="space-y-1 border-b pb-5">
+          <CardTitle className="text-[22px] font-bold tracking-tight text-foreground">
+            {title}
+          </CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            {description}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">{children}</CardContent>
+        <CardContent className="pt-6 pb-2">{children}</CardContent>
         {footer ? (
-          <CardFooter className="justify-center border-t bg-transparent py-4 text-sm text-muted-foreground">
+          <CardFooter className="justify-center border-t bg-muted/30 py-4 text-sm text-muted-foreground">
             {footer}
           </CardFooter>
         ) : null}
@@ -59,10 +72,11 @@ export function AuthCardLink({ text, linkText, href }: AuthCardLinkProps) {
       {text}{" "}
       <Link
         href={href}
-        className="font-medium text-primary underline-offset-4 hover:underline"
+        className="font-semibold text-primary underline-offset-4 hover:underline"
       >
         {linkText}
       </Link>
     </p>
   );
 }
+
