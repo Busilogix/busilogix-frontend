@@ -1,0 +1,22 @@
+export type SettingsRecord = {
+  company_name: string;
+  company_email: string;
+  company_phone: string;
+  company_website: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  gst_number: string;
+  pan_number: string;
+  legal_business_name: string;
+  default_currency: string;
+  invoice_prefix: string;
+  default_payment_terms_days: number;
+  default_tax_percentage: number;
+  email_from_name: string;
+  email_reply_to: string;
+  email_signature: string;
+};
