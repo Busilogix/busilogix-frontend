@@ -3,6 +3,7 @@
 import { BarChart3, Clock, FileText, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { ListPageHeader } from "@/components/layout/list-page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import {
   Card,
@@ -15,19 +16,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/invoices/format";
 import { getReportsData } from "@/lib/reports/stats";
 
-const LOAD_DELAY_MS = 600;
+const LOAD_DELAY_MS = 500;
 
 type ReportsData = ReturnType<typeof getReportsData>;
 
 function ReportsSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-2xl border bg-card p-6">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="mt-2 h-4 w-72" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-32 rounded-2xl" />
+          <Skeleton key={index} className="h-32 rounded-xl" />
         ))}
       </div>
-      <Skeleton className="h-72 rounded-2xl" />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Skeleton className="h-72 rounded-xl" />
+        <Skeleton className="h-72 rounded-xl" />
+      </div>
     </div>
   );
 }
@@ -61,83 +69,50 @@ export function ReportsView() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="interactive-card overflow-hidden">
-          <CardContent className="flex items-start justify-between pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Revenue</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">
-                {formatCurrency(data.totals.revenue, data.currency)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Paid invoices only
-              </p>
-            </div>
-            <span className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-600">
-              <BarChart3 className="size-5" />
-            </span>
-          </CardContent>
-        </Card>
-        <Card className="interactive-card overflow-hidden">
-          <CardContent className="flex items-start justify-between pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Pending</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">
-                {formatCurrency(data.totals.pending, data.currency)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Sent and overdue
-              </p>
-            </div>
-            <span className="rounded-2xl bg-amber-500/10 p-3 text-amber-600">
-              <Clock className="size-5" />
-            </span>
-          </CardContent>
-        </Card>
-        <Card className="interactive-card overflow-hidden">
-          <CardContent className="flex items-start justify-between pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Invoices</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">
-                {data.totals.invoices}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Total created
-              </p>
-            </div>
-            <span className="rounded-2xl bg-violet-500/10 p-3 text-violet-600">
-              <FileText className="size-5" />
-            </span>
-          </CardContent>
-        </Card>
-        <Card className="interactive-card overflow-hidden">
-          <CardContent className="flex items-start justify-between pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Customers</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums">
-                {data.totals.customers}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Customer records
-              </p>
-            </div>
-            <span className="rounded-2xl bg-blue-500/10 p-3 text-blue-600">
-              <Users className="size-5" />
-            </span>
-          </CardContent>
-        </Card>
-      </div>
+      <ListPageHeader
+        title="Reports"
+        description="Understand revenue, pending payments, invoice status, and top customers at a glance."
+        metrics={[
+          {
+            title: "Revenue",
+            value: formatCurrency(data.totals.revenue, data.currency),
+            description: "Paid invoices only",
+            icon: BarChart3,
+            tone: "emerald",
+          },
+          {
+            title: "Pending",
+            value: formatCurrency(data.totals.pending, data.currency),
+            description: "Sent and overdue",
+            icon: Clock,
+            tone: "amber",
+          },
+          {
+            title: "Invoices",
+            value: data.totals.invoices.toLocaleString(),
+            description: "Total created",
+            icon: FileText,
+            tone: "violet",
+          },
+          {
+            title: "Customers",
+            value: data.totals.customers.toLocaleString(),
+            description: "Customer records",
+            icon: Users,
+            tone: "blue",
+          },
+        ]}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Invoice status breakdown</CardTitle>
+        <Card className="surface-card rounded-xl">
+          <CardHeader className="border-b px-4 py-3">
+            <CardTitle className="text-sm">Invoice status breakdown</CardTitle>
             <CardDescription>
-              See how many invoices are draft, sent, paid, overdue, or
-              cancelled.
+              Draft, sent, paid, overdue, and cancelled counts
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-4 p-4 pt-5">
             {statusEntries.length === 0 ? (
               <EmptyState
                 title="No invoice status yet"
@@ -152,9 +127,9 @@ export function ReportsView() {
                     </span>
                     <span className="font-medium">{count}</span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-3 rounded-full bg-gradient-to-r from-primary to-primary/60"
+                      className="h-2.5 rounded-full bg-gradient-to-r from-primary to-primary/60"
                       style={{ width: `${(count / maxStatusCount) * 100}%` }}
                     />
                   </div>
@@ -164,14 +139,12 @@ export function ReportsView() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Top customers by paid revenue</CardTitle>
-            <CardDescription>
-              Customers ranked by invoices marked as paid.
-            </CardDescription>
+        <Card className="surface-card rounded-xl">
+          <CardHeader className="border-b px-4 py-3">
+            <CardTitle className="text-sm">Top customers by revenue</CardTitle>
+            <CardDescription>Ranked by invoices marked as paid</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-4 p-4 pt-5">
             {data.customerTotals.length === 0 ? (
               <EmptyState
                 title="No customer revenue yet"
@@ -184,16 +157,17 @@ export function ReportsView() {
                     <div>
                       <p className="font-medium">{customer.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {customer.invoiceCount} invoices
+                        {customer.invoiceCount} invoice
+                        {customer.invoiceCount === 1 ? "" : "s"}
                       </p>
                     </div>
-                    <span className="font-medium tabular-nums">
+                    <span className="font-semibold tabular-nums">
                       {formatCurrency(customer.revenue, data.currency)}
                     </span>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                      className="h-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"
                       style={{
                         width: `${(customer.revenue / maxCustomerRevenue) * 100}%`,
                       }}

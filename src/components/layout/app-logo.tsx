@@ -1,40 +1,90 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Receipt } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+export const BUSILOGIX_LOGO_SRC = "/Busilogix.png";
+
+type LogoVariant = "sidebar" | "auth" | "panel" | "popover" | "navbar";
+
+const variantStyles: Record<
+  LogoVariant,
+  { wrapper: string; image: string; sizes: string }
+> = {
+  sidebar: {
+    wrapper:
+      "relative block w-[5.75rem] overflow-hidden aspect-[10/9] leading-none",
+    image: "block h-auto w-full",
+    sizes: "92px",
+  },
+  auth: {
+    wrapper:
+      "relative mx-auto block w-[6.5rem] overflow-hidden aspect-[10/9] leading-none",
+    image: "block h-auto w-full",
+    sizes: "104px",
+  },
+  panel: {
+    wrapper:
+      "relative block w-[7rem] overflow-hidden aspect-[10/9] leading-none",
+    image: "block h-auto w-full",
+    sizes: "112px",
+  },
+  popover: {
+    wrapper:
+      "relative block w-[4.75rem] overflow-hidden aspect-[10/9] leading-none",
+    image: "block h-auto w-full",
+    sizes: "76px",
+  },
+  navbar: {
+    wrapper:
+      "relative block w-9 shrink-0 overflow-hidden aspect-[20/13] leading-none",
+    image: "block h-auto w-full",
+    sizes: "36px",
+  },
+};
+
 type AppLogoProps = {
   className?: string;
-  showTagline?: boolean;
   href?: string;
+  variant?: LogoVariant;
+  priority?: boolean;
+  asLink?: boolean;
 };
 
 export function AppLogo({
   className,
-  showTagline = false,
   href = "/dashboard",
+  variant = "sidebar",
+  priority = false,
+  asLink = true,
 }: AppLogoProps) {
+  const styles = variantStyles[variant];
+
+  const image = (
+    <span className={cn(styles.wrapper, className)}>
+      <Image
+        src={BUSILOGIX_LOGO_SRC}
+        alt="Busilogix"
+        width={640}
+        height={640}
+        priority={priority}
+        sizes={styles.sizes}
+        className={styles.image}
+      />
+    </span>
+  );
+
+  if (!asLink) {
+    return image;
+  }
+
   return (
     <Link
       href={href}
-      className={cn(
-        "flex items-center gap-2.5 rounded-xl outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
-        className,
-      )}
+      className="inline-flex rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50"
+      aria-label="Busilogix home"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/25">
-        <Receipt className="size-5" aria-hidden />
-      </span>
-      <span className="flex min-w-0 flex-col">
-        <span className="truncate font-semibold tracking-tight text-foreground">
-          Busilogix
-        </span>
-        {showTagline ? (
-          <span className="truncate text-xs text-muted-foreground">
-            Business management
-          </span>
-        ) : null}
-      </span>
+      {image}
     </Link>
   );
 }

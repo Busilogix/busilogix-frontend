@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageContainer } from "@/components/layout/page-container";
-import { SettingsForm } from "@/components/settings";
+import { SettingsForm, SettingsPageHeader } from "@/components/settings";
 
 export const metadata: Metadata = {
   title: "Settings",
@@ -10,11 +10,9 @@ export const metadata: Metadata = {
 
 export default function SettingsPage() {
   return (
-    <PageContainer
-      title="Settings"
-      description="Set up your business profile once so future invoices are faster and more consistent."
-    >
-      <div className="mx-auto max-w-3xl">
+    <PageContainer>
+      <div className="space-y-6">
+        <SettingsPageHeader />
         <SettingsForm />
       </div>
     </PageContainer>

@@ -14,7 +14,8 @@ const SEED_PRODUCTS: ProductRecord[] = [
     id: "prod_001",
     name: "Pro Laptop Stand",
     sku: "PRO-STAND-01",
-    description: "Ergonomic aluminum stand compatible with laptops from 11 to 17 inches.",
+    description:
+      "Ergonomic aluminum stand compatible with laptops from 11 to 17 inches.",
     price: 49.99,
     category: "Office Supplies",
     status: "active",
@@ -27,7 +28,8 @@ const SEED_PRODUCTS: ProductRecord[] = [
     id: "prod_002",
     name: "Ergonomic Keyboard",
     sku: "ERGO-KEY-02",
-    description: "Split key design with wrist rest and tactile mechanical switches.",
+    description:
+      "Split key design with wrist rest and tactile mechanical switches.",
     price: 129.99,
     category: "Electronics",
     status: "active",
@@ -40,7 +42,8 @@ const SEED_PRODUCTS: ProductRecord[] = [
     id: "prod_003",
     name: "UltraWide Monitor",
     sku: "WIDE-MON-03",
-    description: "34-inch curved display with 144Hz refresh rate and USB-C power delivery.",
+    description:
+      "34-inch curved display with 144Hz refresh rate and USB-C power delivery.",
     price: 399.99,
     category: "Electronics",
     status: "active",
@@ -53,7 +56,8 @@ const SEED_PRODUCTS: ProductRecord[] = [
     id: "prod_004",
     name: "USB-C Multi-port Hub",
     sku: "HUB-USBC-04",
-    description: "8-in-1 adapter with HDMI, SD reader, and pass-through charging.",
+    description:
+      "8-in-1 adapter with HDMI, SD reader, and pass-through charging.",
     price: 29.99,
     category: "Accessories",
     status: "active",
@@ -66,7 +70,8 @@ const SEED_PRODUCTS: ProductRecord[] = [
     id: "prod_005",
     name: "Noise Cancelling Headphones",
     sku: "ANC-HEAD-05",
-    description: "Wireless over-ear headphones with active noise cancellation and 40h battery.",
+    description:
+      "Wireless over-ear headphones with active noise cancellation and 40h battery.",
     price: 199.99,
     category: "Electronics",
     status: "inactive",
@@ -166,7 +171,8 @@ function generateLogId(): string {
 
 export function getAllProducts(): ProductRecord[] {
   return readProductsStore().sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
   );
 }
 
@@ -195,7 +201,14 @@ export function createProduct(data: ProductFormValues): ProductRecord {
 
   // Log stock setup
   if (product.stock > 0) {
-    addAdjustmentLog(product.id, product.name, product.sku, "adjustment", product.stock, "Initial stock value set");
+    addAdjustmentLog(
+      product.id,
+      product.name,
+      product.sku,
+      "adjustment",
+      product.stock,
+      "Initial stock value set",
+    );
   }
 
   return product;
@@ -203,7 +216,7 @@ export function createProduct(data: ProductFormValues): ProductRecord {
 
 export function updateProduct(
   id: string,
-  data: ProductFormValues
+  data: ProductFormValues,
 ): ProductRecord | undefined {
   const products = readProductsStore();
   const index = products.findIndex((p) => p.id === id);
@@ -237,7 +250,7 @@ export function updateProduct(
       updated.sku,
       diff > 0 ? "in" : "out",
       Math.abs(diff),
-      "Product properties updated"
+      "Product properties updated",
     );
   }
 
@@ -267,7 +280,7 @@ export function queryProducts(params: ProductQueryParams): ProductQueryResult {
       (p) =>
         p.name.toLowerCase().includes(normalizedSearch) ||
         p.sku.toLowerCase().includes(normalizedSearch) ||
-        p.category.toLowerCase().includes(normalizedSearch)
+        (p.category?.toLowerCase().includes(normalizedSearch) ?? false),
     );
   }
 
@@ -290,7 +303,7 @@ export function adjustStock(
   productId: string,
   quantity: number,
   type: "in" | "out" | "adjustment",
-  reason: string
+  reason: string,
 ): ProductRecord | undefined {
   const products = readProductsStore();
   const index = products.findIndex((p) => p.id === productId);
@@ -316,14 +329,21 @@ export function adjustStock(
   products[index] = updated;
   writeProductsStore(products);
 
-  addAdjustmentLog(product.id, product.name, product.sku, type, quantity, reason);
+  addAdjustmentLog(
+    product.id,
+    product.name,
+    product.sku,
+    type,
+    quantity,
+    reason,
+  );
 
   return updated;
 }
 
 export function getStockAdjustmentLogs(): StockAdjustmentLog[] {
   return readLogsStore().sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
   );
 }
 
@@ -333,7 +353,7 @@ function addAdjustmentLog(
   sku: string,
   type: "in" | "out" | "adjustment",
   quantity: number,
-  reason: string
+  reason: string,
 ): void {
   const log: StockAdjustmentLog = {
     id: generateLogId(),
@@ -351,6 +371,47 @@ function addAdjustmentLog(
 }
 
 export const PRODUCTS_PAGE_SIZE = 8;
+
+export type ProductStats = {
+  total: number;
+  active: number;
+  inactive: number;
+  lowStock: number;
+};
+
+export type InventoryStats = {
+  totalUnits: number;
+  catalogItems: number;
+  lowStock: number;
+  adjustmentCount: number;
+};
+
+export function getProductStats(): ProductStats {
+  const all = getAllProducts();
+
+  return {
+    total: all.length,
+    active: all.filter((product) => product.status === "active").length,
+    inactive: all.filter((product) => product.status === "inactive").length,
+    lowStock: all.filter(
+      (product) => product.stock <= (product.min_stock_level ?? 10),
+    ).length,
+  };
+}
+
+export function getInventoryStats(): InventoryStats {
+  const all = getAllProducts();
+
+  return {
+    totalUnits: all.reduce((sum, product) => sum + product.stock, 0),
+    catalogItems: all.length,
+    lowStock: all.filter(
+      (product) => product.stock <= (product.min_stock_level ?? 10),
+    ).length,
+    adjustmentCount: getStockAdjustmentLogs().length,
+  };
+}
+
 export const CATEGORY_OPTIONS = [
   "Electronics",
   "Office Supplies",

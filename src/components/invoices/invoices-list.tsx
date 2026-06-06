@@ -1,11 +1,21 @@
 "use client";
 
-import { Download, FileText, Filter, Plus, Search, X } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Download,
+  FileText,
+  Filter,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { FormMessage } from "@/components/auth/form-message";
+import { ListPageHeader } from "@/components/layout/list-page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatCurrency } from "@/lib/invoices/format";
 import {
   duplicateInvoice,
+  getInvoiceStats,
   INVOICES_PAGE_SIZE,
   INVOICE_STATUS_OPTIONS,
   queryInvoices,
@@ -33,7 +45,7 @@ import { InvoicePagination } from "./invoice-pagination";
 import { InvoicesTable, type InvoiceAction } from "./invoices-table";
 import { InvoicesTableSkeleton } from "./invoices-table-skeleton";
 
-const LOAD_DELAY_MS = 700;
+const LOAD_DELAY_MS = 500;
 const ACTION_DELAY_MS = 900;
 
 type ActionFeedback = {
@@ -53,6 +65,7 @@ export function InvoicesList() {
   const [actionFeedback, setActionFeedback] = useState<ActionFeedback | null>(
     null,
   );
+  const [stats, setStats] = useState(() => getInvoiceStats());
   const [result, setResult] = useState(() =>
     queryInvoices({
       search: "",
@@ -87,6 +100,7 @@ export function InvoicesList() {
           pageSize: INVOICES_PAGE_SIZE,
         }),
       );
+      setStats(getInvoiceStats());
       setIsLoading(false);
     }, LOAD_DELAY_MS);
 
@@ -103,6 +117,17 @@ export function InvoicesList() {
   const isEmptyFiltered = hasActiveFilters && !hasInvoices;
   const isEmptyAll = !hasActiveFilters && !hasInvoices;
 
+  const exportRows = useMemo(
+    () =>
+      queryInvoices({
+        search: debouncedSearch,
+        status: statusFilter,
+        page: 1,
+        pageSize: result.totalItems || INVOICES_PAGE_SIZE,
+      }).items,
+    [debouncedSearch, statusFilter, result.totalItems],
+  );
+
   function clearFilters() {
     setSearch("");
     setStatusFilter("all");
@@ -117,12 +142,13 @@ export function InvoicesList() {
         pageSize: INVOICES_PAGE_SIZE,
       }),
     );
+    setStats(getInvoiceStats());
   }
 
   function handleExportInvoices() {
     downloadCsv(
       "busilogix-invoices.csv",
-      result.items.map((invoice) => ({
+      exportRows.map((invoice) => ({
         invoice_number: invoice.invoice_number,
         customer_name: invoice.customer_name,
         issue_date: invoice.issue_date,
@@ -202,6 +228,43 @@ export function InvoicesList() {
 
   return (
     <div className="space-y-6">
+      <ListPageHeader
+        title="Invoices"
+        description="Create, review, send, and track invoices from one billing workspace."
+        action={{
+          label: "Create invoice",
+          href: "/invoices/new",
+          icon: Plus,
+        }}
+        metrics={[
+          {
+            title: "Total invoices",
+            value: stats.total.toLocaleString(),
+            description: "All billing records",
+            icon: FileText,
+            tone: "violet",
+          },
+          {
+            title: "Paid invoices",
+            value: stats.paidCount.toLocaleString(),
+            description: "Included in revenue",
+            icon: CheckCircle2,
+            tone: "emerald",
+          },
+          {
+            title: hasActiveFilters ? "Matching results" : "Outstanding",
+            value: hasActiveFilters
+              ? result.totalItems.toLocaleString()
+              : formatCurrency(stats.pendingAmount, stats.currency),
+            description: hasActiveFilters
+              ? "Invoices matching filters"
+              : "Sent and overdue balances",
+            icon: hasActiveFilters ? Filter : AlertCircle,
+            tone: "amber",
+          },
+        ]}
+      />
+
       {actionFeedback ? (
         <FormMessage
           type={actionFeedback.type}
@@ -210,81 +273,68 @@ export function InvoicesList() {
         />
       ) : null}
 
-      <div className="surface-card flex flex-col gap-4 rounded-2xl p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center lg:flex-initial">
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Find an invoice</p>
-            <div className="relative flex-1 sm:w-80">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                type="search"
-                placeholder="Search invoice # or customer..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="h-10 bg-background/80 pl-9"
-                aria-label="Search invoices"
-              />
-            </div>
+      <div className="surface-card rounded-xl p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              placeholder="Search invoice # or customer..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="h-10 bg-background/80 pl-9"
+              aria-label="Search invoices"
+            />
           </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Filter status</p>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) =>
-                setStatusFilter(value as InvoiceStatusFilter)
-              }
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(value as InvoiceStatusFilter)
+            }
+          >
+            <SelectTrigger
+              className="h-10 w-full bg-background/80 lg:w-44"
+              aria-label="Filter by status"
             >
-              <SelectTrigger
-                className="h-10 w-full bg-background/80 sm:w-44"
-                aria-label="Filter by status"
-              >
-                <Filter className="size-4 shrink-0 text-muted-foreground" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {INVOICE_STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {hasActiveFilters ? (
+              <Filter className="size-4 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {INVOICE_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasActiveFilters ? (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="size-4" aria-hidden />
+                Clear
+              </Button>
+            ) : null}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={clearFilters}
-              className="shrink-0"
+              onClick={handleExportInvoices}
+              disabled={!hasInvoices}
             >
-              <X className="size-4" aria-hidden />
-              Clear filters
+              <Download className="size-4" aria-hidden />
+              Export CSV
             </Button>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            variant="outline"
-            onClick={handleExportInvoices}
-            disabled={!hasInvoices}
-            className="shrink-0"
-          >
-            <Download className="size-4" aria-hidden />
-            Export CSV
-          </Button>
-          <Button
-            render={<Link href="/invoices/new" />}
-            className="shrink-0 shadow-sm"
-          >
-            <Plus className="size-4" aria-hidden />
-            Create invoice
-          </Button>
+            <Button
+              size="sm"
+              render={<Link href="/invoices/new" />}
+              className="shadow-sm"
+            >
+              <Plus className="size-4" aria-hidden />
+              Create invoice
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -295,6 +345,7 @@ export function InvoicesList() {
           icon={FileText}
           title="No invoices yet"
           description="Create your first invoice to start tracking payments and sending bills to customers."
+          action={{ label: "Create invoice", href: "/invoices/new" }}
         />
       ) : isEmptyFiltered ? (
         <EmptyState
@@ -307,9 +358,10 @@ export function InvoicesList() {
           }}
         />
       ) : (
-        <>
+        <div className="space-y-4">
           <InvoicesTable
             invoices={result.items}
+            totalItems={result.totalItems}
             onAction={handleAction}
             pendingActionId={pendingActionId}
           />
@@ -320,7 +372,7 @@ export function InvoicesList() {
             pageSize={result.pageSize}
             onPageChange={setPage}
           />
-        </>
+        </div>
       )}
     </div>
   );

@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 
 export default function ProductsPage() {
   return (
-    <PageContainer
-      title="Products"
-      description="Create and organize your product catalog, SKU details, and customer-facing pricing."
-    >
+    <PageContainer>
       <ProductsList />
     </PageContainer>
   );

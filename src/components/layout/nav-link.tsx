@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { cn } from "@/lib/utils";
 import type { NavItem } from "@/config/navigation";
+import { cn } from "@/lib/utils";
 
 type NavLinkProps = {
   item: NavItem;
@@ -22,22 +22,32 @@ export function NavLink({ item, onNavigate }: NavLinkProps) {
       href={item.href}
       onClick={onNavigate}
       className={cn(
-        "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-        "outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
         isActive
-          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+          ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/15"
+          : "text-sidebar-foreground/75 hover:bg-white/70 hover:text-sidebar-foreground hover:shadow-sm hover:shadow-slate-950/5",
       )}
       aria-current={isActive ? "page" : undefined}
     >
-      <Icon
+      {isActive ? (
+        <span
+          className="absolute top-1/2 left-0 h-7 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+          aria-hidden
+        />
+      ) : null}
+
+      <span
         className={cn(
-          "size-4 shrink-0 transition-transform",
-          isActive ? "text-primary" : "group-hover:scale-105",
+          "flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+          isActive
+            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+            : "bg-sidebar-accent/70 text-sidebar-foreground/70 group-hover:bg-primary/10 group-hover:text-primary",
         )}
-        aria-hidden
-      />
-      <span>{item.title}</span>
+      >
+        <Icon className="size-4" aria-hidden />
+      </span>
+
+      <span className="truncate">{item.title}</span>
     </Link>
   );
 }

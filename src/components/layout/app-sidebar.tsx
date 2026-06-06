@@ -1,23 +1,16 @@
-import { Separator } from "@/components/ui/separator";
-
-import { AppLogo } from "./app-logo";
+import { AccountMenu } from "./account-menu";
+import { SidebarHeader } from "./sidebar-brand";
 import { SidebarNav } from "./sidebar-nav";
 
 export function AppSidebar() {
   return (
-    <aside className="hidden w-72 shrink-0 flex-col border-r border-sidebar-border/80 bg-sidebar/90 backdrop-blur-xl lg:flex">
-      <div className="flex h-16 items-center border-b border-sidebar-border px-5">
-        <AppLogo showTagline />
-      </div>
-      <SidebarNav />
-      <div className="mt-auto px-4 py-4">
-        <Separator className="mb-4 bg-sidebar-border" />
-        <div className="rounded-xl border border-sidebar-border bg-background/70 p-4">
-          <p className="text-sm font-medium text-foreground">Business ready</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Track customers, invoices, revenue, and settings from one workspace.
-          </p>
-        </div>
+    <aside className="hidden h-screen w-72 shrink-0 flex-col border-r border-sidebar-border/70 bg-[linear-gradient(180deg,oklch(1_0_0)_0%,oklch(0.985_0.01_250)_100%)] lg:sticky lg:top-0 lg:flex">
+      <SidebarHeader priority />
+
+      <SidebarNav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden" />
+
+      <div className="relative z-20 shrink-0 overflow-visible border-t border-sidebar-border/60 px-3 py-3">
+        <AccountMenu />
       </div>
     </aside>
   );

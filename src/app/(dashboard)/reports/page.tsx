@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 
 export default function ReportsPage() {
   return (
-    <PageContainer
-      title="Reports"
-      description="Understand revenue, pending payments, invoice status, and top customers at a glance."
-    >
+    <PageContainer>
       <ReportsView />
     </PageContainer>
   );

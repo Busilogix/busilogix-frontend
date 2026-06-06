@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 
 export default function InventoryPage() {
   return (
-    <PageContainer
-      title="Inventory management"
-      description="Monitor physical stock levels, manage low-stock thresholds, and log stock adjustments."
-    >
+    <PageContainer>
       <InventoryView />
     </PageContainer>
   );

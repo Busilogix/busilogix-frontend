@@ -28,7 +28,7 @@ export function InvoicePagination({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        "surface-card flex flex-col gap-3 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5",
         className,
       )}
     >

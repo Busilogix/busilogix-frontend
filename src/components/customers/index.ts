@@ -1,6 +1,9 @@
 export { CustomerDetailView } from "./customer-detail-view";
 export { CustomerForm } from "./customer-form";
+export { CustomerFormHeader } from "./customer-form-header";
+export { CustomerFormSkeleton } from "./customer-form-skeleton";
 export { CustomerPagination } from "./customer-pagination";
+export { CustomersPageHeader } from "./customers-page-header";
 export { CustomersList } from "./customers-list";
 export { CustomersTable } from "./customers-table";
 export { CustomersTableSkeleton } from "./customers-table-skeleton";

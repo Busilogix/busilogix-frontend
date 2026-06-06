@@ -39,21 +39,26 @@ export type InvoiceAction =
 
 type InvoicesTableProps = {
   invoices: InvoiceListRecord[];
+  totalItems: number;
   onAction: (action: InvoiceAction, invoice: InvoiceListRecord) => void;
   pendingActionId?: string | null;
 };
 
 export function InvoicesTable({
   invoices,
+  totalItems,
   onAction,
   pendingActionId,
 }: InvoicesTableProps) {
   return (
-    <div className="surface-card overflow-hidden rounded-2xl">
-      <div className="border-b px-5 py-4">
-        <p className="font-medium">Invoice records</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Use the actions menu to preview, download, or email an invoice.
+    <div className="surface-card overflow-hidden rounded-xl">
+      <div className="border-b px-4 py-3 sm:px-5">
+        <p className="text-sm font-semibold text-foreground">
+          Invoice directory
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {totalItems} record{totalItems === 1 ? "" : "s"} · use actions to
+          send, download, or mark paid
         </p>
       </div>
       <Table>
@@ -76,9 +81,12 @@ export function InvoicesTable({
               <TableRow key={invoice.id}>
                 <TableCell>
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-mono text-sm font-medium">
+                    <Link
+                      href={`/invoices/${invoice.id}`}
+                      className="font-mono text-sm font-semibold hover:text-primary hover:underline"
+                    >
                       {invoice.invoice_number}
-                    </span>
+                    </Link>
                     <span className="text-xs text-muted-foreground md:hidden">
                       {invoice.customer_name}
                     </span>

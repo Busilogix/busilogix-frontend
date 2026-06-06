@@ -42,7 +42,18 @@ export function getDashboardData(): DashboardData {
       pendingAmount: Math.round(pendingAmount * 100) / 100,
       currency: invoices[0]?.currency ?? DEFAULT_CURRENCY,
     },
-    recentInvoices: invoices.slice(0, RECENT_LIMIT).map(toListInvoice),
-    recentCustomers: customers.slice(0, RECENT_LIMIT),
+    recentInvoices: [...invoices]
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+      .slice(0, RECENT_LIMIT)
+      .map(toListInvoice),
+    recentCustomers: [...customers]
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+      .slice(0, RECENT_LIMIT),
   };
 }

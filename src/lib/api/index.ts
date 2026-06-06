@@ -27,8 +27,10 @@ export type {
 export type {
   AuthTokenResponse,
   AuthUser,
+  BackendEnvelope,
   LoginRequest,
   LoginResponse,
+  LoginTokenData,
   RefreshTokenRequest,
   RefreshTokenResponse,
   SignupRequest,
@@ -36,11 +38,17 @@ export type {
 } from "./types/auth.types";
 
 export type {
+  ApiCustomer,
   CreateCustomerRequest,
+  CreateCustomerResponse,
   Customer,
+  CustomerAddress,
+  CustomerListPage,
   CustomerListParams,
+  CustomerListResult,
   CustomerStatus,
   UpdateCustomerRequest,
+  UpdateCustomerResponse,
 } from "./types/customer.types";
 
 export type {

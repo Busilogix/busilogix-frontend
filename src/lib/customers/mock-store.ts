@@ -1,5 +1,59 @@
 import { SEED_CUSTOMERS } from "./mock-data";
-import type { CustomerFormValues, CustomerRecord } from "./types";
+import type {
+  CustomerAddressFormValues,
+  CustomerFormValues,
+  CustomerRecord,
+} from "./types";
+
+function formatAddressForRecord(address?: CustomerAddressFormValues): string {
+  if (!address) {
+    return "";
+  }
+
+  return [
+    address.line1,
+    address.line2,
+    address.city,
+    address.state,
+    address.pincode,
+  ]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function parseAddressFromRecord(address: string): CustomerAddressFormValues {
+  const trimmed = address.trim();
+
+  if (!trimmed) {
+    return {
+      line1: "",
+      line2: "",
+      city: "",
+      state: "",
+      pincode: "",
+    };
+  }
+
+  return {
+    line1: trimmed,
+    line2: "",
+    city: "",
+    state: "",
+    pincode: "",
+  };
+}
+
+export function mapCustomerRecordToFormValues(
+  customer: CustomerRecord,
+): CustomerFormValues {
+  return {
+    mobile: customer.phone,
+    name: customer.name,
+    email: customer.email,
+    address: parseAddressFromRecord(customer.address),
+  };
+}
 
 const STORAGE_KEY = "busilogix_mock_customers";
 
@@ -20,12 +74,12 @@ function readStore(): CustomerRecord[] {
   }
 
   try {
-    return (JSON.parse(stored) as (CustomerRecord & { gst_number?: string })[]).map(
-      (record) => {
-        const { gst_number: _gstNumber, ...customer } = record;
-        return customer;
-      },
-    );
+    return (
+      JSON.parse(stored) as (CustomerRecord & { gst_number?: string })[]
+    ).map((record) => {
+      const { gst_number: _gstNumber, ...customer } = record;
+      return customer;
+    });
   } catch {
     return SEED_CUSTOMERS;
   }
@@ -57,10 +111,10 @@ export function createCustomer(data: CustomerFormValues): CustomerRecord {
   const now = new Date().toISOString();
   const customer: CustomerRecord = {
     id: generateId(),
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    address: data.address,
+    name: data.name?.trim() ?? "",
+    email: data.email?.trim() ?? "",
+    phone: data.mobile.trim(),
+    address: formatAddressForRecord(data.address),
     created_at: now,
     updated_at: now,
   };
@@ -83,10 +137,10 @@ export function updateCustomer(
 
   const updated: CustomerRecord = {
     ...customers[index],
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    address: data.address,
+    name: data.name?.trim() ?? "",
+    email: data.email?.trim() ?? "",
+    phone: data.mobile.trim(),
+    address: formatAddressForRecord(data.address),
     updated_at: new Date().toISOString(),
   };
 
@@ -154,3 +208,26 @@ export function queryCustomers(
 }
 
 export const CUSTOMERS_PAGE_SIZE = 8;
+
+export type CustomerStats = {
+  total: number;
+  addedThisMonth: number;
+  updatedThisWeek: number;
+};
+
+export function getCustomerStats(): CustomerStats {
+  const all = getAllCustomers();
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  return {
+    total: all.length,
+    addedThisMonth: all.filter(
+      (customer) => new Date(customer.created_at) >= monthStart,
+    ).length,
+    updatedThisWeek: all.filter(
+      (customer) => new Date(customer.updated_at) >= weekAgo,
+    ).length,
+  };
+}

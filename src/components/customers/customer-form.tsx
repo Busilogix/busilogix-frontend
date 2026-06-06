@@ -1,12 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, MapPin, Phone, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
+import { FormMessage } from "@/components/auth/form-message";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,33 +25,66 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { LoadingState } from "@/components/layout/loading-state";
-import {
-  createCustomer,
-  getCustomerById,
-  updateCustomer,
-} from "@/lib/customers/mock-store";
-import type { CustomerFormValues } from "@/lib/customers/types";
+import { customerService } from "@/lib/api/customer.service";
+import { isApiError } from "@/lib/api/errors";
+import { buildCreateCustomerPayload } from "@/lib/customers/build-create-payload";
+import { buildUpdateCustomerPayload } from "@/lib/customers/build-update-payload";
+import { mapApiCustomerToFormInput } from "@/lib/customers/map-api-customer";
 import {
   customerFormSchema,
   type CustomerFormInput,
 } from "@/lib/validations/customer";
 
-const LOAD_DELAY_MS = 600;
-const SUBMIT_DELAY_MS = 800;
+import { CustomerFormSkeleton } from "./customer-form-skeleton";
 
 type CustomerFormProps = {
   mode: "create" | "edit";
   customerId?: string;
 };
 
+type CustomerFormSectionProps = {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+};
+
 const defaultValues: CustomerFormInput = {
+  mobile: "",
   name: "",
   email: "",
-  phone: "",
-  address: "",
+  address: {
+    line1: "",
+    line2: "",
+    city: "",
+    state: "",
+    pincode: "",
+  },
 };
+
+function CustomerFormSection({
+  icon,
+  title,
+  description,
+  children,
+}: CustomerFormSectionProps) {
+  return (
+    <Card className="surface-card h-full rounded-xl">
+      <CardHeader className="border-b px-4 py-3 sm:px-5">
+        <div className="flex items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15">
+            {icon}
+          </span>
+          <div>
+            <CardTitle className="text-sm">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 pt-5 sm:p-5">{children}</CardContent>
+    </Card>
+  );
+}
 
 export function CustomerForm({ mode, customerId }: CustomerFormProps) {
   const router = useRouter();
@@ -73,70 +108,91 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
       return;
     }
 
-    setIsLoadingCustomer(true);
-    setNotFound(false);
+    const id = customerId;
+    let cancelled = false;
 
-    const timer = setTimeout(() => {
-      const customer = getCustomerById(customerId);
+    async function loadCustomer() {
+      setIsLoadingCustomer(true);
+      setNotFound(false);
 
-      if (!customer) {
-        setNotFound(true);
-        setIsLoadingCustomer(false);
-        return;
+      try {
+        const customer = await customerService.getById(id);
+
+        if (cancelled) {
+          return;
+        }
+
+        reset(mapApiCustomerToFormInput(customer));
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        if (isApiError(error) && error.statusCode === 404) {
+          setNotFound(true);
+          return;
+        }
+
+        setSubmitError(
+          isApiError(error)
+            ? error.message
+            : "Unable to load customer. Please try again.",
+        );
+      } finally {
+        if (!cancelled) {
+          setIsLoadingCustomer(false);
+        }
       }
+    }
 
-      reset({
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
-      });
-      setIsLoadingCustomer(false);
-    }, LOAD_DELAY_MS);
+    void loadCustomer();
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+    };
   }, [mode, customerId, reset]);
 
   async function onSubmit(data: CustomerFormInput) {
     setSubmitError(null);
     setIsSubmitting(true);
 
-    const payload: CustomerFormValues = {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-    };
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, SUBMIT_DELAY_MS));
-
       if (mode === "create") {
-        createCustomer(payload);
-      } else if (customerId) {
-        const updated = updateCustomer(customerId, payload);
+        const { message } = await customerService.create(
+          buildCreateCustomerPayload(data),
+        );
 
-        if (!updated) {
-          setSubmitError("Customer not found. It may have been removed.");
-          return;
-        }
+        toast.success("Customer created", { description: message });
+        router.push("/customers");
+        return;
       }
 
-      router.push("/customers");
-    } catch {
-      setSubmitError("Something went wrong. Please try again.");
+      if (customerId) {
+        const { message } = await customerService.update(
+          customerId,
+          buildUpdateCustomerPayload(data),
+        );
+
+        toast.success("Customer updated", { description: message });
+        router.push("/customers");
+      }
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.message
+        : "Something went wrong. Please try again.";
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
   }
 
   if (isLoadingCustomer) {
-    return <LoadingState title="Loading customer" variant="skeleton" />;
+    return <CustomerFormSkeleton />;
   }
 
   if (notFound) {
     return (
-      <Card>
+      <Card className="surface-card rounded-xl">
         <CardContent className="py-12 text-center">
           <p className="font-medium text-foreground">Customer not found</p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -154,40 +210,73 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
     );
   }
 
-  return (
-    <Card>
-      <CardHeader className="border-b">
-        <CardTitle>
-          {mode === "create" ? "Customer details" : "Update customer"}
-        </CardTitle>
-        <CardDescription>
-          Add the basic contact and billing details you will use on invoices.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-7">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-8"
-          noValidate
-        >
-          {submitError ? (
-            <p
-              role="alert"
-              className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-            >
-              {submitError}
-            </p>
-          ) : null}
+  const isCreate = mode === "create";
+  const addressErrors = errors.address;
 
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+      {submitError ? (
+        <FormMessage type="error" title="Save failed" message={submitError} />
+      ) : null}
+
+      <div className="surface-card rounded-xl border-primary/10 bg-primary/5 p-4 sm:p-5">
+        <p className="text-sm font-semibold text-foreground">
+          {isCreate ? "Before you create an invoice" : "Keep records accurate"}
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          {isCreate
+            ? "Mobile number is required. Name, email, and billing address are optional — if you add an address, line 1, city, state, and pincode are required."
+            : "Update name, email, and address. Mobile number cannot be changed after creation."}
+        </p>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <CustomerFormSection
+          icon={<User className="size-4" aria-hidden />}
+          title="Contact information"
+          description={
+            isCreate
+              ? "Mobile is required; name and email are optional"
+              : "Mobile is read-only on edit"
+          }
+        >
           <FieldGroup>
-            <Field data-invalid={!!errors.name || undefined}>
-              <FieldLabel htmlFor="name">Name</FieldLabel>
+            <Field data-invalid={!!errors.mobile || undefined}>
+              <FieldLabel htmlFor="mobile">
+                Mobile number <span className="text-destructive">*</span>
+              </FieldLabel>
               <FieldDescription>
-                Use the customer or company name you want shown on invoices.
+                {isCreate
+                  ? "Include country code, e.g. +91 70072 69286."
+                  : "Saved at creation and cannot be updated."}
+              </FieldDescription>
+              <div className="relative">
+                <Phone
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  id="mobile"
+                  type="tel"
+                  placeholder="+917007269286"
+                  className="pl-9"
+                  disabled={isSubmitting || !isCreate}
+                  readOnly={!isCreate}
+                  aria-invalid={!!errors.mobile}
+                  {...register("mobile")}
+                />
+              </div>
+              <FieldError errors={[errors.mobile]} />
+            </Field>
+
+            <Field data-invalid={!!errors.name || undefined}>
+              <FieldLabel htmlFor="name">Customer name</FieldLabel>
+              <FieldDescription>
+                Optional. Shown on invoices and lists.
               </FieldDescription>
               <Input
                 id="name"
-                placeholder="Acme Corporation"
+                placeholder="Dhruv Gupta"
                 disabled={isSubmitting}
                 aria-invalid={!!errors.name}
                 {...register("name")}
@@ -195,82 +284,136 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
               <FieldError errors={[errors.name]} />
             </Field>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field data-invalid={!!errors.email || undefined}>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <FieldDescription>
-                  Invoice emails and reminders will be sent here.
-                </FieldDescription>
+            <Field data-invalid={!!errors.email || undefined}>
+              <FieldLabel htmlFor="email">Email address</FieldLabel>
+              <FieldDescription>
+                Optional. Used for invoice emails and reminders.
+              </FieldDescription>
+              <div className="relative">
+                <Mail
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
                 <Input
                   id="email"
                   type="email"
                   placeholder="billing@company.com"
+                  className="pl-9"
                   disabled={isSubmitting}
                   aria-invalid={!!errors.email}
                   {...register("email")}
                 />
-                <FieldError errors={[errors.email]} />
+              </div>
+              <FieldError errors={[errors.email]} />
+            </Field>
+          </FieldGroup>
+        </CustomerFormSection>
+
+        <CustomerFormSection
+          icon={<MapPin className="size-4" aria-hidden />}
+          title="Billing address"
+          description="Optional — required fields apply only when address is added"
+        >
+          <FieldGroup>
+            <Field data-invalid={!!addressErrors?.line1 || undefined}>
+              <FieldLabel htmlFor="address-line1">Address line 1</FieldLabel>
+              <FieldDescription>Street, building, or area.</FieldDescription>
+              <Input
+                id="address-line1"
+                placeholder="100 Market Street"
+                disabled={isSubmitting}
+                aria-invalid={!!addressErrors?.line1}
+                {...register("address.line1")}
+              />
+              <FieldError errors={[addressErrors?.line1]} />
+            </Field>
+
+            <Field data-invalid={!!addressErrors?.line2 || undefined}>
+              <FieldLabel htmlFor="address-line2">Address line 2</FieldLabel>
+              <FieldDescription>
+                Optional apartment, suite, or landmark.
+              </FieldDescription>
+              <Input
+                id="address-line2"
+                placeholder="Suite 4B"
+                disabled={isSubmitting}
+                aria-invalid={!!addressErrors?.line2}
+                {...register("address.line2")}
+              />
+              <FieldError errors={[addressErrors?.line2]} />
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field data-invalid={!!addressErrors?.city || undefined}>
+                <FieldLabel htmlFor="address-city">City</FieldLabel>
+                <Input
+                  id="address-city"
+                  placeholder="Bengaluru"
+                  disabled={isSubmitting}
+                  aria-invalid={!!addressErrors?.city}
+                  {...register("address.city")}
+                />
+                <FieldError errors={[addressErrors?.city]} />
               </Field>
 
-              <Field data-invalid={!!errors.phone || undefined}>
-                <FieldLabel htmlFor="phone">Phone</FieldLabel>
-                <FieldDescription>
-                  Include country code if you bill international customers.
-                </FieldDescription>
+              <Field data-invalid={!!addressErrors?.state || undefined}>
+                <FieldLabel htmlFor="address-state">State</FieldLabel>
                 <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
+                  id="address-state"
+                  placeholder="Karnataka"
                   disabled={isSubmitting}
-                  aria-invalid={!!errors.phone}
-                  {...register("phone")}
+                  aria-invalid={!!addressErrors?.state}
+                  {...register("address.state")}
                 />
-                <FieldError errors={[errors.phone]} />
+                <FieldError errors={[addressErrors?.state]} />
               </Field>
             </div>
 
-            <Field data-invalid={!!errors.address || undefined}>
-              <FieldLabel htmlFor="address">Address</FieldLabel>
-              <FieldDescription>
-                Full billing address, including city, state, and postal code.
-              </FieldDescription>
-              <Textarea
-                id="address"
-                placeholder="Street, city, state, postal code"
-                rows={3}
+            <Field data-invalid={!!addressErrors?.pincode || undefined}>
+              <FieldLabel htmlFor="address-pincode">Pincode</FieldLabel>
+              <Input
+                id="address-pincode"
+                placeholder="560100"
                 disabled={isSubmitting}
-                aria-invalid={!!errors.address}
-                {...register("address")}
+                aria-invalid={!!addressErrors?.pincode}
+                {...register("address.pincode")}
               />
-              <FieldError errors={[errors.address]} />
+              <FieldError errors={[addressErrors?.pincode]} />
             </Field>
           </FieldGroup>
+        </CustomerFormSection>
+      </div>
 
-          <div className="flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSubmitting}
-              render={<Link href="/customers" />}
-            >
-              <ArrowLeft className="size-4" aria-hidden />
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="animate-spin" aria-hidden />
-                  {mode === "create" ? "Creating..." : "Saving..."}
-                </>
-              ) : mode === "create" ? (
-                "Create customer"
-              ) : (
-                "Save changes"
-              )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      <div className="surface-card sticky bottom-4 z-10 flex flex-col gap-3 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <p className="text-sm text-muted-foreground">
+          {isCreate
+            ? "Customer will be saved to your account after creation."
+            : "Updates sync to the customer list immediately."}
+        </p>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            render={<Link href="/customers" />}
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="shadow-sm">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" aria-hidden />
+                {isCreate ? "Creating..." : "Saving..."}
+              </>
+            ) : isCreate ? (
+              "Create customer"
+            ) : (
+              "Save changes"
+            )}
+          </Button>
+        </div>
+      </div>
+    </form>
   );
 }

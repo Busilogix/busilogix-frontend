@@ -30,16 +30,21 @@ export function MetricCard({
   className,
 }: MetricCardProps) {
   return (
-    <Card size="sm" className={cn("interactive-card overflow-hidden", className)}>
-      <CardContent className="relative flex items-start justify-between gap-3 pt-4 pb-1">
+    <Card
+      size="sm"
+      className={cn("interactive-card overflow-hidden", className)}
+    >
+      <CardContent className="relative flex items-start justify-between gap-3 p-4">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/80 via-primary/30 to-transparent" />
-        <div className="min-w-0 space-y-1">
-          <p className="text-xs font-medium text-muted-foreground">{title}</p>
-          <p className="truncate text-xl font-semibold tracking-tight tabular-nums">
+        <div className="min-w-0 space-y-1.5">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="truncate text-2xl font-bold tracking-tight tabular-nums">
             {value}
           </p>
           {description ? (
-            <p className="text-xs text-muted-foreground/80 leading-normal">{description}</p>
+            <p className="text-xs leading-normal text-muted-foreground/80">
+              {description}
+            </p>
           ) : null}
           {trend ? (
             <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">

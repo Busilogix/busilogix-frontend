@@ -3,8 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,18 +16,22 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/auth-provider";
+import { authService } from "@/lib/api/auth.service";
+import { isApiError } from "@/lib/api/errors";
 import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
 
 import { AuthCard, AuthCardLink } from "./auth-card";
-import { FormMessage } from "./form-message";
 
-const SUBMIT_DELAY_MS = 1200;
+type LoginFormProps = {
+  registeredMessage?: string | null;
+};
 
-export function LoginForm() {
+export function LoginForm({ registeredMessage }: LoginFormProps) {
+  const router = useRouter();
+  const { setUserEmail } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   const {
     register,
@@ -36,20 +42,28 @@ export function LoginForm() {
     defaultValues: { email: "", password: "" },
   });
 
-  async function onSubmit(_data: LoginFormValues) {
-    setSubmitError(null);
-    setSubmitSuccess(null);
+  useEffect(() => {
+    if (registeredMessage) {
+      toast.success("Account created", {
+        description: registeredMessage,
+      });
+    }
+  }, [registeredMessage]);
+
+  async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, SUBMIT_DELAY_MS));
-      setSubmitSuccess(
-        "Sign-in successful. API integration will connect your account here.",
-      );
-    } catch {
-      setSubmitError(
-        "Unable to sign in right now. Please try again. (API placeholder)",
-      );
+      await authService.login(data);
+      setUserEmail(data.email);
+      router.push("/dashboard");
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.message
+        : "Unable to sign in right now. Please try again.";
+      toast.error("Sign in failed", {
+        description: message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -68,18 +82,14 @@ export function LoginForm() {
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        {submitError ? (
-          <FormMessage type="error" title="Sign in failed" message={submitError} />
-        ) : null}
-        {submitSuccess ? (
-          <FormMessage type="success" title="Signed in" message={submitSuccess} />
-        ) : null}
-
         <FieldGroup className="gap-4">
           <Field data-invalid={!!errors.email || undefined}>
             <FieldLabel htmlFor="login-email">Email address</FieldLabel>
             <div className="relative">
-              <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Mail
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
               <Input
                 id="login-email"
                 type="email"
@@ -106,7 +116,10 @@ export function LoginForm() {
               </Link>
             </div>
             <div className="relative">
-              <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Lock
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
               <Input
                 id="login-password"
                 type={showPassword ? "text" : "password"}
@@ -124,7 +137,11 @@ export function LoginForm() {
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 tabIndex={-1}
               >
-                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                {showPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
               </button>
             </div>
             <FieldError errors={[errors.password]} />
@@ -132,7 +149,11 @@ export function LoginForm() {
         </FieldGroup>
 
         <div className="pt-1">
-          <Button type="submit" className="w-full font-semibold shadow-sm" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full font-semibold shadow-sm"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="animate-spin" aria-hidden />
@@ -147,4 +168,3 @@ export function LoginForm() {
     </AuthCard>
   );
 }
-

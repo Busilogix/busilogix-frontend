@@ -229,3 +229,29 @@ export const INVOICE_STATUS_OPTIONS: {
   { value: "overdue", label: "Overdue" },
   { value: "cancelled", label: "Cancelled" },
 ];
+
+export type InvoiceStats = {
+  total: number;
+  paidCount: number;
+  pendingAmount: number;
+  overdueCount: number;
+  currency: string;
+};
+
+export function getInvoiceStats(): InvoiceStats {
+  const all = getAllInvoices();
+  const pending = all.filter(
+    (invoice) => invoice.status === "sent" || invoice.status === "overdue",
+  );
+
+  return {
+    total: all.length,
+    paidCount: all.filter((invoice) => invoice.status === "paid").length,
+    pendingAmount:
+      Math.round(
+        pending.reduce((sum, invoice) => sum + invoice.total_amount, 0) * 100,
+      ) / 100,
+    overdueCount: all.filter((invoice) => invoice.status === "overdue").length,
+    currency: all[0]?.currency ?? "USD",
+  };
+}

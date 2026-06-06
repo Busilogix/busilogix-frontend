@@ -7,6 +7,14 @@ export const metadata: Metadata = {
   description: "Sign in to your Busilogix account",
 };
 
-export default function LoginPage() {
-  return <LoginForm />;
+type LoginPageProps = {
+  searchParams: Promise<{ registered?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const registeredMessage =
+    params.registered === "1" ? "Account created — sign in to continue." : null;
+
+  return <LoginForm registeredMessage={registeredMessage} />;
 }

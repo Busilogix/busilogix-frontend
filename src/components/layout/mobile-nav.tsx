@@ -13,7 +13,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import { AppLogo } from "./app-logo";
+import { AccountMenu } from "./account-menu";
+import { SidebarHeader } from "./sidebar-brand";
 import { SidebarNav } from "./sidebar-nav";
 
 export function MobileNav() {
@@ -32,13 +33,21 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-72 bg-sidebar p-0 text-sidebar-foreground"
+        className="flex h-full w-72 flex-col overflow-hidden border-r border-sidebar-border/70 bg-[linear-gradient(180deg,oklch(0.99_0.01_250)_0%,oklch(0.975_0.012_252)_55%,oklch(0.96_0.018_252)_100%)] p-0 text-sidebar-foreground"
       >
-        <SheetHeader className="border-b border-sidebar-border px-5 py-4 text-left">
+        <SheetHeader className="shrink-0 p-0 text-left">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <AppLogo showTagline />
+          <SidebarHeader />
         </SheetHeader>
-        <SidebarNav onNavigate={() => setOpen(false)} />
+
+        <SidebarNav
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+          onNavigate={() => setOpen(false)}
+        />
+
+        <div className="relative z-20 shrink-0 overflow-visible border-t border-sidebar-border/60 px-3 py-3">
+          <AccountMenu />
+        </div>
       </SheetContent>
     </Sheet>
   );

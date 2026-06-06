@@ -1,5 +1,6 @@
-import { BarChart3, FileText, Package, ShieldCheck, Users, Zap } from "lucide-react";
-import Image from "next/image";
+import { BarChart3, FileText, Package, Users, Zap } from "lucide-react";
+
+import { AppLogo } from "@/components/layout/app-logo";
 
 const stats = [
   { value: "10K+", label: "Invoices processed" },
@@ -11,7 +12,8 @@ const features = [
   {
     icon: FileText,
     title: "Smart invoicing",
-    description: "Create, send, and track invoices with automatic totals and tax.",
+    description:
+      "Create, send, and track invoices with automatic totals and tax.",
   },
   {
     icon: Users,
@@ -21,7 +23,8 @@ const features = [
   {
     icon: Package,
     title: "Product & inventory",
-    description: "Real-time stock levels, low-stock alerts, and adjustment logs.",
+    description:
+      "Real-time stock levels, low-stock alerts, and adjustment logs.",
   },
   {
     icon: BarChart3,
@@ -32,41 +35,36 @@ const features = [
 
 export function AuthBrandPanel() {
   return (
-    <div className="relative hidden flex-col overflow-hidden lg:flex" style={{
-      background: "linear-gradient(145deg, oklch(0.18 0.04 252) 0%, oklch(0.12 0.06 258) 50%, oklch(0.08 0.02 252) 100%)",
-    }}>
-      {/* Ambient glows */}
+    <div
+      className="relative hidden flex-col overflow-hidden lg:flex"
+      style={{
+        background:
+          "linear-gradient(145deg, oklch(0.18 0.04 252) 0%, oklch(0.12 0.06 258) 50%, oklch(0.08 0.02 252) 100%)",
+      }}
+    >
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
         style={{
-          background: "radial-gradient(ellipse at 20% 10%, oklch(0.48 0.18 252 / 0.35) 0%, transparent 55%), radial-gradient(ellipse at 80% 90%, oklch(0.55 0.20 200 / 0.20) 0%, transparent 45%)",
+          background:
+            "radial-gradient(ellipse at 20% 10%, oklch(0.48 0.18 252 / 0.35) 0%, transparent 55%), radial-gradient(ellipse at 80% 90%, oklch(0.55 0.20 200 / 0.20) 0%, transparent 45%)",
         }}
       />
-      {/* Subtle grid lines */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         aria-hidden
         style={{
-          backgroundImage: "linear-gradient(oklch(1 0 0) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0) 1px, transparent 1px)",
+          backgroundImage:
+            "linear-gradient(oklch(1 0 0) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
         }}
       />
 
       <div className="relative flex flex-1 flex-col justify-between p-10 xl:p-14">
-        {/* Logo */}
-        <div className="w-full">
-          <Image
-            src="/Busilogix.png"
-            alt="Busilogix"
-            width={220}
-            height={80}
-            className="h-26 w-auto object-contain rounded-md"
-            priority
-          />
+        <div className="inline-flex rounded-xl bg-white w-fit px-3 py-2 shadow-lg shadow-black/20">
+          <AppLogo variant="panel" asLink={false} priority />
         </div>
 
-        {/* Hero copy */}
         <div className="space-y-8">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur-sm">
@@ -77,11 +75,11 @@ export function AuthBrandPanel() {
               Run your entire business from one place
             </h2>
             <p className="max-w-xs text-sm leading-relaxed text-white/60">
-              Invoices, customers, products, inventory, and analytics — all connected in a single intelligent workspace.
+              Invoices, customers, products, inventory, and analytics — all
+              connected in a single intelligent workspace.
             </p>
           </div>
 
-          {/* Feature list */}
           <ul className="space-y-4">
             {features.map((item) => (
               <li key={item.title} className="flex gap-3">
@@ -89,19 +87,24 @@ export function AuthBrandPanel() {
                   <item.icon className="size-4 text-primary" aria-hidden />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-white">{item.title}</p>
-                  <p className="text-xs leading-relaxed text-white/55">{item.description}</p>
+                  <p className="text-sm font-semibold text-white">
+                    {item.title}
+                  </p>
+                  <p className="text-xs leading-relaxed text-white/55">
+                    {item.description}
+                  </p>
                 </div>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Stats row */}
         <div className="grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
           {stats.map((s) => (
             <div key={s.label} className="px-4 py-3 text-center">
-              <p className="text-xl font-bold tabular-nums text-white">{s.value}</p>
+              <p className="text-xl font-bold tabular-nums text-white">
+                {s.value}
+              </p>
               <p className="mt-0.5 text-[11px] text-white/50">{s.label}</p>
             </div>
           ))}
@@ -110,4 +113,3 @@ export function AuthBrandPanel() {
     </div>
   );
 }
-

@@ -1,8 +1,22 @@
 const ACCESS_TOKEN_KEY = "busilogix_access_token";
 const REFRESH_TOKEN_KEY = "busilogix_refresh_token";
 
+type AuthChangeListener = () => void;
+const authChangeListeners = new Set<AuthChangeListener>();
+
 function isBrowser(): boolean {
   return typeof window !== "undefined";
+}
+
+function notifyAuthChanges(): void {
+  authChangeListeners.forEach((listener) => listener());
+}
+
+export function subscribeToAuthChanges(
+  listener: AuthChangeListener,
+): () => void {
+  authChangeListeners.add(listener);
+  return () => authChangeListeners.delete(listener);
 }
 
 export type AuthTokens = {
@@ -34,6 +48,8 @@ export function setTokens(tokens: AuthTokens): void {
   if (tokens.refreshToken) {
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
   }
+
+  notifyAuthChanges();
 }
 
 export function clearTokens(): void {
@@ -43,6 +59,7 @@ export function clearTokens(): void {
 
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  notifyAuthChanges();
 }
 
 export function hasAccessToken(): boolean {

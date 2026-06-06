@@ -28,13 +28,19 @@ export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }
 
+type BackendErrorBody = {
+  message?: string;
+};
+
 export function normalizeAxiosError(error: AxiosError<ApiErrorBody>): ApiError {
   const statusCode = error.response?.status ?? 0;
   const body = error.response?.data;
   const meta = body?.meta;
+  const backendMessage = (body as BackendErrorBody | undefined)?.message;
 
   const message =
     meta?.message ??
+    backendMessage ??
     error.message ??
     "An unexpected error occurred. Please try again.";
 
