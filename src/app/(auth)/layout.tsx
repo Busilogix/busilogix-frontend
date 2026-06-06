@@ -19,7 +19,7 @@ export default function AuthLayout({
           {children}
         </main>
         <p className="pb-5 text-center text-[11px] text-muted-foreground/70">
-          © {new Date().getFullYear()} Busilogix · Intelligent Commerce Operations Platform
+          © 2026 Busilogix · Intelligent Commerce Operations Platform
         </p>
       </div>
     </div>
