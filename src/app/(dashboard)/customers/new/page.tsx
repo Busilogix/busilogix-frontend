@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { CustomerForm } from "@/components/customers";
+import { CustomerForm, CustomerFormHeader } from "@/components/customers";
 import { PageContainer } from "@/components/layout/page-container";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Add Customer",
@@ -13,21 +10,9 @@ export const metadata: Metadata = {
 
 export default function NewCustomerPage() {
   return (
-    <PageContainer
-      title="Add customer"
-      description="Enter contact and billing details for a new customer."
-      actions={
-        <Link
-          href="/customers"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "default" }),
-          )}
-        >
-          Back to list
-        </Link>
-      }
-    >
-      <div className="mx-auto max-w-2xl">
+    <PageContainer>
+      <div className="space-y-6">
+        <CustomerFormHeader mode="create" />
         <CustomerForm mode="create" />
       </div>
     </PageContainer>

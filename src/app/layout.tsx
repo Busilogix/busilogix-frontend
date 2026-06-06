@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/context/auth-provider";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,6 +23,10 @@ export const metadata: Metadata = {
   },
   description:
     "Professional invoicing and business management platform for modern teams.",
+  icons: {
+    icon: "/Busilogix.png",
+    apple: "/Busilogix.png",
+  },
 };
 
 export default function RootLayout({
@@ -32,7 +39,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans">{children}</body>
+      <body className="min-h-full font-sans">
+        <AuthProvider>{children}</AuthProvider>
+        <Toaster richColors closeButton position="top-right" />
+      </body>
     </html>
   );
 }

@@ -1,222 +1,354 @@
 "use client";
 
-import { Download, Plus, Search, Package } from "lucide-react";
-import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { Download, Package, Plus, Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { FormMessage } from "@/components/auth/form-message";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isApiError } from "@/lib/api/errors";
+import { productService } from "@/lib/api/product.service";
+import type {
+  ProductCatalogStats,
+  ProductListResult,
+} from "@/lib/api/types/product.types";
+import { isValidStockRange } from "@/lib/api/utils/product-query";
+import { downloadCsv } from "@/lib/export/csv";
 import {
   PRODUCTS_PAGE_SIZE,
-  deleteProduct,
-  queryProducts,
-} from "@/lib/products/mock-store";
-import type { ProductRecord } from "@/lib/products/types";
-import { downloadCsv } from "@/lib/export/csv";
+  type ProductStockFilter,
+  stockFilterToQuery,
+} from "@/lib/products/constants";
+import { mapApiProductToRecord } from "@/lib/products/map-api-product";
+import { cn } from "@/lib/utils";
 
+import { CreateProductModal } from "./create-product-modal";
+import { EditProductModal } from "./edit-product-modal";
+import { ProductsPageHeader } from "./products-page-header";
 import { ProductsPagination } from "./products-pagination";
 import { ProductsTable } from "./products-table";
+import { ProductsTableSkeleton } from "./products-table-skeleton";
 
-const LOAD_DELAY_MS = 400;
+const DEBOUNCE_MS = 300;
+
+const STOCK_FILTER_OPTIONS: { value: ProductStockFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "in_stock", label: "In stock" },
+  { value: "low_stock", label: "Low stock" },
+  { value: "out_of_stock", label: "Out of stock" },
+];
+
+const emptyResult: ProductListResult = {
+  items: [],
+  page: 1,
+  pageSize: PRODUCTS_PAGE_SIZE,
+  totalItems: 0,
+  totalPages: 1,
+  hasNext: false,
+  hasPrevious: false,
+};
 
 export function ProductsList() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
+  const [stockFilter, setStockFilter] = useState<ProductStockFilter>("all");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PRODUCTS_PAGE_SIZE);
   const [isLoading, setIsLoading] = useState(true);
-  const [result, setResult] = useState(() =>
-    queryProducts({
-      search: "",
-      status: "all",
-      page: 1,
-      pageSize: PRODUCTS_PAGE_SIZE,
-    })
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [result, setResult] = useState<ProductListResult>(emptyResult);
+  const [catalogStats, setCatalogStats] = useState<ProductCatalogStats | null>(
+    null,
+  );
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  const stockQuery = useMemo(
+    () => stockFilterToQuery(stockFilter),
+    [stockFilter],
   );
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
-    }, 250);
+    }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchProducts = useCallback(() => {
-    setIsLoading(true);
+  useEffect(() => {
+    setPage(1);
+  }, [stockFilter]);
 
-    const timer = setTimeout(() => {
-      setResult(
-        queryProducts({
-          search: debouncedSearch,
-          status,
-          page,
-          pageSize: PRODUCTS_PAGE_SIZE,
-        })
+  const fetchProducts = useCallback(async () => {
+    if (
+      !isValidStockRange(
+        stockQuery.minStockQuantity,
+        stockQuery.maxStockQuantity,
+      )
+    ) {
+      setFetchError(
+        "Maximum stock quantity must be greater than or equal to minimum stock quantity.",
       );
+      setResult({ ...emptyResult, pageSize });
       setIsLoading(false);
-    }, LOAD_DELAY_MS);
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [debouncedSearch, status, page]);
+    setIsLoading(true);
+    setFetchError(null);
+
+    try {
+      const response = await productService.list({
+        page: page - 1,
+        size: pageSize,
+        search: debouncedSearch,
+        ...stockQuery,
+      });
+
+      setResult(response);
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.message
+        : "Unable to load products. Please try again.";
+      setFetchError(message);
+      setResult({ ...emptyResult, pageSize });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [debouncedSearch, page, pageSize, stockQuery]);
+
+  function handlePageSizeChange(nextPageSize: number) {
+    setPageSize(nextPageSize);
+    setPage(1);
+  }
 
   useEffect(() => {
-    const cleanup = fetchProducts();
-    return cleanup;
+    void fetchProducts();
   }, [fetchProducts]);
 
+  const isFiltered = debouncedSearch.trim().length > 0 || stockFilter !== "all";
+
+  const refreshCatalogStats = useCallback(async () => {
+    setIsStatsLoading(true);
+
+    try {
+      const stats = await productService.getStats();
+      setCatalogStats(stats);
+    } catch {
+      setCatalogStats(null);
+    } finally {
+      setIsStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshCatalogStats();
+  }, [refreshCatalogStats]);
+
+  useEffect(() => {
+    if (isFiltered) {
+      return;
+    }
+
+    void refreshCatalogStats();
+  }, [isFiltered, result.totalItems, refreshCatalogStats]);
+
+  const products = useMemo(
+    () => result.items.map(mapApiProductToRecord),
+    [result.items],
+  );
+
   const hasProducts = result.totalItems > 0;
-  const isEmptySearch = debouncedSearch.length > 0 && !hasProducts;
-  const isEmptyDatabase = debouncedSearch.length === 0 && !hasProducts;
+  const isEmptySearch = isFiltered && !hasProducts;
+  const isEmptyDatabase = !isFiltered && !hasProducts;
 
-  function refreshProducts(nextPage = page) {
-    setResult(
-      queryProducts({
+  function clearFilters() {
+    setSearch("");
+    setDebouncedSearch("");
+    setStockFilter("all");
+    setPage(1);
+  }
+
+  async function handleExportProducts() {
+    try {
+      const exportResult = await productService.list({
+        page: 0,
+        size: result.totalItems || pageSize,
         search: debouncedSearch,
-        status,
-        page: nextPage,
-        pageSize: PRODUCTS_PAGE_SIZE,
-      })
-    );
-  }
+        ...stockQuery,
+      });
 
-  function handleDeleteProduct(product: ProductRecord) {
-    const confirmed = window.confirm(
-      `Delete ${product.name}? This will remove it from the product catalog.`
-    );
+      const rows = exportResult.items.map(mapApiProductToRecord);
 
-    if (!confirmed) return;
-
-    deleteProduct(product.id);
-    refreshProducts();
-  }
-
-  function handleExportProducts() {
-    downloadCsv(
-      "busilogix-products.csv",
-      result.items.map((prod) => ({
-        sku: prod.sku,
-        name: prod.name,
-        category: prod.category,
-        price: prod.price,
-        stock: prod.stock,
-        min_stock: prod.min_stock_level,
-        status: prod.status,
-      }))
-    );
+      downloadCsv(
+        "busilogix-products.csv",
+        rows.map((product) => ({
+          sku: product.sku,
+          name: product.name,
+          description: product.description,
+          selling_price: product.price,
+          stock: product.stock,
+          created_at: product.created_at,
+        })),
+      );
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.message
+        : "Unable to export products. Please try again.";
+      setFetchError(message);
+    }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="surface-card flex flex-col gap-3 rounded-xl p-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:w-72">
+    <div className="space-y-6">
+      <ProductsPageHeader
+        stats={catalogStats}
+        isStatsLoading={isStatsLoading}
+        isFiltered={isFiltered}
+        matchingCount={result.totalItems}
+        search={debouncedSearch}
+        stockFilter={stockFilter}
+        onStockFilterChange={setStockFilter}
+      />
+
+      <div className="surface-card rounded-xl p-4 sm:p-5">
+        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Search & filters
+        </p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1">
             <Search
-              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
               aria-hidden
             />
             <Input
               type="search"
-              placeholder="Search by name, SKU..."
+              placeholder="Search by name or SKU..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="h-8.5 bg-background/80 pl-8.5 text-xs"
+              className="h-10 bg-background/80 pl-9"
               aria-label="Search products"
             />
           </div>
-          <div className="flex rounded-lg border bg-muted/30 p-0.5 self-start">
-            <button
-              onClick={() => { setStatus("all"); setPage(1); }}
-              className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                status === "all"
-                  ? "bg-background text-foreground shadow-sm shadow-slate-950/5"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => { setStatus("active"); setPage(1); }}
-              className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                status === "active"
-                  ? "bg-background text-foreground shadow-sm shadow-slate-950/5"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Active
-            </button>
-            <button
-              onClick={() => { setStatus("inactive"); setPage(1); }}
-              className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
-                status === "inactive"
-                  ? "bg-background text-foreground shadow-sm shadow-slate-950/5"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Inactive
-            </button>
+          <div
+            className="flex flex-wrap rounded-xl border bg-muted/30 p-1 self-start"
+            role="group"
+            aria-label="Stock level filter"
+          >
+            {STOCK_FILTER_OPTIONS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setStockFilter(value)}
+                className={cn(
+                  "rounded-lg px-3 py-2 text-xs font-medium transition-all",
+                  stockFilter === value
+                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
+                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportProducts}
-            disabled={!hasProducts}
-            className="h-8 text-xs px-2.5"
-          >
-            <Download className="size-3.5" aria-hidden />
-            Export CSV
-          </Button>
-          <Button
-            render={<Link href="/products/new" />}
-            size="sm"
-            className="h-8 text-xs px-2.5 shadow-sm"
-          >
-            <Plus className="size-3.5" aria-hidden />
-            Add product
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {isFiltered ? (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="size-4" aria-hidden />
+                Clear
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void handleExportProducts()}
+              disabled={!hasProducts || isLoading}
+            >
+              <Download className="size-4" aria-hidden />
+              Export CSV
+            </Button>
+            <Button
+              size="sm"
+              className="shadow-sm"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <Plus className="size-4" aria-hidden />
+              Add product
+            </Button>
+          </div>
         </div>
       </div>
 
+      <CreateProductModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onCreated={() => {
+          setPage(1);
+          void fetchProducts();
+          void refreshCatalogStats();
+        }}
+      />
+
+      <EditProductModal
+        productId={editingProductId}
+        open={editingProductId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingProductId(null);
+          }
+        }}
+        onUpdated={() => {
+          void fetchProducts();
+          void refreshCatalogStats();
+        }}
+      />
+
+      {fetchError ? (
+        <FormMessage
+          type="error"
+          title="Unable to load products"
+          message={fetchError}
+        />
+      ) : null}
+
       {isLoading ? (
-        <div className="rounded-xl border bg-card p-6 space-y-4">
-          <div className="h-6 bg-muted/65 animate-pulse rounded w-1/3" />
-          <div className="h-32 bg-muted/50 animate-pulse rounded" />
-        </div>
+        <ProductsTableSkeleton />
       ) : isEmptyDatabase ? (
         <EmptyState
           icon={Package}
           title="No products yet"
           description="Create your first product in the catalog to manage pricing and inventory levels."
-          action={{ label: "Add product", href: "/products/new" }}
         />
       ) : isEmptySearch ? (
         <EmptyState
           icon={Search}
           title="No matching products"
-          description={`No products found for "${debouncedSearch}". Try another name or SKU.`}
+          description="No results match your current search or stock filters. Try adjusting them."
           action={{
-            label: "Clear search",
-            onClick: () => setSearch(""),
+            label: "Clear filters",
+            onClick: clearFilters,
           }}
         />
       ) : (
-        <>
+        <div className="space-y-4">
           <ProductsTable
-            products={result.items}
-            onDeleteProduct={handleDeleteProduct}
+            products={products}
+            totalItems={result.totalItems}
+            onEditProduct={(product) => setEditingProductId(product.id)}
           />
           <ProductsPagination
             page={result.page}
             totalPages={result.totalPages}
             totalItems={result.totalItems}
-            pageSize={result.pageSize}
+            pageSize={pageSize}
             onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
           />
-        </>
+        </div>
       )}
     </div>
   );

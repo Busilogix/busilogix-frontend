@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,6 @@ import {
 } from "@/components/ui/card";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -25,30 +25,296 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingState } from "@/components/layout/loading-state";
+import { isApiError } from "@/lib/api/errors";
+import { productService } from "@/lib/api/product.service";
+import { buildCreateProductPayload } from "@/lib/products/build-create-payload";
+import { mapApiProductToFormInput } from "@/lib/products/map-api-product";
 import {
-  createProduct,
-  getProductById,
-  updateProduct,
-  CATEGORY_OPTIONS,
-} from "@/lib/products/mock-store";
-import type { ProductFormValues } from "@/lib/products/types";
-import {
-  productFormSchema,
-  type ProductFormInput,
-  defaultProductValues,
+  createProductDefaultValues,
+  createProductFormSchema,
+  type CreateProductFormInput,
 } from "@/lib/validations/product";
-
-const LOAD_DELAY_MS = 400;
-const SUBMIT_DELAY_MS = 600;
 
 type ProductFormProps = {
   mode: "create" | "edit";
   productId?: string;
 };
 
-export function ProductForm({ mode, productId }: ProductFormProps) {
+export type CreateProductFormProps = {
+  variant?: "card" | "embedded";
+  fieldIdPrefix?: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+};
+
+type ProductFormFieldsProps = {
+  isSubmitting: boolean;
+  submitLabel: string;
+  submittingLabel: string;
+  register: ReturnType<typeof useForm<CreateProductFormInput>>["register"];
+  errors: ReturnType<
+    typeof useForm<CreateProductFormInput>
+  >["formState"]["errors"];
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  submitError: string | null;
+  title: string;
+  description: string;
+  variant: "card" | "embedded";
+  fieldIdPrefix: string;
+  onCancel?: () => void;
+};
+
+function ProductFormFields({
+  isSubmitting,
+  submitLabel,
+  submittingLabel,
+  register,
+  errors,
+  onSubmit,
+  submitError,
+  title,
+  description,
+  variant,
+  fieldIdPrefix,
+  onCancel,
+}: ProductFormFieldsProps) {
+  const form = (
+    <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      {submitError ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+        >
+          {submitError}
+        </p>
+      ) : null}
+
+      <FieldGroup className="gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field data-invalid={!!errors.name || undefined}>
+            <FieldLabel htmlFor={`${fieldIdPrefix}-name`} className="text-xs">
+              Product name
+            </FieldLabel>
+            <Input
+              id={`${fieldIdPrefix}-name`}
+              placeholder="e.g. iPhone 15"
+              disabled={isSubmitting}
+              className="h-8 text-xs"
+              {...register("name")}
+            />
+            <FieldError errors={[errors.name]} />
+          </Field>
+
+          <Field data-invalid={!!errors.sku || undefined}>
+            <FieldLabel htmlFor={`${fieldIdPrefix}-sku`} className="text-xs">
+              SKU
+            </FieldLabel>
+            <Input
+              id={`${fieldIdPrefix}-sku`}
+              placeholder="e.g. IPH15-128-BLK"
+              disabled={isSubmitting}
+              className="h-8 font-mono text-xs"
+              {...register("sku")}
+            />
+            <FieldError errors={[errors.sku]} />
+          </Field>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field data-invalid={!!errors.price || undefined}>
+            <FieldLabel htmlFor={`${fieldIdPrefix}-price`} className="text-xs">
+              Selling price
+            </FieldLabel>
+            <Input
+              id={`${fieldIdPrefix}-price`}
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="79999.00"
+              disabled={isSubmitting}
+              className="h-8 text-xs"
+              {...register("price", { valueAsNumber: true })}
+            />
+            <FieldError errors={[errors.price]} />
+          </Field>
+
+          <Field data-invalid={!!errors.stock || undefined}>
+            <FieldLabel htmlFor={`${fieldIdPrefix}-stock`} className="text-xs">
+              Stock quantity
+            </FieldLabel>
+            <Input
+              id={`${fieldIdPrefix}-stock`}
+              type="number"
+              min={0}
+              step="1"
+              placeholder="50"
+              disabled={isSubmitting}
+              className="h-8 text-xs"
+              {...register("stock", { valueAsNumber: true })}
+            />
+            <FieldError errors={[errors.stock]} />
+          </Field>
+        </div>
+
+        <Field data-invalid={!!errors.description || undefined}>
+          <FieldLabel
+            htmlFor={`${fieldIdPrefix}-description`}
+            className="text-xs"
+          >
+            Description
+          </FieldLabel>
+          <Textarea
+            id={`${fieldIdPrefix}-description`}
+            placeholder="Apple iPhone 15 128GB Black"
+            rows={2}
+            disabled={isSubmitting}
+            className="text-xs"
+            {...register("description")}
+          />
+          <FieldError errors={[errors.description]} />
+        </Field>
+      </FieldGroup>
+
+      <div className="flex flex-col-reverse gap-2 border-t pt-3.5 sm:flex-row sm:justify-end">
+        {onCancel ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isSubmitting}
+            onClick={onCancel}
+            className="h-8 px-3 text-xs"
+          >
+            Cancel
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isSubmitting}
+            render={<Link href="/products" />}
+            className="h-8 px-3 text-xs"
+          >
+            <ArrowLeft className="size-3.5" aria-hidden />
+            Cancel
+          </Button>
+        )}
+        <Button
+          type="submit"
+          size="sm"
+          className="h-8 px-3 text-xs"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="size-3 animate-spin" aria-hidden />
+              {submittingLabel}
+            </>
+          ) : (
+            submitLabel
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (variant === "embedded") {
+    return form;
+  }
+
+  return (
+    <Card>
+      <CardHeader className="border-b px-4 py-3">
+        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <CardDescription className="text-xs">{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="px-4 pt-4 pb-4">{form}</CardContent>
+    </Card>
+  );
+}
+
+export function CreateProductForm({
+  variant = "card",
+  fieldIdPrefix = "create-product",
+  onSuccess,
+  onCancel,
+}: CreateProductFormProps = {}) {
   const router = useRouter();
-  const [isLoadingProduct, setIsLoadingProduct] = useState(mode === "edit");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateProductFormInput>({
+    resolver: zodResolver(createProductFormSchema),
+    defaultValues: createProductDefaultValues,
+  });
+
+  async function onSubmit(data: CreateProductFormInput) {
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      const { message } = await productService.create(
+        buildCreateProductPayload(data),
+      );
+
+      toast.success("Product created", { description: message });
+
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/products");
+      }
+    } catch (error) {
+      setSubmitError(
+        isApiError(error)
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <ProductFormFields
+      title="Product catalog details"
+      description="Add name, SKU, selling price, and opening stock for the new product."
+      isSubmitting={isSubmitting}
+      submitLabel="Create product"
+      submittingLabel="Creating..."
+      register={register}
+      errors={errors}
+      submitError={submitError}
+      onSubmit={handleSubmit(onSubmit)}
+      variant={variant}
+      fieldIdPrefix={fieldIdPrefix}
+      onCancel={onCancel}
+    />
+  );
+}
+
+export type EditProductFormProps = {
+  productId: string;
+  variant?: "card" | "embedded";
+  fieldIdPrefix?: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+};
+
+export function EditProductForm({
+  productId,
+  variant = "card",
+  fieldIdPrefix = "edit-product",
+  onSuccess,
+  onCancel,
+}: EditProductFormProps) {
+  const router = useRouter();
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -58,89 +324,109 @@ export function ProductForm({ mode, productId }: ProductFormProps) {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<any>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues: defaultProductValues,
+  } = useForm<CreateProductFormInput>({
+    resolver: zodResolver(createProductFormSchema),
+    defaultValues: createProductDefaultValues,
   });
 
   useEffect(() => {
-    if (mode !== "edit" || !productId) return;
+    let cancelled = false;
 
-    setIsLoadingProduct(true);
-    setNotFound(false);
+    async function loadProduct() {
+      setIsLoadingProduct(true);
+      setNotFound(false);
 
-    const timer = setTimeout(() => {
-      const product = getProductById(productId);
+      try {
+        const product = await productService.getById(productId);
 
-      if (!product) {
-        setNotFound(true);
-        setIsLoadingProduct(false);
-        return;
+        if (!cancelled) {
+          reset(mapApiProductToFormInput(product));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          if (isApiError(error) && error.statusCode === 404) {
+            setNotFound(true);
+          } else {
+            setSubmitError(
+              isApiError(error)
+                ? error.message
+                : "Unable to load product. Please try again.",
+            );
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingProduct(false);
+        }
       }
+    }
 
-      reset({
-        name: product.name,
-        sku: product.sku,
-        description: product.description,
-        price: product.price,
-        category: product.category,
-        status: product.status,
-        stock: product.stock,
-        min_stock_level: product.min_stock_level,
-      });
-      setIsLoadingProduct(false);
-    }, LOAD_DELAY_MS);
+    void loadProduct();
 
-    return () => clearTimeout(timer);
-  }, [mode, productId, reset]);
+    return () => {
+      cancelled = true;
+    };
+  }, [productId, reset]);
 
-  async function onSubmit(data: ProductFormInput) {
+  async function onSubmit(data: CreateProductFormInput) {
     setSubmitError(null);
     setIsSubmitting(true);
 
-    const payload: ProductFormValues = {
-      name: data.name,
-      sku: data.sku,
-      description: data.description || "",
-      price: Number(data.price),
-      category: data.category,
-      status: data.status,
-      stock: Number(data.stock),
-      min_stock_level: Number(data.min_stock_level),
-    };
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, SUBMIT_DELAY_MS));
+      const { message } = await productService.update(
+        productId,
+        buildCreateProductPayload(data),
+      );
 
-      if (mode === "create") {
-        createProduct(payload);
-      } else if (productId) {
-        const updated = updateProduct(productId, payload);
-        if (!updated) {
-          setSubmitError("Product not found. It may have been removed.");
-          return;
-        }
+      toast.success("Product updated", { description: message });
+
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/products");
       }
-
-      router.push("/products");
-    } catch {
-      setSubmitError("Something went wrong. Please try again.");
+    } catch (error) {
+      setSubmitError(
+        isApiError(error)
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   }
 
   if (isLoadingProduct) {
+    if (variant === "embedded") {
+      return <LoadingState title="Loading product" variant="skeleton" />;
+    }
+
     return <LoadingState title="Loading product details" variant="skeleton" />;
   }
 
   if (notFound) {
+    if (variant === "embedded") {
+      return (
+        <div className="space-y-4 py-2 text-center">
+          <p className="font-medium text-foreground">Product not found</p>
+          <p className="text-sm text-muted-foreground">
+            This product may have been deleted or the link is invalid.
+          </p>
+          {onCancel ? (
+            <Button variant="outline" size="sm" onClick={onCancel}>
+              Close
+            </Button>
+          ) : null}
+        </div>
+      );
+    }
+
     return (
       <Card>
         <CardContent className="py-12 text-center">
           <p className="font-medium text-foreground">Product not found</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            This product catalog entry may have been deleted or the link is invalid.
+            This product may have been deleted or the link is invalid.
           </p>
           <Button
             variant="outline"
@@ -155,175 +441,31 @@ export function ProductForm({ mode, productId }: ProductFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader className="border-b py-3 px-4">
-        <CardTitle className="text-base font-semibold">
-          {mode === "create" ? "Product catalog details" : "Update product properties"}
-        </CardTitle>
-        <CardDescription className="text-xs">
-          Enter product details, pricing, SKUs, and initial warehouse stock levels.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-4 px-4 pb-4">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          {submitError ? (
-            <p
-              role="alert"
-              className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-            >
-              {submitError}
-            </p>
-          ) : null}
-
-          <FieldGroup className="gap-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field data-invalid={!!errors.name || undefined}>
-                <FieldLabel htmlFor="name" className="text-xs">Product Name</FieldLabel>
-                <Input
-                  id="name"
-                  placeholder="e.g. Mechanical Keyboard"
-                  disabled={isSubmitting}
-                  className="h-8 text-xs"
-                  aria-invalid={!!errors.name}
-                  {...register("name")}
-                />
-                <FieldError errors={[errors.name]} />
-              </Field>
-
-              <Field data-invalid={!!errors.sku || undefined}>
-                <FieldLabel htmlFor="sku" className="text-xs">SKU</FieldLabel>
-                <Input
-                  id="sku"
-                  placeholder="e.g. KB-MECH-01"
-                  disabled={isSubmitting}
-                  className="h-8 text-xs font-mono"
-                  aria-invalid={!!errors.sku}
-                  {...register("sku")}
-                />
-                <FieldError errors={[errors.sku]} />
-              </Field>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Field data-invalid={!!errors.category || undefined}>
-                <FieldLabel htmlFor="category" className="text-xs">Category</FieldLabel>
-                <select
-                  id="category"
-                  disabled={isSubmitting}
-                  className="flex h-8 w-full rounded-lg border border-input bg-background/50 px-2 py-1 text-xs shadow-inner shadow-slate-950/5 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/20"
-                  {...register("category")}
-                >
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-                <FieldError errors={[errors.category]} />
-              </Field>
-
-              <Field data-invalid={!!errors.price || undefined}>
-                <FieldLabel htmlFor="price" className="text-xs">Price ($)</FieldLabel>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  disabled={isSubmitting}
-                  className="h-8 text-xs"
-                  aria-invalid={!!errors.price}
-                  {...register("price")}
-                />
-                <FieldError errors={[errors.price]} />
-              </Field>
-
-              <Field data-invalid={!!errors.status || undefined}>
-                <FieldLabel htmlFor="status" className="text-xs">Status</FieldLabel>
-                <select
-                  id="status"
-                  disabled={isSubmitting}
-                  className="flex h-8 w-full rounded-lg border border-input bg-background/50 px-2 py-1 text-xs shadow-inner shadow-slate-950/5 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/20"
-                  {...register("status")}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-                <FieldError errors={[errors.status]} />
-              </Field>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 border-t pt-3">
-              <Field data-invalid={!!errors.stock || undefined}>
-                <FieldLabel htmlFor="stock" className="text-xs">Stock Level</FieldLabel>
-                <Input
-                  id="stock"
-                  type="number"
-                  placeholder="0"
-                  disabled={isSubmitting}
-                  className="h-8 text-xs"
-                  aria-invalid={!!errors.stock}
-                  {...register("stock")}
-                />
-                <FieldError errors={[errors.stock]} />
-              </Field>
-
-              <Field data-invalid={!!errors.min_stock_level || undefined}>
-                <FieldLabel htmlFor="min_stock_level" className="text-xs">Min Stock Threshold (Alerts)</FieldLabel>
-                <Input
-                  id="min_stock_level"
-                  type="number"
-                  placeholder="5"
-                  disabled={isSubmitting}
-                  className="h-8 text-xs"
-                  aria-invalid={!!errors.min_stock_level}
-                  {...register("min_stock_level")}
-                />
-                <FieldError errors={[errors.min_stock_level]} />
-              </Field>
-            </div>
-
-            <Field data-invalid={!!errors.description || undefined}>
-              <FieldLabel htmlFor="description" className="text-xs">Description</FieldLabel>
-              <Textarea
-                id="description"
-                placeholder="Product characteristics, dimensions, materials..."
-                rows={2}
-                disabled={isSubmitting}
-                className="text-xs"
-                aria-invalid={!!errors.description}
-                {...register("description")}
-              />
-              <FieldError errors={[errors.description]} />
-            </Field>
-          </FieldGroup>
-
-          <div className="flex flex-col-reverse gap-2 border-t pt-3.5 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isSubmitting}
-              render={<Link href="/products" />}
-              className="h-8 text-xs px-3"
-            >
-              <ArrowLeft className="size-3.5" aria-hidden />
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" className="h-8 text-xs px-3" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="animate-spin size-3" aria-hidden />
-                  {mode === "create" ? "Creating..." : "Saving..."}
-                </>
-              ) : mode === "create" ? (
-                "Create product"
-              ) : (
-                "Save changes"
-              )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+    <ProductFormFields
+      title="Update product"
+      description="Update name, SKU, selling price, and stock for this product."
+      isSubmitting={isSubmitting}
+      submitLabel="Save changes"
+      submittingLabel="Saving..."
+      register={register}
+      errors={errors}
+      submitError={submitError}
+      onSubmit={handleSubmit(onSubmit)}
+      variant={variant}
+      fieldIdPrefix={fieldIdPrefix}
+      onCancel={onCancel}
+    />
   );
+}
+
+export function ProductForm({ mode, productId }: ProductFormProps) {
+  if (mode === "create") {
+    return <CreateProductForm />;
+  }
+
+  if (!productId) {
+    return null;
+  }
+
+  return <EditProductForm productId={productId} />;
 }

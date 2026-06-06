@@ -7,19 +7,22 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Create Invoice",
-  description: "Build a new invoice with line items and automatic totals",
+  title: "Quick Bill",
+  description:
+    "Fast POS-style billing with SKU scan, cart, and one-click checkout",
 };
 
 export default function NewInvoicePage() {
   return (
     <PageContainer
-      title="Create invoice"
-      description="Build a professional invoice with customer details, line items, and automatic tax calculations."
+      title="Quick bill"
+      description="Enter mobile, scan SKU or search products, and bill in seconds. Tax defaults are remembered."
       actions={
         <Link
           href="/invoices"
-          className={cn(buttonVariants({ variant: "outline", size: "default" }))}
+          className={cn(
+            buttonVariants({ variant: "outline", size: "default" }),
+          )}
         >
           Back to invoices
         </Link>

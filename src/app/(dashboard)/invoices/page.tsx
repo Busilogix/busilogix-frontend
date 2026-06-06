@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 
 export default function InvoicesPage() {
   return (
-    <PageContainer
-      title="Invoices"
-      description="Create, review, send, and track invoices from one simple billing workspace."
-    >
+    <PageContainer>
       <InvoicesList />
     </PageContainer>
   );

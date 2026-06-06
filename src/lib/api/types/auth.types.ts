@@ -10,6 +10,19 @@ export type SignupRequest = {
   password: string;
 };
 
+export type BackendEnvelope<T = undefined> = {
+  timestamp: string;
+  status: string;
+  message: string;
+  data?: T;
+};
+
+export type LoginTokenData = {
+  accessToken: string;
+  tokenType: string;
+  expiresInSeconds: number;
+};
+
 export type AuthTokenResponse = {
   access_token: string;
   refresh_token?: string;
@@ -27,13 +40,12 @@ export type AuthUser = {
 };
 
 export type LoginResponse = {
-  user: AuthUser;
-  tokens: AuthTokenResponse;
+  message: string;
+  tokens: LoginTokenData;
 };
 
 export type SignupResponse = {
-  user: AuthUser;
-  tokens: AuthTokenResponse;
+  message: string;
 };
 
 export type RefreshTokenRequest = {

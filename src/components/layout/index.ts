@@ -1,4 +1,6 @@
 export { AppLogo } from "./app-logo";
+export { ListPageHeader, type ListPageMetric } from "./list-page-header";
+export { SidebarHeader } from "./sidebar-brand";
 export { AppNavbar } from "./app-navbar";
 export { AppShell } from "./app-shell";
 export { AppSidebar } from "./app-sidebar";

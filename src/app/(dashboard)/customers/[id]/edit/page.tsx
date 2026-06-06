@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { CustomerForm } from "@/components/customers";
+import { CustomerForm, CustomerFormHeader } from "@/components/customers";
 import { PageContainer } from "@/components/layout/page-container";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 type EditCustomerPageProps = {
   params: Promise<{ id: string }>;
@@ -27,21 +24,9 @@ export default async function EditCustomerPage({
   const { id } = await params;
 
   return (
-    <PageContainer
-      title="Edit customer"
-      description="Update customer contact and billing information."
-      actions={
-        <Link
-          href="/customers"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "default" }),
-          )}
-        >
-          Back to list
-        </Link>
-      }
-    >
-      <div className="mx-auto max-w-2xl">
+    <PageContainer>
+      <div className="space-y-6">
+        <CustomerFormHeader mode="edit" />
         <CustomerForm mode="edit" customerId={id} />
       </div>
     </PageContainer>

@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 
 export default function CustomersPage() {
   return (
-    <PageContainer
-      title="Customers"
-      description="Keep customer contact, tax, and billing details organized before creating invoices."
-    >
+    <PageContainer>
       <CustomersList />
     </PageContainer>
   );

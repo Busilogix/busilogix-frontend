@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 
+import { shellContentClassName } from "./shell-content";
+
 type PageContainerProps = {
   children: React.ReactNode;
   title?: string;
@@ -18,7 +20,8 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6",
+        shellContentClassName,
+        "pb-4 pt-3 sm:pb-6 sm:pt-4",
         className,
       )}
     >
@@ -31,9 +34,7 @@ export function PageContainer({
               </h1>
             ) : null}
             {description ? (
-              <p className="text-xs text-muted-foreground">
-                {description}
-              </p>
+              <p className="text-xs text-muted-foreground">{description}</p>
             ) : null}
           </div>
           {actions ? (

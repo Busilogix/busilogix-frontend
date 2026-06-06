@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 
+import { AppLogo } from "@/components/layout/app-logo";
 import {
   Card,
   CardContent,
@@ -28,16 +28,8 @@ export function AuthCard({
 }: AuthCardProps) {
   return (
     <div className={cn("w-full max-w-md", className)}>
-      {/* Logo shown only on mobile (hidden on lg where the brand panel is visible) */}
-      <div className="mb-7 flex flex-col items-center gap-2 lg:hidden">
-        <Image
-          src="/Busilogix.png"
-          alt="Busilogix"
-          width={180}
-          height={150}
-          className="object-contain"
-          priority
-        />
+      <div className="mb-5 flex justify-center lg:hidden">
+        <AppLogo variant="auth" href="/login" priority />
       </div>
 
       <Card className="shadow-lg shadow-slate-950/8 ring-1 ring-black/5">
@@ -79,4 +71,3 @@ export function AuthCardLink({ text, linkText, href }: AuthCardLinkProps) {
     </p>
   );
 }
-

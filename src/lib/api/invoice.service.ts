@@ -1,11 +1,16 @@
 import { apiClient } from "./api";
-import type { ApiResponse, PaginatedApiResponse } from "./types/api.types";
+import { ApiError } from "./errors";
+import type { BackendEnvelope } from "./types/auth.types";
 import type {
+  ApiInvoice,
   CreateInvoiceRequest,
+  CreateInvoiceResponse,
   Invoice,
   InvoiceListParams,
   UpdateInvoiceRequest,
 } from "./types/invoice.types";
+import { parseAuthResponse } from "./utils/auth-response";
+import type { ApiResponse, PaginatedApiResponse } from "./types/api.types";
 import { unwrapApiResponse } from "./utils/response";
 
 const INVOICES_BASE = "/invoices";
@@ -28,13 +33,22 @@ class InvoiceService {
     return unwrapApiResponse(response);
   }
 
-  async create(payload: CreateInvoiceRequest): Promise<Invoice> {
-    const response = await apiClient.post<ApiResponse<Invoice>>(
+  async create(payload: CreateInvoiceRequest): Promise<CreateInvoiceResponse> {
+    const response = await apiClient.post<BackendEnvelope<ApiInvoice>>(
       INVOICES_BASE,
       payload,
     );
 
-    return unwrapApiResponse(response);
+    const { message, data } = parseAuthResponse(response);
+
+    if (!data) {
+      throw new ApiError("Invoice response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+
+    return { message, invoice: data };
   }
 
   async update(id: string, payload: UpdateInvoiceRequest): Promise<Invoice> {

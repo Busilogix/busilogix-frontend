@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-    <PageContainer
-      title="Dashboard"
-      description="Start here to understand your customers, invoices, revenue, and next actions."
-    >
+    <PageContainer>
       <DashboardView />
     </PageContainer>
   );

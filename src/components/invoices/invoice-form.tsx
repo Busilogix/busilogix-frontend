@@ -26,9 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { calculateInvoiceTotals } from "@/lib/invoices/calculations";
 import {
-  createInvoiceFromForm,
   getInvoiceById,
-  suggestInvoiceNumber,
   updateInvoiceFromForm,
 } from "@/lib/invoices/mock-store";
 import type { InvoiceDetailRecord } from "@/lib/invoices/types";
@@ -38,6 +36,7 @@ import {
   type InvoiceFormInput,
 } from "@/lib/validations/invoice";
 
+import { CreateInvoiceForm } from "./create-invoice-form";
 import { InvoiceFormSummary } from "./invoice-form-summary";
 import { InvoiceLineItems } from "./invoice-line-items";
 
@@ -65,9 +64,9 @@ function mapInvoiceToForm(invoice: InvoiceDetailRecord): InvoiceFormInput {
   };
 }
 
-export function InvoiceForm({ mode = "create", invoiceId }: InvoiceFormProps) {
+function EditInvoiceForm({ invoiceId }: { invoiceId?: string }) {
   const router = useRouter();
-  const [isLoadingInvoice, setIsLoadingInvoice] = useState(mode === "edit");
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -93,11 +92,6 @@ export function InvoiceForm({ mode = "create", invoiceId }: InvoiceFormProps) {
   const watchedLineItems = watch("line_items");
 
   useEffect(() => {
-    if (mode === "create") {
-      setValue("invoice_number", suggestInvoiceNumber());
-      return;
-    }
-
     if (!invoiceId) {
       return;
     }
@@ -115,7 +109,7 @@ export function InvoiceForm({ mode = "create", invoiceId }: InvoiceFormProps) {
 
     reset(mapInvoiceToForm(invoice));
     setIsLoadingInvoice(false);
-  }, [invoiceId, mode, reset, setValue]);
+  }, [invoiceId, reset]);
 
   const totals = useMemo(
     () =>
@@ -136,20 +130,18 @@ export function InvoiceForm({ mode = "create", invoiceId }: InvoiceFormProps) {
     try {
       await new Promise((resolve) => setTimeout(resolve, SUBMIT_DELAY_MS));
 
-      if (mode === "edit" && invoiceId) {
-        const updated = updateInvoiceFromForm(invoiceId, data);
-
-        if (!updated) {
-          setSubmitError("Invoice not found. It may have been removed.");
-          return;
-        }
-
-        router.push(`/invoices/${invoiceId}`);
+      if (!invoiceId) {
         return;
       }
 
-      createInvoiceFromForm(data);
-      router.push("/invoices");
+      const updated = updateInvoiceFromForm(invoiceId, data);
+
+      if (!updated) {
+        setSubmitError("Invoice not found. It may have been removed.");
+        return;
+      }
+
+      router.push(`/invoices/${invoiceId}`);
     } catch {
       setSubmitError("Unable to save the invoice. Please try again.");
     } finally {
@@ -389,10 +381,8 @@ export function InvoiceForm({ mode = "create", invoiceId }: InvoiceFormProps) {
                       <Loader2 className="animate-spin" aria-hidden />
                       Saving invoice...
                     </>
-                  ) : mode === "edit" ? (
-                    "Save changes"
                   ) : (
-                    "Save as draft"
+                    "Save changes"
                   )}
                 </Button>
                 <Button
@@ -412,4 +402,12 @@ export function InvoiceForm({ mode = "create", invoiceId }: InvoiceFormProps) {
       </div>
     </form>
   );
+}
+
+export function InvoiceForm({ mode = "create", invoiceId }: InvoiceFormProps) {
+  if (mode === "create") {
+    return <CreateInvoiceForm />;
+  }
+
+  return <EditInvoiceForm invoiceId={invoiceId} />;
 }

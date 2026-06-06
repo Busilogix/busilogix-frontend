@@ -4,12 +4,12 @@ export type ProductRecord = {
   sku: string;
   description: string;
   price: number;
-  category: string;
-  status: "active" | "inactive";
   stock: number;
-  min_stock_level: number;
   created_at: string;
   updated_at: string;
+  category?: string;
+  status?: "active" | "inactive";
+  min_stock_level?: number;
 };
 
 export type ProductFormValues = {

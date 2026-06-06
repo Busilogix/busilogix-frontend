@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Mail, MapPin, Pencil, Phone } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -12,87 +12,128 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getCustomerDisplayName } from "@/lib/customers/map-api-customer";
 import type { CustomerRecord } from "@/lib/customers/types";
 
 type CustomersTableProps = {
   customers: CustomerRecord[];
-  onDeleteCustomer?: (customer: CustomerRecord) => void;
+  totalItems: number;
 };
 
-export function CustomersTable({
-  customers,
-  onDeleteCustomer,
-}: CustomersTableProps) {
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function CustomerAvatar({ name }: { name: string }) {
   return (
-    <div className="surface-card overflow-hidden rounded-2xl">
-      <div className="border-b px-5 py-4">
-        <p className="font-medium">Customer records</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Edit a customer any time to keep invoice details accurate.
-        </p>
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-primary/15">
+      {getInitials(name) || "?"}
+    </span>
+  );
+}
+
+export function CustomersTable({ customers, totalItems }: CustomersTableProps) {
+  return (
+    <div className="surface-card overflow-hidden rounded-xl">
+      <div className="flex flex-col gap-1 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            Customer directory
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {totalItems} record{totalItems === 1 ? "" : "s"} in your workspace
+          </p>
+        </div>
       </div>
+
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead className="hidden md:table-cell">Email</TableHead>
-            <TableHead className="hidden lg:table-cell">Phone</TableHead>
+            <TableHead>Customer</TableHead>
+            <TableHead className="hidden md:table-cell">Contact</TableHead>
+            <TableHead className="hidden xl:table-cell">Location</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {customers.map((customer) => (
-            <TableRow key={customer.id}>
-              <TableCell>
-                <div className="flex flex-col gap-0.5">
-                  <Link
-                    href={`/customers/${customer.id}`}
-                    className="font-medium hover:text-primary hover:underline"
-                  >
-                    {customer.name}
-                  </Link>
-                  <Link
-                    href={`/customers/${customer.id}`}
-                    className="text-xs font-medium text-primary hover:underline"
-                  >
-                    View profile
-                  </Link>
-                  <span className="text-xs text-muted-foreground md:hidden">
-                    {customer.email}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell className="hidden text-muted-foreground md:table-cell">
-                {customer.email}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {customer.phone}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    render={<Link href={`/customers/${customer.id}/edit`} />}
-                  >
-                    <Pencil className="size-3.5" aria-hidden />
-                    Edit
-                  </Button>
-                  {onDeleteCustomer ? (
+          {customers.map((customer) => {
+            const displayName = getCustomerDisplayName(customer);
+
+            return (
+              <TableRow key={customer.id} className="group">
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <CustomerAvatar name={displayName} />
+                    <div className="min-w-0">
+                      <Link
+                        href={`/customers/${customer.id}`}
+                        className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
+                      >
+                        {displayName}
+                      </Link>
+                      <p className="text-xs text-muted-foreground md:hidden">
+                        {customer.email}
+                      </p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <div className="space-y-1 text-sm">
+                    <p className="flex items-center gap-1.5 text-muted-foreground">
+                      <Mail className="size-3.5 shrink-0" aria-hidden />
+                      <span className="truncate">{customer.email}</span>
+                    </p>
+                    <p className="flex items-center gap-1.5 text-muted-foreground">
+                      <Phone className="size-3.5 shrink-0" aria-hidden />
+                      <span>{customer.phone || "—"}</span>
+                    </p>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden xl:table-cell">
+                  <p className="flex max-w-xs items-start gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                    <span className="line-clamp-2">{customer.address}</span>
+                  </p>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="sm:hidden"
+                      aria-label={`View ${displayName}`}
+                      render={<Link href={`/customers/${customer.id}`} />}
+                    >
+                      <Eye className="size-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => onDeleteCustomer(customer)}
+                      className="hidden sm:inline-flex"
+                      render={<Link href={`/customers/${customer.id}/edit`} />}
                     >
-                      <Trash2 className="size-3.5" aria-hidden />
-                      Delete
+                      <Pencil className="size-3.5" aria-hidden />
+                      Edit
                     </Button>
-                  ) : null}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="sm:hidden"
+                      aria-label={`Edit ${displayName}`}
+                      render={<Link href={`/customers/${customer.id}/edit`} />}
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

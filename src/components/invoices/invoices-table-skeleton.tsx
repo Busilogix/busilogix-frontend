@@ -12,7 +12,11 @@ const ROW_COUNT = 6;
 
 export function InvoicesTableSkeleton() {
   return (
-    <div className="rounded-xl border bg-card">
+    <div className="surface-card overflow-hidden rounded-xl">
+      <div className="border-b px-4 py-3 sm:px-5">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="mt-2 h-3 w-40" />
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
