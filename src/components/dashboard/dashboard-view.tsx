@@ -132,7 +132,7 @@ export function DashboardView() {
     const stockLogs = getStockAdjustmentLogs();
 
     const outstanding = allInvoices
-      .filter((inv) => inv.status === "sent" || inv.status === "overdue")
+      .filter((inv) => inv.status === "OVERDUE")
       .sort((a, b) => b.total_amount - a.total_amount)
       .slice(0, 4);
     setOutstandingInvoices(outstanding);
@@ -145,7 +145,7 @@ export function DashboardView() {
     }));
 
     allInvoices.forEach((inv) => {
-      if (inv.status === "paid") {
+      if (inv.status === "PAID") {
         const date = new Date(inv.issue_date);
         const monthName = date.toLocaleString("default", { month: "short" });
         const match = monthlyTotals.find((m) => m.month === monthName);
@@ -170,7 +170,7 @@ export function DashboardView() {
         color: "text-violet-600 bg-violet-500/10",
       });
 
-      if (inv.status === "paid") {
+      if (inv.status === "PAID") {
         events.push({
           id: `act_inv_p_${inv.id}`,
           type: "invoice_paid",
@@ -227,7 +227,7 @@ export function DashboardView() {
   }, []);
 
   const handleMarkAsPaid = (invoiceId: string) => {
-    updateInvoiceStatus(invoiceId, "paid");
+    updateInvoiceStatus(invoiceId, "PAID");
     loadData();
   };
 
@@ -469,7 +469,7 @@ export function DashboardView() {
                         <span
                           className={cn(
                             "rounded border px-1.5 py-0.5 text-[10px] font-medium uppercase",
-                            inv.status === "overdue"
+                            inv.status === "OVERDUE"
                               ? "border-destructive/20 bg-destructive/5 text-destructive"
                               : "border-amber-500/20 bg-amber-500/5 text-amber-600",
                           )}

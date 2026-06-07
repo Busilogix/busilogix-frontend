@@ -57,11 +57,11 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
 
   const stats = useMemo(() => {
     const paid = invoices
-      .filter((invoice) => invoice.status === "paid")
+      .filter((invoice) => invoice.status === "PAID")
       .reduce((sum, invoice) => sum + invoice.total_amount, 0);
     const pending = invoices
       .filter(
-        (invoice) => invoice.status === "sent" || invoice.status === "overdue",
+        (invoice) => invoice.status === "OVERDUE",
       )
       .reduce((sum, invoice) => sum + invoice.total_amount, 0);
 
