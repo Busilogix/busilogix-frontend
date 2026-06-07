@@ -37,6 +37,7 @@ import { LOW_STOCK_THRESHOLD } from "@/lib/products/constants";
 import type { ProductRecord, StockAdjustmentLog } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import { inventoryService, productService, isApiError, type InventorySummaryData } from "@/lib/api";
+import { InventorySkeleton } from "./inventory-skeleton";
 
 type MappedStockAdjustmentLog = StockAdjustmentLog & {
   stockAfterAction?: number;
@@ -46,6 +47,7 @@ export function InventoryView() {
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [logs, setLogs] = useState<MappedStockAdjustmentLog[]>([]);
   const [summary, setSummary] = useState<InventorySummaryData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -96,9 +98,17 @@ export function InventoryView() {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-    fetchLogs();
-    fetchSummary();
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        await Promise.all([fetchProducts(), fetchLogs(), fetchSummary()]);
+      } catch (err) {
+        console.error("Failed to load inventory logs data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
   }, [fetchProducts, fetchLogs, fetchSummary]);
 
   const totalUnits = products.reduce((acc, p) => acc + p.stock, 0);
@@ -118,8 +128,12 @@ export function InventoryView() {
         description="Track real-time stock intake, outflow, modifications, and ledger movements."
       />
 
-      {summary && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {isLoading ? (
+        <InventorySkeleton />
+      ) : (
+        <>
+          {summary && (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="surface-card rounded-xl border border-blue-500/10 bg-gradient-to-br from-card via-card to-blue-500/[0.02] p-4 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <div className="absolute top-0 right-0 size-16 bg-blue-500/5 rounded-full blur-xl -z-10" />
             <div className="flex items-center justify-between">
@@ -386,6 +400,8 @@ export function InventoryView() {
           </Card>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
