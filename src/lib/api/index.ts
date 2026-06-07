@@ -1,6 +1,7 @@
 export { apiClient, apiConfig } from "./api";
 export { authService } from "./auth.service";
 export { customerService } from "./customer.service";
+export { imageService } from "./image.service";
 export { invoiceService } from "./invoice.service";
 
 export { ApiError, isApiError, normalizeAxiosError } from "./errors";
@@ -54,8 +55,19 @@ export type {
 export type {
   CreateInvoiceRequest,
   Invoice,
+  BackendInvoice,
   InvoiceLineItem,
   InvoiceListParams,
+  InvoiceListPage,
+  InvoiceListResult,
   InvoiceStatus,
   UpdateInvoiceRequest,
 } from "./types/invoice.types";
+
+export { inventoryService } from "./inventory.service";
+export type {
+  ApiInventoryLog,
+  InventoryLogListPage,
+  InventoryLogListParams,
+  InventoryLogListResult,
+} from "./types/inventory.types";

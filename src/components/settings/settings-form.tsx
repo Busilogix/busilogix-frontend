@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, CreditCard, Loader2, MapPin } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useForm, type UseFormSetError } from "react-hook-form";
+import { Controller, useForm, type UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
 import type { ZodIssue } from "zod";
 
@@ -22,6 +22,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { LogoUploader } from "@/components/ui/logo-uploader";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { isApiError } from "@/lib/api/errors";
 import { storeService } from "@/lib/api/store.service";
 import {
@@ -31,6 +33,7 @@ import {
 import { EMPTY_SETTINGS } from "@/lib/settings/defaults";
 import { mapApiStoreToFormInput } from "@/lib/settings/map-api-store";
 import { dispatchStoreUpdated } from "@/lib/settings/store-events";
+import { formatMobileNumber } from "@/lib/utils";
 import {
   PAYMENT_FIELD_NAMES,
   paymentFormSchema,
@@ -102,6 +105,9 @@ export function SettingsForm() {
     register,
     reset,
     getValues,
+    setValue,
+    watch,
+    control,
     setError,
     clearErrors,
     formState: { errors },
@@ -109,6 +115,8 @@ export function SettingsForm() {
     resolver: zodResolver(settingsFormSchema),
     defaultValues: EMPTY_SETTINGS,
   });
+
+  const logoUrl = watch("logo_url");
 
   const isSaving = isSavingProfile || isSavingPayment;
 
@@ -165,6 +173,7 @@ export function SettingsForm() {
     const values = getValues();
     const result = profileFormSchema.safeParse({
       ...values,
+      company_phone: formatMobileNumber(values.company_phone),
       gst_number: values.gst_number.trim().toUpperCase(),
       logo_url: values.logo_url.trim(),
     });
@@ -262,15 +271,29 @@ export function SettingsForm() {
             description="Business identity and tax registration for invoices"
           >
             <FieldGroup>
-              <Field data-invalid={!!errors.company_name || undefined}>
-                <FieldLabel htmlFor="company_name">Company name</FieldLabel>
-                <Input
-                  id="company_name"
-                  disabled={isSaving}
-                  {...register("company_name")}
-                />
-                <FieldError errors={[errors.company_name]} />
-              </Field>
+              <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
+                <Field data-invalid={!!errors.logo_url || undefined}>
+                  <FieldLabel>Logo</FieldLabel>
+                  <LogoUploader
+                    value={logoUrl}
+                    onChange={(url) => setValue("logo_url", url, { shouldValidate: true })}
+                    disabled={isSaving}
+                    compact
+                  />
+                  <FieldError errors={[errors.logo_url]} />
+                </Field>
+
+                <Field data-invalid={!!errors.company_name || undefined}>
+                  <FieldLabel htmlFor="company_name">Company name</FieldLabel>
+                  <Input
+                    id="company_name"
+                    disabled={isSaving}
+                    {...register("company_name")}
+                  />
+                  <FieldError errors={[errors.company_name]} />
+                </Field>
+              </div>
+
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field data-invalid={!!errors.company_email || undefined}>
                   <FieldLabel htmlFor="company_email">Company email</FieldLabel>
@@ -284,36 +307,34 @@ export function SettingsForm() {
                 </Field>
                 <Field data-invalid={!!errors.company_phone || undefined}>
                   <FieldLabel htmlFor="company_phone">Company phone</FieldLabel>
-                  <Input
-                    id="company_phone"
-                    type="tel"
-                    disabled={isSaving}
-                    {...register("company_phone")}
+                  <Controller
+                    control={control}
+                    name="company_phone"
+                    render={({ field }) => (
+                      <PhoneInput
+                        id="company_phone"
+                        disabled={isSaving}
+                        placeholder="98765 43210"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
                   />
                   <FieldError errors={[errors.company_phone]} />
                 </Field>
-                <Field data-invalid={!!errors.gst_number || undefined}>
-                  <FieldLabel htmlFor="gst_number">GST number</FieldLabel>
-                  <Input
-                    id="gst_number"
-                    placeholder="27AABCU9603R1ZM"
-                    className="font-mono uppercase"
-                    disabled={isSaving}
-                    {...register("gst_number")}
-                  />
-                  <FieldError errors={[errors.gst_number]} />
-                </Field>
-                <Field data-invalid={!!errors.logo_url || undefined}>
-                  <FieldLabel htmlFor="logo_url">Logo URL</FieldLabel>
-                  <Input
-                    id="logo_url"
-                    placeholder="https://example.com/logo.png"
-                    disabled={isSaving}
-                    {...register("logo_url")}
-                  />
-                  <FieldError errors={[errors.logo_url]} />
-                </Field>
               </div>
+
+              <Field data-invalid={!!errors.gst_number || undefined}>
+                <FieldLabel htmlFor="gst_number">GST number</FieldLabel>
+                <Input
+                  id="gst_number"
+                  placeholder="27AABCU9603R1ZM"
+                  className="font-mono uppercase"
+                  disabled={isSaving}
+                  {...register("gst_number")}
+                />
+                <FieldError errors={[errors.gst_number]} />
+              </Field>
             </FieldGroup>
           </SettingsSection>
 

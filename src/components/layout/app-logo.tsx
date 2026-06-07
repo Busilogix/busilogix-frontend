@@ -48,6 +48,7 @@ type AppLogoProps = {
   href?: string;
   variant?: LogoVariant;
   asLink?: boolean;
+  priority?: boolean;
 };
 
 export function AppLogo({
@@ -55,6 +56,7 @@ export function AppLogo({
   href = "/dashboard",
   variant = "sidebar",
   asLink = true,
+  priority = true,
 }: AppLogoProps) {
   const styles = variantStyles[variant];
 
@@ -67,10 +69,11 @@ export function AppLogo({
         height={640}
         sizes={styles.sizes}
         className={styles.image}
-        priority
+        priority={priority}
       />
     </span>
   );
+
 
   if (!asLink) {
     return image;

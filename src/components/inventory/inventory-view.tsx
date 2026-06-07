@@ -11,7 +11,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import { ListPageHeader } from "@/components/layout/list-page-header";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ import {
 import { LOW_STOCK_THRESHOLD } from "@/lib/products/constants";
 import type { ProductRecord, StockAdjustmentLog } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
+import { inventoryService } from "@/lib/api/inventory.service";
 
 export function InventoryView() {
   const [products, setProducts] = useState<ProductRecord[]>([]);
@@ -57,10 +58,38 @@ export function InventoryView() {
     type: "success" | "error";
   } | null>(null);
 
+  const fetchLogs = useCallback(async () => {
+    try {
+      const result = await inventoryService.getLogs({ page: 1, size: 50 });
+      const mappedLogs: StockAdjustmentLog[] = result.items.map((apiLog) => {
+        const type =
+          apiLog.quantityChange > 0
+            ? "in"
+            : apiLog.quantityChange < 0
+            ? "out"
+            : "adjustment";
+        return {
+          id: apiLog.id,
+          product_id: apiLog.productId,
+          product_name: apiLog.productName,
+          sku: apiLog.productSku,
+          type,
+          quantity: Math.abs(apiLog.quantityChange),
+          reason: apiLog.remarks || apiLog.action,
+          timestamp: apiLog.createdAt,
+        };
+      });
+      setLogs(mappedLogs);
+    } catch (err) {
+      console.error("Failed to fetch inventory logs from backend, falling back to local:", err);
+      setLogs(getStockAdjustmentLogs());
+    }
+  }, []);
+
   useEffect(() => {
     setProducts(getAllProducts());
-    setLogs(getStockAdjustmentLogs());
-  }, []);
+    fetchLogs();
+  }, [fetchLogs]);
 
   const inventoryStats = getInventoryStats();
   const lowStockProducts = products.filter(
@@ -107,7 +136,7 @@ export function InventoryView() {
 
       if (updated) {
         setProducts(getAllProducts());
-        setLogs(getStockAdjustmentLogs());
+        fetchLogs();
         setAdjustQty("");
         setAdjustReason("");
         setMsg({

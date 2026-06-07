@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { FormMessage } from "@/components/auth/form-message";
+import { toast } from "sonner";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -52,6 +53,7 @@ export function CustomersList() {
   const [pageSize, setPageSize] = useState(CUSTOMERS_PAGE_SIZE);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  // Removed fetchError state; errors will be shown via toast notifications
   const [result, setResult] = useState<CustomerListResult>(emptyResult);
   const [catalogStats, setCatalogStats] = useState<CustomerCatalogStats | null>(
     null,
@@ -94,7 +96,7 @@ export function CustomersList() {
       const message = isApiError(error)
         ? error.message
         : "Unable to load customers. Please try again.";
-      setFetchError(message);
+      toast.error(message);
       setResult({ ...emptyResult, pageSize });
     } finally {
       setIsLoading(false);

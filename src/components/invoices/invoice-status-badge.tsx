@@ -10,28 +10,23 @@ const statusConfig: Record<
     variant?: "default" | "secondary" | "destructive" | "outline";
   }
 > = {
-  draft: {
+  DRAFT: {
     label: "Draft",
     variant: "secondary",
     className: "",
   },
-  sent: {
-    label: "Sent",
-    variant: "default",
-    className: "bg-primary/10 text-primary hover:bg-primary/15",
-  },
-  paid: {
+  PAID: {
     label: "Paid",
     variant: "outline",
     className:
       "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400",
   },
-  overdue: {
+  OVERDUE: {
     label: "Overdue",
     variant: "destructive",
     className: "",
   },
-  cancelled: {
+  CANCELLED: {
     label: "Cancelled",
     variant: "outline",
     className: "text-muted-foreground",
@@ -47,7 +42,8 @@ export function InvoiceStatusBadge({
   status,
   className,
 }: InvoiceStatusBadgeProps) {
-  const config = statusConfig[status];
+  const normalizedStatus = (status || "").toUpperCase() as InvoiceStatus;
+  const config = statusConfig[normalizedStatus] || statusConfig.DRAFT;
 
   return (
     <Badge

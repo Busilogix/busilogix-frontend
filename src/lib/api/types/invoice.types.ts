@@ -60,7 +60,7 @@ export type CreateInvoiceResponse = {
 };
 
 /** @deprecated Legacy list/detail shape — migrate when list API is integrated */
-export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
+export type InvoiceStatus = "DRAFT" | "PAID" | "OVERDUE" | "CANCELLED";
 
 /** @deprecated Legacy list/detail shape — migrate when list API is integrated */
 export type InvoiceLineItem = {
@@ -102,9 +102,36 @@ export type UpdateInvoiceRequest = Partial<{
 }>;
 
 export type InvoiceListParams = {
-  page?: number;
-  page_size?: number;
+  page?: number; // 1-indexed in frontend
+  size?: number; // maps to size in backend
   search?: string;
   status?: InvoiceStatus;
-  customer_id?: string;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+};
+
+export type BackendInvoice = ApiInvoice & {
+  createdAt: string;
+};
+
+export type InvoiceListPage = {
+  content: BackendInvoice[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  isFirst: boolean;
+  isLast: boolean;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
+
+export type InvoiceListResult = {
+  items: BackendInvoice[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 };

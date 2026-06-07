@@ -1,11 +1,22 @@
 "use client";
 
-import { CheckCircle2, Copy, Download, Mail, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Download,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
+  User,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { FormMessage } from "@/components/auth/form-message";
+
+import { toast } from "sonner";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -18,18 +29,53 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatInvoiceDate } from "@/lib/invoices/format";
-import {
-  duplicateInvoice,
-  getInvoiceById,
-  updateInvoiceStatus,
-} from "@/lib/invoices/mock-store";
 import type { InvoiceDetailRecord } from "@/lib/invoices/types";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
+import { invoiceService } from "@/lib/api/invoice.service";
+import type { BackendInvoice } from "@/lib/api/types/invoice.types";
+
 import { downloadCsv } from "@/lib/export/csv";
 
 import { InvoiceDetailSkeleton } from "./invoice-detail-skeleton";
 import { InvoiceStatusBadge } from "./invoice-status-badge";
+
+function mapApiInvoiceToDetailRecord(apiInvoice: BackendInvoice): InvoiceDetailRecord {
+  const status = apiInvoice.status as any;
+  const taxAmount =
+    (apiInvoice.cgstAmount || 0) +
+    (apiInvoice.sgstAmount || 0) +
+    (apiInvoice.igstAmount || 0);
+
+  return {
+    id: apiInvoice.id,
+    invoice_number: apiInvoice.invoiceNumber,
+    customer_id: apiInvoice.customer?.id || "",
+    customer_name: apiInvoice.customer?.name || "Unknown Customer",
+    customer_email: apiInvoice.customer?.email || "",
+    customer_phone: apiInvoice.customer?.mobile || "",
+    customer_address: apiInvoice.customer?.address,
+    status,
+    issue_date: apiInvoice.createdAt,
+    due_date: apiInvoice.createdAt,
+    currency: "INR",
+    subtotal: apiInvoice.totalAmount,
+    tax_amount: taxAmount,
+    total_amount: apiInvoice.netAmount,
+    notes: "",
+    line_items: (apiInvoice.items || []).map((item) => ({
+      id: item.id || Math.random().toString(),
+      item_name: item.productName || "Unknown Item",
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      tax_percentage: 0,
+      line_subtotal: item.totalPrice,
+      line_tax: 0,
+      line_total: item.totalPrice,
+    })),
+    created_at: apiInvoice.createdAt,
+    updated_at: apiInvoice.createdAt,
+  };
+}
 
 const LOAD_DELAY_MS = 600;
 const ACTION_DELAY_MS = 800;
@@ -38,87 +84,103 @@ type InvoiceDetailViewProps = {
   invoiceId: string;
 };
 
-type ActionFeedback = {
-  type: "success" | "error";
-  title: string;
-  message: string;
-};
-
 export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
   const router = useRouter();
   const [invoice, setInvoice] = useState<InvoiceDetailRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
-  const [actionFeedback, setActionFeedback] = useState<ActionFeedback | null>(
-    null,
-  );
 
   useEffect(() => {
+    let active = true;
     setIsLoading(true);
     setNotFound(false);
 
-    const timer = setTimeout(() => {
-      const record = getInvoiceById(invoiceId);
-      if (!record) {
+    async function loadInvoice() {
+      if (!invoiceId) {
+        console.warn("Invoice ID is missing");
         setNotFound(true);
-        setInvoice(null);
-      } else {
-        setInvoice(record);
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-    }, LOAD_DELAY_MS);
+      try {
+        const data = await invoiceService.getById(invoiceId);
+        if (active) {
+          setInvoice(mapApiInvoiceToDetailRecord(data));
+          setIsLoading(false);
+        }
+      } catch (err: any) {
+        console.error("Backend fetch failed:", err);
+        if (err?.statusCode === 404 || err?.status === 404) {
+          if (active) {
+            setNotFound(true);
+            setIsLoading(false);
+          }
+          return;
+        }
+        toast.error("Failed to fetch invoice from server.");
+        if (active) {
+          setInvoice(null);
+          setIsLoading(false);
+        }
+      }
+    }
 
-    return () => clearTimeout(timer);
+    void loadInvoice();
+
+    return () => {
+      active = false;
+    };
   }, [invoiceId]);
 
   async function runAction(
-    action: "download" | "email" | "mark-paid" | "duplicate",
+    action: "download" | "email" | "mark-paid" | "cancel",
     label: string,
     message: string,
   ) {
-    if (!invoice) {
-      return;
-    }
+    if (!invoice) return;
 
-    setActionFeedback(null);
     setPendingAction(action);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, ACTION_DELAY_MS));
-
       if (action === "mark-paid") {
-        const updated = updateInvoiceStatus(invoice.id, "paid");
-        if (updated) {
-          setInvoice(updated);
+        const updated = await invoiceService.update(invoice.id, { status: "PAID" });
+        setInvoice(mapApiInvoiceToDetailRecord(updated));
+      }
+
+      if (action === "cancel") {
+        const updated = await invoiceService.cancel(invoice.id);
+        setInvoice(mapApiInvoiceToDetailRecord(updated));
+      }
+
+      if (action === "download") {
+        try {
+          const blob = await invoiceService.downloadPdf(invoice.id);
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", `${invoice.invoice_number}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode?.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error("Failed to download PDF:", error);
+          throw error;
         }
       }
 
-      if (action === "duplicate") {
-        const copy = duplicateInvoice(invoice.id);
-        if (copy) {
-          router.push(`/invoices/${copy.id}/edit`);
-          return;
-        }
-      }
 
-      setActionFeedback({ type: "success", title: label, message });
+      toast.success(label, { description: message });
     } catch {
-      setActionFeedback({
-        type: "error",
-        title: "Action failed",
-        message: "Something went wrong. Please try again.",
-      });
+      toast.error("Action failed: Something went wrong. Please try again.");
     } finally {
       setPendingAction(null);
     }
   }
 
   function exportInvoiceCsv() {
-    if (!invoice) {
-      return;
-    }
-
+    if (!invoice) return;
     downloadCsv(
       `${invoice.invoice_number}.csv`,
       invoice.line_items.map((item) => ({
@@ -133,9 +195,7 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
     );
   }
 
-  if (isLoading) {
-    return <InvoiceDetailSkeleton />;
-  }
+  if (isLoading) return <InvoiceDetailSkeleton />;
 
   if (notFound || !invoice) {
     return (
@@ -147,213 +207,216 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {actionFeedback ? (
-        <FormMessage
-          type={actionFeedback.type}
-          title={actionFeedback.title}
-          message={actionFeedback.message}
-        />
-      ) : null}
+  const busy = pendingAction !== null;
+  const canMarkPaid = invoice.status !== "PAID" && invoice.status !== "CANCELLED";
 
-      <div className="surface-card flex flex-col gap-4 rounded-3xl p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="font-mono text-2xl font-semibold tracking-tight">
-              {invoice.invoice_number}
-            </h2>
-            <InvoiceStatusBadge status={invoice.status} />
+  return (
+    <div className="space-y-4">
+      {/* ── Header + Actions card ── */}
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/invoices"
+              className="inline-flex items-center justify-center size-8 rounded-lg border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              title="Back to Invoices"
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="font-mono text-lg font-bold tracking-tight sm:text-xl">
+                  {invoice.invoice_number}
+                </h1>
+                <InvoiceStatusBadge status={invoice.status} />
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Issued {formatInvoiceDate(invoice.issue_date)} · Due {formatInvoiceDate(invoice.due_date)}
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Issued {formatInvoiceDate(invoice.issue_date)} · Due{" "}
-            {formatInvoiceDate(invoice.due_date)}
+          <p className="text-2xl font-bold tabular-nums text-primary sm:text-3xl">
+            {formatCurrency(invoice.total_amount, invoice.currency)}
           </p>
         </div>
-
-        <div className="flex flex-wrap gap-2 sm:justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pendingAction !== null}
-            onClick={exportInvoiceCsv}
-          >
+        <div className="flex flex-wrap items-center gap-2 border-t bg-muted/20 px-4 py-3 sm:px-5">
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => runAction("download", "PDF downloaded", `${invoice.invoice_number}.pdf downloaded.`)}>
             <Download className="size-4" aria-hidden />
-            Export CSV
+            PDF
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pendingAction !== null}
-            onClick={() =>
-              runAction(
-                "email",
-                "Email sent (preview)",
-                `Invoice ${invoice.invoice_number} would be emailed to ${invoice.customer_email}. API integration pending.`,
-              )
-            }
-          >
+          <Button size="sm" variant="outline" disabled={busy} onClick={exportInvoiceCsv}>
+            <Download className="size-4" aria-hidden />
+            CSV
+          </Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => runAction("email", "Email queued", `Invoice ${invoice.invoice_number} would be emailed to ${invoice.customer_email}.`)}>
             <Mail className="size-4" aria-hidden />
-            Send Email
+            Email
           </Button>
-          {invoice.status !== "paid" ? (
+          {canMarkPaid && (
             <Button
-              variant="outline"
               size="sm"
-              disabled={pendingAction !== null}
-              onClick={() =>
-                runAction(
-                  "mark-paid",
-                  "Invoice marked as paid",
-                  `${invoice.invoice_number} is now counted as revenue.`,
-                )
-              }
+              variant="outline"
+              className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950"
+              disabled={busy}
+              onClick={() => runAction("mark-paid", "Invoice marked as paid", `${invoice.invoice_number} is now counted as revenue.`)}
             >
               <CheckCircle2 className="size-4" aria-hidden />
               Mark Paid
             </Button>
-          ) : null}
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pendingAction !== null}
-            onClick={() =>
-              runAction(
-                "duplicate",
-                "Invoice duplicated",
-                "A draft copy was created.",
-              )
-            }
-          >
-            <Copy className="size-4" aria-hidden />
-            Duplicate
-          </Button>
-          <Link
-            href={`/invoices/${invoice.id}/edit`}
-            className={cn(buttonVariants({ variant: "default", size: "sm" }))}
-          >
-            <Pencil className="size-4" aria-hidden />
-            Edit Invoice
-          </Link>
+          )}
+          {invoice.status !== "CANCELLED" && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+              disabled={busy}
+              onClick={() => runAction("cancel", "Invoice cancelled", `${invoice.invoice_number} has been cancelled.`)}
+            >
+              <XCircle className="size-4" aria-hidden />
+              Cancel Invoice
+            </Button>
+          )}
         </div>
       </div>
 
-      <article className="overflow-hidden rounded-3xl border bg-card shadow-sm shadow-slate-950/5">
-        <div className="border-b bg-gradient-to-br from-muted/50 to-background px-6 py-6 sm:px-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                Invoice summary
-              </p>
-              <p className="mt-2 text-lg font-semibold">Busilogix</p>
-              <p className="text-sm text-muted-foreground">
-                Professional invoicing &amp; business management
-              </p>
+      {/* ── Content grid ── */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* ── Left: line items (2 cols) ── */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 border-b px-4 py-3">
+              <FileText className="size-4 text-muted-foreground" aria-hidden />
+              <h2 className="text-sm font-semibold">Line Items</h2>
+              <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {invoice.line_items.length}
+              </span>
             </div>
-            <div className="sm:text-right">
-              <p className="text-xs text-muted-foreground">Amount due</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-primary">
-                {formatCurrency(invoice.total_amount, invoice.currency)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-8 px-6 py-8 sm:px-8">
-          <section className="rounded-2xl border bg-background/60 p-5">
-            <h3 className="mb-4 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-              Customer information
-            </h3>
-            <div className="rounded-xl bg-muted/30 p-5">
-              <p className="font-medium text-foreground">
-                {invoice.customer_name}
-              </p>
-              <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted-foreground">Email</dt>
-                  <dd>{invoice.customer_email}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Phone</dt>
-                  <dd>{invoice.customer_phone}</dd>
-                </div>
-              </dl>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border bg-background/60 p-5">
-            <h3 className="mb-4 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-              Invoice items
-            </h3>
-            <div className="overflow-hidden rounded-xl border bg-card">
+            <div className="overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
-                    <TableHead>Item</TableHead>
+                    <TableHead className="pl-4">Item</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Unit price</TableHead>
-                    <TableHead className="text-right">Tax %</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="text-right">Tax</TableHead>
+                    <TableHead className="text-right pr-4">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {invoice.line_items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">
-                        {item.item_name}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {item.quantity}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCurrency(item.unit_price, invoice.currency)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {item.tax_percentage}%
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">
-                        {formatCurrency(item.line_total, invoice.currency)}
-                      </TableCell>
+                    <TableRow key={item.id} className="hover:bg-muted/15 transition-colors">
+                      <TableCell className="pl-4 font-medium">{item.item_name}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{item.quantity}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(item.unit_price, invoice.currency)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{item.tax_percentage}%</TableCell>
+                      <TableCell className="text-right tabular-nums font-semibold pr-4">{formatCurrency(item.line_total, invoice.currency)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-          </section>
-
-          <section className="flex justify-end">
-            <div className="w-full max-w-sm space-y-4 rounded-2xl border bg-primary/5 p-6 shadow-sm">
-              <h3 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-                Payment summary
-              </h3>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium tabular-nums">
-                  {formatCurrency(invoice.subtotal, invoice.currency)}
-                </span>
+            {/* Totals */}
+            <div className="border-t bg-muted/15 px-4 py-3 space-y-1.5">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Subtotal</span>
+                <span className="tabular-nums">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax</span>
-                <span className="font-medium tabular-nums">
-                  {formatCurrency(invoice.tax_amount, invoice.currency)}
-                </span>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Tax</span>
+                <span className="tabular-nums">{formatCurrency(invoice.tax_amount, invoice.currency)}</span>
               </div>
               <Separator />
-              <div className="flex justify-between">
-                <span className="font-semibold">Grand total</span>
-                <span className="text-lg font-semibold tabular-nums text-primary">
-                  {formatCurrency(invoice.total_amount, invoice.currency)}
-                </span>
+              <div className="flex justify-between font-semibold">
+                <span>Grand Total</span>
+                <span className="tabular-nums text-primary">{formatCurrency(invoice.total_amount, invoice.currency)}</span>
               </div>
-              {invoice.notes ? (
-                <p className="border-t pt-3 text-xs text-muted-foreground">
-                  {invoice.notes}
-                </p>
-              ) : null}
             </div>
-          </section>
+          </div>
         </div>
-      </article>
+
+        {/* ── Right sidebar ── */}
+        <div className="space-y-4">
+
+
+          {/* Customer */}
+          <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 border-b bg-muted/30 px-4 py-2.5">
+              <User className="size-3.5 text-muted-foreground" aria-hidden />
+              <h2 className="text-sm font-semibold">Customer</h2>
+            </div>
+
+            {/* Customer Info Section */}
+            <div className="p-4 space-y-3.5">
+              <div>
+                <p className="font-semibold text-base text-foreground leading-tight">{invoice.customer_name}</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 text-sm text-muted-foreground pt-2.5 border-t border-muted/50">
+                {/* Contact Column */}
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 block mb-1">Contact</span>
+                  {invoice.customer_email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                      <span className="break-all font-medium text-foreground/90">{invoice.customer_email}</span>
+                    </div>
+                  )}
+                  {invoice.customer_phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                      <span className="font-medium text-foreground/90">{invoice.customer_phone}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Address Column */}
+                {invoice.customer_address && (
+                  <div className="space-y-2 sm:border-l sm:pl-4 lg:border-l-0 lg:pl-0 xl:border-l xl:pl-4 border-muted/50 min-w-0">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 block mb-1">Address</span>
+                    {(() => {
+                      const line1Text = [
+                        invoice.customer_address.line1,
+                        invoice.customer_address.line2,
+                      ].filter(Boolean).join(", ");
+                      const line2Text = `${invoice.customer_address.city}, ${invoice.customer_address.state} ${invoice.customer_address.pincode}`;
+
+                      return (
+                        <div className="relative min-w-0 group cursor-pointer">
+                          {/* Default state: Truncated two lines */}
+                          <div className="flex items-start gap-2 group-hover:hidden min-w-0">
+                            <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                            <div className="text-foreground/90 text-sm text-left leading-tight truncate w-full min-w-0">
+                              <p className="font-medium truncate">{line1Text}</p>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">{line2Text}</p>
+                            </div>
+                          </div>
+                          {/* Hover state: Full wrapped multi-line */}
+                          <div className="hidden group-hover:flex items-start gap-2 min-w-0">
+                            <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                            <div className="space-y-0.5 text-foreground/90 text-sm leading-relaxed text-left break-words">
+                              <p className="font-semibold">{invoice.customer_address.line1}</p>
+                              {invoice.customer_address.line2 && <p className="font-medium">{invoice.customer_address.line2}</p>}
+                              <p className="font-medium">{invoice.customer_address.city}, {invoice.customer_address.state} {invoice.customer_address.pincode}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          {invoice.notes && (
+            <div className="rounded-xl border bg-card shadow-sm p-4">
+              <h2 className="mb-1.5 text-sm font-semibold">Notes</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">{invoice.notes}</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -102,11 +102,11 @@ function getSetupSteps(store: ApiStore | null): SetupStep[] {
   return [
     {
       label: "Store profile created",
-      done: Boolean(store.name.trim() && store.address.line1.trim()),
+      done: Boolean(store.name?.trim() && store.address?.line1?.trim()),
     },
     {
       label: "GST number added",
-      done: Boolean(store.gstNumber.trim()),
+      done: Boolean(store.gstNumber?.trim()),
     },
     {
       label: "Payment details configured",
@@ -161,16 +161,14 @@ export function getEmptyStoreSummary(): StoreSummary {
 
 export function getStoreSummary(store: ApiStore): StoreSummary {
   const paymentConfigured = isPaymentConfigured(store);
-  const filledCount = PROFILE_FIELDS.filter((getValue) =>
-    getValue(store).trim(),
-  ).length;
   const setupSteps = getSetupSteps(store);
+  const completedSteps = setupSteps.filter((step) => step.done).length;
 
   return {
-    companyName: store.name.trim(),
-    gstNumber: store.gstNumber.trim(),
+    companyName: (store.name || "").trim(),
+    gstNumber: (store.gstNumber || "").trim(),
     paymentConfigured,
-    profileComplete: Math.round((filledCount / PROFILE_FIELDS.length) * 100),
+    profileComplete: Math.round((completedSteps / setupSteps.length) * 100),
     location: formatLocation(store),
     contactLine: formatContactLine(store),
     paymentPreview: formatPaymentPreview(store),

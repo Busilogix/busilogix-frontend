@@ -79,7 +79,7 @@ function toListRecord(invoice: InvoiceDetailRecord): InvoiceListRecord {
   return list;
 }
 
-export const INVOICES_PAGE_SIZE = 8;
+export const INVOICES_PAGE_SIZE = 10;
 
 export function suggestInvoiceNumber(): string {
   const year = new Date().getFullYear();
@@ -167,7 +167,7 @@ export function duplicateInvoice(id: string): InvoiceDetailRecord | undefined {
     ...invoice,
     id: `inv_${Date.now().toString(36)}`,
     invoice_number: suggestInvoiceNumber(),
-    status: "draft",
+    status: "DRAFT",
     issue_date: new Date().toISOString().split("T")[0],
     created_at: now,
     updated_at: now,
@@ -222,13 +222,12 @@ export const INVOICE_STATUS_OPTIONS: {
   value: InvoiceStatusFilter;
   label: string;
 }[] = [
-  { value: "all", label: "All statuses" },
-  { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
-  { value: "paid", label: "Paid" },
-  { value: "overdue", label: "Overdue" },
-  { value: "cancelled", label: "Cancelled" },
-];
+    { value: "all", label: "All statuses" },
+    { value: "DRAFT", label: "Draft" },
+    { value: "PAID", label: "Paid" },
+    { value: "OVERDUE", label: "Overdue" },
+    { value: "CANCELLED", label: "Cancelled" },
+  ];
 
 export type InvoiceStats = {
   total: number;
@@ -241,17 +240,17 @@ export type InvoiceStats = {
 export function getInvoiceStats(): InvoiceStats {
   const all = getAllInvoices();
   const pending = all.filter(
-    (invoice) => invoice.status === "sent" || invoice.status === "overdue",
+    (invoice) => invoice.status === "OVERDUE",
   );
 
   return {
     total: all.length,
-    paidCount: all.filter((invoice) => invoice.status === "paid").length,
+    paidCount: all.filter((invoice) => invoice.status === "PAID").length,
     pendingAmount:
       Math.round(
         pending.reduce((sum, invoice) => sum + invoice.total_amount, 0) * 100,
       ) / 100,
-    overdueCount: all.filter((invoice) => invoice.status === "overdue").length,
+    overdueCount: all.filter((invoice) => invoice.status === "OVERDUE").length,
     currency: all[0]?.currency ?? "USD",
   };
 }
