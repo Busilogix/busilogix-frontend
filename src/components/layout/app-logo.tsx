@@ -47,16 +47,16 @@ type AppLogoProps = {
   className?: string;
   href?: string;
   variant?: LogoVariant;
-  priority?: boolean;
   asLink?: boolean;
+  priority?: boolean;
 };
 
 export function AppLogo({
   className,
   href = "/dashboard",
   variant = "sidebar",
-  priority = false,
   asLink = true,
+  priority = true,
 }: AppLogoProps) {
   const styles = variantStyles[variant];
 
@@ -67,12 +67,13 @@ export function AppLogo({
         alt="Busilogix"
         width={640}
         height={640}
-        priority={priority}
         sizes={styles.sizes}
         className={styles.image}
+        priority={priority}
       />
     </span>
   );
+
 
   if (!asLink) {
     return image;

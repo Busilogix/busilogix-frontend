@@ -101,7 +101,7 @@ export function InvoicesTable({
                 <TableCell className="hidden sm:table-cell">
                   <span
                     className={
-                      invoice.status === "overdue"
+                      invoice.status === "OVERDUE"
                         ? "font-medium text-destructive"
                         : "text-muted-foreground"
                     }
@@ -150,7 +150,7 @@ export function InvoicesTable({
                         <Mail className="size-4" aria-hidden />
                         Send Email
                       </DropdownMenuItem>
-                      {invoice.status !== "paid" ? (
+                      {invoice.status !== "PAID" ? (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

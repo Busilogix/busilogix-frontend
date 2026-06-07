@@ -1,4 +1,5 @@
 import type { InvoiceStatus } from "@/lib/api/types/invoice.types";
+import type { CustomerAddress } from "@/lib/api/types/customer.types";
 
 export type { InvoiceStatus };
 
@@ -30,6 +31,7 @@ export type InvoiceListRecord = {
 export type InvoiceDetailRecord = InvoiceListRecord & {
   customer_email: string;
   customer_phone: string;
+  customer_address?: CustomerAddress;
   subtotal: number;
   tax_amount: number;
   line_items: InvoiceLineItemRecord[];

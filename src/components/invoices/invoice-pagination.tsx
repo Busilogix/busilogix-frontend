@@ -3,14 +3,25 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+const INVOICES_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 type InvoicePaginationProps = {
   page: number;
   totalPages: number;
   totalItems: number;
   pageSize: number;
+  pageSizeOptions?: readonly number[];
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   className?: string;
 };
 
@@ -19,7 +30,9 @@ export function InvoicePagination({
   totalPages,
   totalItems,
   pageSize,
+  pageSizeOptions = INVOICES_PAGE_SIZE_OPTIONS,
   onPageChange,
+  onPageSizeChange,
   className,
 }: InvoicePaginationProps) {
   const start = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -40,30 +53,56 @@ export function InvoicePagination({
         of <span className="font-medium text-foreground">{totalItems}</span>{" "}
         invoices
       </p>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="size-4" aria-hidden />
-          Previous
-        </Button>
-        <span className="min-w-24 text-center text-sm text-muted-foreground">
-          Page {page} of {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
-          aria-label="Next page"
-        >
-          Next
-          <ChevronRight className="size-4" aria-hidden />
-        </Button>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Rows per page</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value) => onPageSizeChange(Number(value))}
+          >
+            <SelectTrigger
+              size="sm"
+              className="h-9 min-w-16 bg-background/80"
+              aria-label="Rows per page"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              {pageSizeOptions.map((option) => (
+                <SelectItem key={option} value={String(option)}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+            Previous
+          </Button>
+          <span className="min-w-24 text-center text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            aria-label="Next page"
+          >
+            Next
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        </div>
       </div>
     </div>
   );

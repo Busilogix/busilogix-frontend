@@ -36,7 +36,7 @@ const features = [
 export function AuthBrandPanel() {
   return (
     <div
-      className="relative hidden flex-col overflow-hidden lg:flex"
+      className="relative hidden flex-col overflow-hidden lg:sticky lg:top-0 lg:flex lg:h-screen"
       style={{
         background:
           "linear-gradient(145deg, oklch(0.18 0.04 252) 0%, oklch(0.12 0.06 258) 50%, oklch(0.08 0.02 252) 100%)",
@@ -62,7 +62,7 @@ export function AuthBrandPanel() {
 
       <div className="relative flex flex-1 flex-col justify-between p-10 xl:p-14">
         <div className="inline-flex rounded-xl bg-white w-fit px-3 py-2 shadow-lg shadow-black/20">
-          <AppLogo variant="panel" asLink={false} priority />
+          <AppLogo variant="panel" asLink={false} />
         </div>
 
         <div className="space-y-8">

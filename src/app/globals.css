@@ -135,6 +135,13 @@
   html {
     @apply font-sans;
   }
+  
+  input::placeholder,
+  textarea::placeholder,
+  [data-placeholder] {
+    color: var(--muted-foreground) !important;
+    opacity: 0.3 !important;
+  }
 }
 
 @layer components {

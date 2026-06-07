@@ -6,31 +6,77 @@ import type {
   CreateInvoiceRequest,
   CreateInvoiceResponse,
   Invoice,
+  BackendInvoice,
   InvoiceListParams,
+  InvoiceListPage,
+  InvoiceListResult,
   UpdateInvoiceRequest,
 } from "./types/invoice.types";
 import { parseAuthResponse } from "./utils/auth-response";
-import type { ApiResponse, PaginatedApiResponse } from "./types/api.types";
-import { unwrapApiResponse } from "./utils/response";
 
 const INVOICES_BASE = "/invoices";
 
 class InvoiceService {
-  async list(params?: InvoiceListParams): Promise<Invoice[]> {
-    const response = await apiClient.get<PaginatedApiResponse<Invoice>>(
+  async list(params: InvoiceListParams = {}): Promise<InvoiceListResult> {
+    const page = params.page ? params.page - 1 : 0; // Backend is 0-indexed
+    const size = params.size ?? 20;
+
+    const queryParams: Record<string, any> = {
+      page,
+      size,
+    };
+
+    if (params.search?.trim()) {
+      queryParams.search = params.search.trim();
+    }
+    if (params.status) {
+      queryParams.status = params.status;
+    }
+    if (params.startDate) {
+      queryParams.startDate = params.startDate;
+    }
+    if (params.endDate) {
+      queryParams.endDate = params.endDate;
+    }
+
+    const response = await apiClient.get<BackendEnvelope<InvoiceListPage>>(
       INVOICES_BASE,
-      { params },
+      { params: queryParams },
     );
 
-    return response.data.data;
+    const { data } = parseAuthResponse(response);
+
+    if (!data) {
+      throw new ApiError("Invoices list response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+
+    return {
+      items: data.content,
+      page: data.page + 1,
+      pageSize: data.size,
+      totalItems: data.totalElements,
+      totalPages: Math.max(1, data.totalPages),
+      hasNext: data.hasNext,
+      hasPrevious: data.hasPrevious,
+    };
   }
 
-  async getById(id: string): Promise<Invoice> {
-    const response = await apiClient.get<ApiResponse<Invoice>>(
+  async getById(id: string): Promise<BackendInvoice> {
+    const response = await apiClient.get<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}`,
     );
 
-    return unwrapApiResponse(response);
+    const { data } = parseAuthResponse(response);
+    if (!data) {
+      throw new ApiError("Invoice response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+    return data;
   }
 
   async create(payload: CreateInvoiceRequest): Promise<CreateInvoiceResponse> {
@@ -51,25 +97,63 @@ class InvoiceService {
     return { message, invoice: data };
   }
 
-  async update(id: string, payload: UpdateInvoiceRequest): Promise<Invoice> {
-    const response = await apiClient.put<ApiResponse<Invoice>>(
+  async update(id: string, payload: UpdateInvoiceRequest): Promise<BackendInvoice> {
+    const response = await apiClient.put<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}`,
       payload,
     );
 
-    return unwrapApiResponse(response);
+    const { data } = parseAuthResponse(response);
+    if (!data) {
+      throw new ApiError("Invoice response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+    return data;
   }
 
   async delete(id: string): Promise<void> {
     await apiClient.delete(`${INVOICES_BASE}/${id}`);
   }
 
-  async send(id: string): Promise<Invoice> {
-    const response = await apiClient.post<ApiResponse<Invoice>>(
+  async send(id: string): Promise<BackendInvoice> {
+    const response = await apiClient.post<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}/send`,
     );
 
-    return unwrapApiResponse(response);
+    const { data } = parseAuthResponse(response);
+    if (!data) {
+      throw new ApiError("Invoice response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+    return data;
+  }
+
+  async cancel(id: string): Promise<BackendInvoice> {
+    const response = await apiClient.patch<BackendEnvelope<BackendInvoice>>(
+      `${INVOICES_BASE}/${id}/cancel`,
+    );
+
+    const { data } = parseAuthResponse(response);
+    if (!data) {
+      throw new ApiError("Invoice response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+    return data;
+  }
+
+  async downloadPdf(id: string): Promise<Blob> {
+    const response = await apiClient.get<Blob>(
+      `${INVOICES_BASE}/${id}/download`,
+      { responseType: "blob" },
+    );
+
+    return response.data;
   }
 }
 

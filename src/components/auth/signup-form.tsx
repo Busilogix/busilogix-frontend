@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { authService } from "@/lib/api/auth.service";
 import { isApiError } from "@/lib/api/errors";
+import { formatMobileNumber } from "@/lib/utils";
 import { signupSchema, type SignupFormValues } from "@/lib/validations/auth";
 
 import { AuthCard, AuthCardLink } from "./auth-card";
@@ -29,6 +31,7 @@ export function SignupForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -39,7 +42,10 @@ export function SignupForm() {
     setIsLoading(true);
 
     try {
-      await authService.signup(data);
+      await authService.signup({
+        ...data,
+        mobile: formatMobileNumber(data.mobile),
+      });
       router.push("/login?registered=1");
     } catch (error) {
       const message = isApiError(error)
@@ -112,22 +118,19 @@ export function SignupForm() {
 
             <Field data-invalid={!!errors.mobile || undefined}>
               <FieldLabel htmlFor="signup-mobile">Mobile</FieldLabel>
-              <div className="relative">
-                <Phone
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  id="signup-mobile"
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  autoComplete="tel"
-                  disabled={isLoading}
-                  aria-invalid={!!errors.mobile}
-                  className="pl-9"
-                  {...register("mobile")}
-                />
-              </div>
+              <Controller
+                control={control}
+                name="mobile"
+                render={({ field }) => (
+                  <PhoneInput
+                    id="signup-mobile"
+                    disabled={isLoading}
+                    placeholder="98765 43210"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
               <FieldError errors={[errors.mobile]} />
             </Field>
           </div>

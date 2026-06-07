@@ -26,18 +26,7 @@ export default async function InvoiceDetailPage({
   const { id } = await params;
 
   return (
-    <PageContainer
-      actions={
-        <Link
-          href="/invoices"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "default" }),
-          )}
-        >
-          Back to invoices
-        </Link>
-      }
-    >
+    <PageContainer>
       <InvoiceDetailView invoiceId={id} />
     </PageContainer>
   );

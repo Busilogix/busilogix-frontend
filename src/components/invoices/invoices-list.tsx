@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  AlertCircle,
-  CheckCircle2,
   Download,
   FileText,
   Filter,
@@ -14,7 +12,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { FormMessage } from "@/components/auth/form-message";
+import { toast } from "sonner";
 import { ListPageHeader } from "@/components/layout/list-page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
@@ -26,19 +24,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/invoices/format";
-import {
-  duplicateInvoice,
-  getInvoiceStats,
-  INVOICES_PAGE_SIZE,
-  INVOICE_STATUS_OPTIONS,
-  queryInvoices,
-  updateInvoiceStatus,
-} from "@/lib/invoices/mock-store";
+const INVOICES_PAGE_SIZE = 10;
+
+const INVOICE_STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "PAID", label: "Paid" },
+  { value: "OVERDUE", label: "Overdue" },
+  { value: "CANCELLED", label: "Cancelled" },
+] as const;
 import type {
   InvoiceListRecord,
   InvoiceStatusFilter,
 } from "@/lib/invoices/types";
+import { invoiceService } from "@/lib/api/invoice.service";
 import { downloadCsv } from "@/lib/export/csv";
 
 import { InvoicePagination } from "./invoice-pagination";
@@ -48,11 +47,7 @@ import { InvoicesTableSkeleton } from "./invoices-table-skeleton";
 const LOAD_DELAY_MS = 500;
 const ACTION_DELAY_MS = 900;
 
-type ActionFeedback = {
-  type: "success" | "error";
-  title: string;
-  message: string;
-};
+// ActionFeedback type removed; using Sonner toast
 
 export function InvoicesList() {
   const router = useRouter();
@@ -60,20 +55,27 @@ export function InvoicesList() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<InvoiceStatusFilter>("all");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(INVOICES_PAGE_SIZE);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
-  const [actionFeedback, setActionFeedback] = useState<ActionFeedback | null>(
-    null,
-  );
-  const [stats, setStats] = useState(() => getInvoiceStats());
-  const [result, setResult] = useState(() =>
-    queryInvoices({
-      search: "",
-      status: "all",
-      page: 1,
-      pageSize: INVOICES_PAGE_SIZE,
-    }),
-  );
+  const [result, setResult] = useState<{
+    items: InvoiceListRecord[];
+    totalItems: number;
+    totalPages: number;
+    page: number;
+    pageSize: number;
+  }>(() => ({
+    items: [],
+    totalItems: 0,
+    totalPages: 1,
+    page: 1,
+    pageSize: INVOICES_PAGE_SIZE,
+  }));
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -88,28 +90,52 @@ export function InvoicesList() {
     setPage(1);
   }, [statusFilter]);
 
-  const fetchInvoices = useCallback(() => {
+  const fetchInvoices = useCallback(async () => {
     setIsLoading(true);
+    try {
+      const apiStatus = statusFilter === "all" ? undefined : (statusFilter as any);
+      const res = await invoiceService.list({
+        search: debouncedSearch || undefined,
+        status: apiStatus,
+        page,
+        size: pageSize,
+      });
 
-    const timer = setTimeout(() => {
-      setResult(
-        queryInvoices({
-          search: debouncedSearch,
-          status: statusFilter,
-          page,
-          pageSize: INVOICES_PAGE_SIZE,
-        }),
-      );
-      setStats(getInvoiceStats());
+      const mappedItems: InvoiceListRecord[] = res.items.map((inv) => {
+        const status = inv.status as any;
+
+        return {
+          id: inv.id,
+          invoice_number: inv.invoiceNumber,
+          customer_id: inv.customer?.id || "",
+          customer_name: inv.customer?.name || "Unknown Customer",
+          status,
+          issue_date: inv.createdAt,
+          due_date: inv.createdAt,
+          currency: "INR",
+          total_amount: inv.netAmount,
+          created_at: inv.createdAt,
+          updated_at: inv.createdAt,
+        };
+      });
+
+      setResult({
+        items: mappedItems,
+        totalItems: res.totalItems,
+        totalPages: res.totalPages,
+        page: res.page,
+        pageSize: res.pageSize,
+      });
+    } catch (err) {
+      console.error("Failed to fetch invoices from backend:", err);
+      toast.error("Failed to fetch invoices from server.");
+    } finally {
       setIsLoading(false);
-    }, LOAD_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [debouncedSearch, statusFilter, page]);
+    }
+  }, [debouncedSearch, statusFilter, page, pageSize]);
 
   useEffect(() => {
-    const cleanup = fetchInvoices();
-    return cleanup;
+    fetchInvoices();
   }, [fetchInvoices]);
 
   const hasActiveFilters = debouncedSearch.length > 0 || statusFilter !== "all";
@@ -117,16 +143,7 @@ export function InvoicesList() {
   const isEmptyFiltered = hasActiveFilters && !hasInvoices;
   const isEmptyAll = !hasActiveFilters && !hasInvoices;
 
-  const exportRows = useMemo(
-    () =>
-      queryInvoices({
-        search: debouncedSearch,
-        status: statusFilter,
-        page: 1,
-        pageSize: result.totalItems || INVOICES_PAGE_SIZE,
-      }).items,
-    [debouncedSearch, statusFilter, result.totalItems],
-  );
+  const exportRows = result.items;
 
   function clearFilters() {
     setSearch("");
@@ -134,15 +151,7 @@ export function InvoicesList() {
   }
 
   function refreshInvoices() {
-    setResult(
-      queryInvoices({
-        search: debouncedSearch,
-        status: statusFilter,
-        page,
-        pageSize: INVOICES_PAGE_SIZE,
-      }),
-    );
-    setStats(getInvoiceStats());
+    void fetchInvoices();
   }
 
   function handleExportInvoices() {
@@ -168,59 +177,56 @@ export function InvoicesList() {
       return;
     }
 
-    setActionFeedback(null);
+    // No action feedback state; toast will handle notifications
     setPendingActionId(invoice.id);
 
     try {
       await new Promise((resolve) => setTimeout(resolve, ACTION_DELAY_MS));
 
       if (action === "mark-paid") {
-        updateInvoiceStatus(invoice.id, "paid");
+        await invoiceService.update(invoice.id, { status: "PAID" });
         refreshInvoices();
-        setActionFeedback({
-          type: "success",
-          title: "Invoice marked as paid",
-          message: `${invoice.invoice_number} is now included in total revenue.`,
-        });
+        toast.success("Invoice marked as paid", { description: `${invoice.invoice_number} is now included in total revenue.` });
+        return;
+      }
+
+      if (action === "download") {
+        try {
+          const blob = await invoiceService.downloadPdf(invoice.id);
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", `${invoice.invoice_number}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode?.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          toast.success("PDF downloaded", { description: `${invoice.invoice_number}.pdf downloaded successfully.` });
+        } catch (error) {
+          console.error("Failed to download PDF:", error);
+          toast.error("Download failed", { description: "Unable to download PDF from backend. Please try again." });
+        }
         return;
       }
 
       if (action === "duplicate") {
-        const copy = duplicateInvoice(invoice.id);
-        refreshInvoices();
-        setActionFeedback({
-          type: copy ? "success" : "error",
-          title: copy ? "Invoice duplicated" : "Duplicate failed",
-          message: copy
-            ? `${invoice.invoice_number} was copied as ${copy.invoice_number}.`
-            : "Unable to duplicate this invoice. Please try again.",
-        });
+        toast.error("Duplicate failed", { description: "Duplication is not supported." });
         return;
       }
 
       const messages: Record<
-        Exclude<InvoiceAction, "view" | "mark-paid" | "duplicate">,
-        ActionFeedback
+        Exclude<InvoiceAction, "view" | "mark-paid" | "duplicate" | "download">,
+        { title: string; message: string }
       > = {
-        download: {
-          type: "success",
-          title: "PDF download",
-          message: `${invoice.invoice_number}.pdf — download will start here when PDF generation is connected.`,
-        },
         email: {
-          type: "success",
           title: "Email sent (preview)",
           message: `Invoice ${invoice.invoice_number} would be emailed to ${invoice.customer_name}. API integration pending.`,
         },
       };
 
-      setActionFeedback(messages[action]);
+      toast.success(messages[action].title, { description: messages[action].message });
     } catch {
-      setActionFeedback({
-        type: "error",
-        title: "Action failed",
-        message: "Something went wrong. Please try again.",
-      });
+      toast.error("Action failed", { description: "Something went wrong. Please try again." });
     } finally {
       setPendingActionId(null);
     }
@@ -236,42 +242,9 @@ export function InvoicesList() {
           href: "/invoices/new",
           icon: Plus,
         }}
-        metrics={[
-          {
-            title: "Total invoices",
-            value: stats.total.toLocaleString(),
-            description: "All billing records",
-            icon: FileText,
-            tone: "violet",
-          },
-          {
-            title: "Paid invoices",
-            value: stats.paidCount.toLocaleString(),
-            description: "Included in revenue",
-            icon: CheckCircle2,
-            tone: "emerald",
-          },
-          {
-            title: hasActiveFilters ? "Matching results" : "Outstanding",
-            value: hasActiveFilters
-              ? result.totalItems.toLocaleString()
-              : formatCurrency(stats.pendingAmount, stats.currency),
-            description: hasActiveFilters
-              ? "Invoices matching filters"
-              : "Sent and overdue balances",
-            icon: hasActiveFilters ? Filter : AlertCircle,
-            tone: "amber",
-          },
-        ]}
       />
 
-      {actionFeedback ? (
-        <FormMessage
-          type={actionFeedback.type}
-          title={actionFeedback.title}
-          message={actionFeedback.message}
-        />
-      ) : null}
+      {/* Toast notifications are displayed via Sonner; no UI block needed here */}
 
       <div className="surface-card rounded-xl p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -371,6 +344,7 @@ export function InvoicesList() {
             totalItems={result.totalItems}
             pageSize={result.pageSize}
             onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
           />
         </div>
       )}
