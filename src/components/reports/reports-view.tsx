@@ -224,13 +224,30 @@ export function ReportsView() {
   }, [limit]);
 
   useEffect(() => {
-    void fetchSalesReport();
-    void fetchProductReport();
-    void fetchGstReport();
-    void fetchInventoryReport();
-  }, [fetchSalesReport, fetchProductReport, fetchGstReport, fetchInventoryReport]);
+    if (activeTab === "sales") {
+      void fetchSalesReport();
+    }
+  }, [activeTab, fetchSalesReport]);
 
-  const isInitialLoading = isSalesLoading && isProductLoading && isGstLoading && isInventoryLoading;
+  useEffect(() => {
+    if (activeTab === "products") {
+      void fetchProductReport();
+    }
+  }, [activeTab, fetchProductReport]);
+
+  useEffect(() => {
+    if (activeTab === "taxes") {
+      void fetchGstReport();
+    }
+  }, [activeTab, fetchGstReport]);
+
+  useEffect(() => {
+    if (activeTab === "inventory") {
+      void fetchInventoryReport();
+    }
+  }, [activeTab, fetchInventoryReport]);
+
+  const isInitialLoading = activeTab === "sales" && isSalesLoading;
 
   if (!mounted || isInitialLoading) {
     return <ReportsSkeleton />;
