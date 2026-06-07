@@ -4,9 +4,9 @@ import { getAllInvoices } from "@/lib/invoices/mock-store";
 export function getReportsData() {
   const customers = getAllCustomers();
   const invoices = getAllInvoices();
-  const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
+  const paidInvoices = invoices.filter((invoice) => invoice.status === "PAID");
   const pendingInvoices = invoices.filter(
-    (invoice) => invoice.status === "sent" || invoice.status === "overdue",
+    (invoice) => invoice.status === "OVERDUE",
   );
 
   const revenue = paidInvoices.reduce(
@@ -37,7 +37,7 @@ export function getReportsData() {
         name: customer.name,
         invoiceCount: customerInvoices.length,
         revenue: customerInvoices
-          .filter((invoice) => invoice.status === "paid")
+          .filter((invoice) => invoice.status === "PAID")
           .reduce((sum, invoice) => sum + invoice.total_amount, 0),
       };
     })

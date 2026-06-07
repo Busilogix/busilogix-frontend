@@ -5,8 +5,9 @@ import {
   calculateLineTax,
   calculateLineTotal,
 } from "./calculations";
-import { SEED_INVOICES } from "./mock-data";
 import type { InvoiceDetailRecord, InvoiceLineItemRecord } from "./types";
+
+const SEED_INVOICES: any[] = [];
 
 const customerById = Object.fromEntries(
   SEED_CUSTOMERS.map((customer) => [customer.id, customer]),
@@ -70,7 +71,7 @@ export function buildSeedInvoiceDetails(): InvoiceDetailRecord[] {
       tax_amount: Math.round(tax_amount * 100) / 100,
       line_items,
       notes:
-        invoice.status === "paid"
+        invoice.status === "PAID"
           ? "Payment received. Thank you for your business."
           : undefined,
     };

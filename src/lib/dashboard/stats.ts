@@ -25,12 +25,12 @@ export function getDashboardData(): DashboardData {
   const invoices = getAllInvoices();
 
   const totalRevenue = invoices
-    .filter((invoice) => invoice.status === "paid")
+    .filter((invoice) => invoice.status === "PAID")
     .reduce((sum, invoice) => sum + invoice.total_amount, 0);
 
   const pendingAmount = invoices
     .filter(
-      (invoice) => invoice.status === "sent" || invoice.status === "overdue",
+      (invoice) => invoice.status === "OVERDUE",
     )
     .reduce((sum, invoice) => sum + invoice.total_amount, 0);
 

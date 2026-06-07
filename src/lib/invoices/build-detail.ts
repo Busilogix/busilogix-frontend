@@ -44,7 +44,7 @@ export function buildInvoiceDetailFromForm(
     customer_name: data.customer_name,
     customer_email: data.customer_email,
     customer_phone: data.customer_phone,
-    status: options?.status ?? "draft",
+    status: options?.status ?? "DRAFT",
     issue_date: data.issue_date,
     due_date: data.due_date,
     currency: "USD",
