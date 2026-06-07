@@ -69,11 +69,17 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<AuthUser> {
-    const response = await apiClient.get<ApiResponse<AuthUser>>(
-      `${AUTH_BASE}/me`,
+    const response = await apiClient.get<BackendEnvelope<AuthUser>>(
+      "/users/me",
     );
 
-    return unwrapApiResponse(response);
+    const { data } = parseAuthResponse(response);
+
+    if (!data) {
+      throw new Error("User profile response did not include data.");
+    }
+
+    return data;
   }
 }
 

@@ -46,6 +46,7 @@ function clearStoredUserEmail(): void {
 type AuthContextValue = {
   isAuthenticated: boolean;
   userEmail: string | null;
+  userName: string | null;
   setUserEmail: (email: string) => void;
   logout: () => void;
   hasStore: boolean | null;
@@ -57,6 +58,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [userEmail, setUserEmailState] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const isAuthenticated = useHasAccessToken();
   const [hasStore, setHasStoreState] = useState<boolean | null>(null);
   const [isCheckingStore, setIsCheckingStore] = useState(true);
@@ -68,6 +70,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserEmailState(getStoredUserEmail());
     });
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUserName(null);
+      return;
+    }
+
+    let active = true;
+    async function loadUserProfile() {
+      try {
+        const user = await authService.getCurrentUser();
+        if (active) {
+          setUserName(user.name);
+        }
+      } catch (error) {
+        console.error("Failed to load user profile name", error);
+      }
+    }
+
+    void loadUserProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -118,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     clearStoredUserEmail();
     setUserEmailState(null);
+    setUserName(null);
     setHasStoreState(null);
     setIsCheckingStore(true);
     authService.logout();
@@ -130,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       isAuthenticated,
       userEmail,
+      userName,
       setUserEmail,
       logout,
       hasStore,
@@ -139,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       isAuthenticated,
       userEmail,
+      userName,
       setUserEmail,
       logout,
       hasStore,

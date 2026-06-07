@@ -36,3 +36,19 @@ export type InventoryLogListResult = {
   hasNext: boolean;
   hasPrevious: boolean;
 };
+
+export type ActiveProductSummary = {
+  productSku: string;
+  productName: string;
+  movementCount: number;
+};
+
+export type InventorySummaryData = {
+  totalLogsCount: number;
+  affectedProducts: number;
+  totalQuantityAdded: number;
+  totalQuantityRemoved: number;
+  netQuantityChange: number;
+  mostActiveProducts: ActiveProductSummary[];
+};
+
