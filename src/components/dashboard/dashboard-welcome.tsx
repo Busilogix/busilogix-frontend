@@ -3,6 +3,8 @@
 import { ArrowRight, CircleDollarSign } from "lucide-react";
 import Link from "next/link";
 
+import { useEffect, useState } from "react";
+
 import { useAuth } from "@/context/auth-provider";
 import { useStoreName } from "@/hooks/use-store-name";
 import { formatCurrency } from "@/lib/invoices/format";
@@ -38,7 +40,17 @@ function getDisplayName(email: string | null): string {
     return "there";
   }
 
-  return localPart.charAt(0).toUpperCase() + localPart.slice(1);
+  // Strip digits
+  const cleanName = localPart.replace(/\d+/g, "");
+
+  if (!cleanName) {
+    return localPart.charAt(0).toUpperCase() + localPart.slice(1);
+  }
+
+  const parts = cleanName.split(/[._-]+/);
+  return parts
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function formatToday(): string {
@@ -54,8 +66,17 @@ export function DashboardWelcome({
   currency,
   className,
 }: DashboardWelcomeProps) {
-  const { userEmail } = useAuth();
+  const { userEmail, userName } = useAuth();
   const storeName = useStoreName();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const greetingName = userName || getDisplayName(userEmail);
+  const greeting = mounted ? getGreeting() : "Hello";
+  const todayDate = mounted ? formatToday() : "";
 
   return (
     <section
@@ -66,9 +87,9 @@ export function DashboardWelcome({
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="text-sm text-muted-foreground">{formatToday()}</p>
+          <p className="text-sm text-muted-foreground min-h-[20px]">{todayDate}</p>
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            {getGreeting()}, {getDisplayName(userEmail)}
+            {greeting}, {greetingName}
           </h1>
           <p className="text-sm text-muted-foreground">
             Here&apos;s what&apos;s happening at{" "}

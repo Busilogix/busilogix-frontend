@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { LoadingState } from "@/components/layout/loading-state";
 import { useAuth } from "@/context/auth-provider";
@@ -10,8 +10,17 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, hasStore, isCheckingStore } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.replace("/login");
       return;
@@ -30,7 +39,11 @@ export function AuthGuard({ children }: { children: ReactNode }) {
         router.replace("/dashboard");
       }
     }
-  }, [isAuthenticated, hasStore, isCheckingStore, pathname, router]);
+  }, [mounted, isAuthenticated, hasStore, isCheckingStore, pathname, router]);
+
+  if (!mounted) {
+    return <LoadingState title="Loading..." description="" />;
+  }
 
   if (!isAuthenticated) {
     return <LoadingState title="Redirecting to sign in..." description="" />;

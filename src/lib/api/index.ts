@@ -70,4 +70,46 @@ export type {
   InventoryLogListPage,
   InventoryLogListParams,
   InventoryLogListResult,
+  InventorySummaryData,
 } from "./types/inventory.types";
+
+export { dashboardService } from "./dashboard.service";
+export type {
+  ApiRecentInvoice,
+  ApiTopProduct,
+  ApiDashboardData,
+} from "./types/dashboard.types";
+
+export { salesService } from "./sales.service";
+export type {
+  SalesReportIntervalData,
+  SalesReportData,
+  SalesReportParams,
+} from "./types/sales.types";
+
+export { productReportService } from "./product-report.service";
+export type {
+  ProductReportItem,
+  ProductReportData,
+  ProductReportParams,
+} from "./types/product-report.types";
+
+export { gstReportService } from "./gst-report.service";
+export type {
+  GstReportData,
+  GstReportParams,
+} from "./types/gst-report.types";
+
+export { inventoryReportService } from "./inventory-report.service";
+export type {
+  InventoryReportProductItem,
+  InventoryReportData,
+  InventoryReportParams,
+} from "./types/inventory-report.types";export { productService } from "./product.service";
+export type {
+  ApiProduct,
+  ProductCatalogStats,
+  ProductListParams,
+  ProductListResult,
+} from "./types/product.types";
+

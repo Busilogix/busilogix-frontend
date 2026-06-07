@@ -5,6 +5,7 @@ import type {
   InventoryLogListPage,
   InventoryLogListParams,
   InventoryLogListResult,
+  InventorySummaryData,
 } from "./types/inventory.types";
 import { parseAuthResponse } from "./utils/auth-response";
 
@@ -43,6 +44,23 @@ class InventoryService {
       hasNext: data.hasNext,
       hasPrevious: data.hasPrevious,
     };
+  }
+
+  async getSummary(): Promise<InventorySummaryData> {
+    const response = await apiClient.get<BackendEnvelope<InventorySummaryData>>(
+      `${INVENTORY_BASE}/summary`,
+    );
+
+    const { data } = parseAuthResponse(response);
+
+    if (!data) {
+      throw new ApiError("Inventory summary response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+
+    return data;
   }
 }
 

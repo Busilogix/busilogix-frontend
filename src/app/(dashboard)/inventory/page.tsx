@@ -4,8 +4,8 @@ import { PageContainer } from "@/components/layout/page-container";
 import { InventoryView } from "@/components/inventory/inventory-view";
 
 export const metadata: Metadata = {
-  title: "Inventory",
-  description: "Track stock levels and stock adjustments logs",
+  title: "Inventory Logs",
+  description: "Monitor product stock adjustment ledger and real-time inventory logs",
 };
 
 export default function InventoryPage() {

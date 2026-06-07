@@ -237,11 +237,6 @@ export function InvoicesList() {
       <ListPageHeader
         title="Invoices"
         description="Create, review, send, and track invoices from one billing workspace."
-        action={{
-          label: "Create invoice",
-          href: "/invoices/new",
-          icon: Plus,
-        }}
       />
 
       {/* Toast notifications are displayed via Sonner; no UI block needed here */}
