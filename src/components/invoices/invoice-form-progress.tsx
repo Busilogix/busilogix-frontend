@@ -47,7 +47,7 @@ export function InvoiceFormProgress({
                 {step.label}
               </span>
               {index < steps.length - 1 ? (
-                <span className="hidden text-muted-foreground sm:inline">
+                <span className="text-muted-foreground/50 text-xs">
                   →
                 </span>
               ) : null}

@@ -2,6 +2,7 @@
 
 import { Download, Package, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { FormMessage } from "@/components/auth/form-message";
 import { EmptyState } from "@/components/layout/empty-state";
@@ -203,6 +204,28 @@ export function ProductsList() {
     }
   }
 
+  async function handleStockAdjust(product: any, newStock: number) {
+    if (newStock < 0) return;
+    try {
+      await productService.update(product.id, {
+        name: product.name,
+        sku: product.sku,
+        sellingPrice: product.price,
+        stockQuantity: newStock,
+        description: product.description || undefined,
+      });
+      toast.success("Stock updated", {
+        description: `${product.name} stock adjusted to ${newStock}.`,
+      });
+      void fetchProducts();
+      void refreshCatalogStats();
+    } catch (error) {
+      toast.error("Failed to update stock", {
+        description: "Something went wrong while adjusting stock.",
+      });
+    }
+  }
+
   return (
     <div className="space-y-6">
       <ProductsPageHeader
@@ -255,9 +278,9 @@ export function ProductsList() {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {isFiltered ? (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="flex-1 sm:flex-none">
                 <X className="size-4" aria-hidden />
                 Clear
               </Button>
@@ -267,13 +290,14 @@ export function ProductsList() {
               size="sm"
               onClick={() => void handleExportProducts()}
               disabled={!hasProducts || isLoading}
+              className="flex-1 sm:flex-none"
             >
               <Download className="size-4" aria-hidden />
               Export CSV
             </Button>
             <Button
               size="sm"
-              className="shadow-sm"
+              className="shadow-sm flex-1 sm:flex-none"
               onClick={() => setIsCreateModalOpen(true)}
             >
               <Plus className="size-4" aria-hidden />
@@ -339,6 +363,7 @@ export function ProductsList() {
             products={products}
             totalItems={result.totalItems}
             onEditProduct={(product) => setEditingProductId(product.id)}
+            onStockAdjust={handleStockAdjust}
           />
           <ProductsPagination
             page={result.page}

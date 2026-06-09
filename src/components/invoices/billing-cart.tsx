@@ -69,7 +69,7 @@ export function BillingCart({
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-xl border">
+      <div className="hidden sm:block overflow-hidden rounded-xl border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
@@ -198,6 +198,130 @@ export function BillingCart({
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="block sm:hidden space-y-3">
+        {filledRows.map(({ field, index }) => {
+          const item = watchedItems[index];
+          const unitPrice = getProductUnitPrice(
+            item?.productId ?? "",
+            products,
+          );
+          const quantity = Number(item?.quantity) || 0;
+          const lineTotal = roundCurrency(quantity * unitPrice);
+          const selectedProduct = products.find(
+            (product) => product.id === item?.productId,
+          );
+          const stock = selectedProduct
+            ? getApiProductStock(selectedProduct)
+            : 0;
+          const exceedsStock =
+            selectedProduct && quantity > 0 && quantity > stock;
+
+          return (
+            <div
+              key={field.id}
+              className={cn(
+                "rounded-xl border p-3.5 space-y-3 transition-colors bg-card",
+                highlightedIndex === index && "bg-emerald-500/10 border-emerald-500/30",
+              )}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-semibold text-foreground text-sm leading-snug truncate">
+                    {selectedProduct?.name ?? "Product"}
+                  </h4>
+                  <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-1.5 mt-1">
+                    <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-[10px]">
+                      {selectedProduct?.sku || "SKU"}
+                    </span>
+                    <span>·</span>
+                    <span>{formatCurrency(unitPrice, "INR")}</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-8 text-muted-foreground hover:text-destructive shrink-0"
+                  onClick={() => {
+                    if (fields.length <= 1) {
+                      setValue(`items.${index}.productId`, "", {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      setValue(`items.${index}.quantity`, 1, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      return;
+                    }
+                    remove(index);
+                  }}
+                  disabled={disabled}
+                  aria-label={`Remove item ${index + 1}`}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <div className="flex flex-col gap-1">
+                  {exceedsStock && (
+                    <span className="text-xs font-medium text-amber-600 animate-pulse mb-0.5">
+                      low stock ({stock})
+                    </span>
+                  )}
+                  <div className="inline-flex items-center gap-1 rounded-lg border bg-background p-0.5 w-fit">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8"
+                      disabled={disabled || quantity <= 1}
+                      aria-label={`Decrease quantity for item ${index + 1}`}
+                      onClick={() =>
+                        setValue(
+                          `items.${index}.quantity`,
+                          Math.max(1, quantity - 1),
+                          { shouldDirty: true, shouldValidate: true },
+                        )
+                      }
+                    >
+                      <Minus className="size-4" aria-hidden />
+                    </Button>
+                    <span className="min-w-8 text-center text-sm font-semibold tabular-nums">
+                      {quantity}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-8"
+                      disabled={disabled}
+                      aria-label={`Increase quantity for item ${index + 1}`}
+                      onClick={() =>
+                        setValue(`items.${index}.quantity`, quantity + 1, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      <Plus className="size-4" aria-hidden />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[10px] text-muted-foreground block mb-0.5 uppercase tracking-wider font-semibold">Total</span>
+                  <span className="text-base font-bold tabular-nums text-primary">
+                    {formatCurrency(lineTotal, "INR")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {itemsError ? (

@@ -3,8 +3,8 @@ import type { CustomerAddress } from "./customer.types";
 export type InvoiceTaxType = "INTRA_STATE" | "INTER_STATE";
 
 export type CreateInvoiceCustomer = {
-  name: string;
-  email: string;
+  name: string | null;
+  email: string | null;
   mobile: string;
   address?: CustomerAddress;
 };

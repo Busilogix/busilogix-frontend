@@ -278,9 +278,9 @@ export function InvoicesList() {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {hasActiveFilters ? (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="flex-1 sm:flex-none">
                 <X className="size-4" aria-hidden />
                 Clear
               </Button>
@@ -290,6 +290,7 @@ export function InvoicesList() {
               size="sm"
               onClick={handleExportInvoices}
               disabled={!hasInvoices}
+              className="flex-1 sm:flex-none"
             >
               <Download className="size-4" aria-hidden />
               Export CSV
@@ -297,7 +298,7 @@ export function InvoicesList() {
             <Button
               size="sm"
               render={<Link href="/invoices/new" />}
-              className="shadow-sm"
+              className="shadow-sm flex-1 sm:flex-none"
             >
               <Plus className="size-4" aria-hidden />
               Create invoice
