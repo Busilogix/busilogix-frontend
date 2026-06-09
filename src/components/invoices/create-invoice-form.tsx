@@ -217,11 +217,31 @@ export function CreateInvoiceForm() {
   );
 
   const handleCounterSale = useCallback(() => {
-    applyCounterSaleCustomer(setValue);
-    setCustomerLookup({ status: "idle" });
-    lastLookupMobileRef.current = COUNTER_SALE_CUSTOMER.mobile;
-    focusQuickAdd();
-  }, [focusQuickAdd, setValue]);
+    const isCurrentlyCounterSale =
+      customerMobile?.trim() === COUNTER_SALE_CUSTOMER.mobile &&
+      customerName?.trim() === COUNTER_SALE_CUSTOMER.name &&
+      customerEmail?.trim() === COUNTER_SALE_CUSTOMER.email;
+
+    if (isCurrentlyCounterSale) {
+      setValue("customer.mobile", "", { shouldDirty: true, shouldValidate: false });
+      setValue("customer.name", "", { shouldDirty: true, shouldValidate: false });
+      setValue("customer.email", "", { shouldDirty: true, shouldValidate: false });
+      setValue("customer.address", {
+        line1: "",
+        line2: "",
+        city: "",
+        state: "",
+        pincode: "",
+      }, { shouldDirty: true, shouldValidate: false });
+      setCustomerLookup({ status: "idle" });
+      lastLookupMobileRef.current = null;
+    } else {
+      applyCounterSaleCustomer(setValue);
+      setCustomerLookup({ status: "idle" });
+      lastLookupMobileRef.current = COUNTER_SALE_CUSTOMER.mobile;
+      focusQuickAdd();
+    }
+  }, [focusQuickAdd, setValue, customerMobile, customerName, customerEmail]);
 
   const handleAutofillWalkInFromMobile = useCallback(() => {
     const mobile = customerMobile?.trim() ?? "";
@@ -521,12 +541,12 @@ export function CreateInvoiceForm() {
                 <p className="mb-2 text-xs font-medium text-muted-foreground">
                   Autofill options
                 </p>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full">
                   <Button
                     type="button"
                     size="sm"
                     variant={isCounterSale ? "default" : "outline"}
-                    className="h-9"
+                    className="h-9 flex-1 sm:flex-none"
                     disabled={isSubmitting}
                     onClick={handleCounterSale}
                   >
@@ -538,7 +558,7 @@ export function CreateInvoiceForm() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9"
+                      className="h-9 flex-1 sm:flex-none"
                       disabled={isSubmitting}
                       onClick={() => applyRecentCustomer(customer)}
                     >
@@ -548,225 +568,229 @@ export function CreateInvoiceForm() {
                 </div>
               </div>
 
-              <div className="grid gap-3 lg:grid-cols-[minmax(9rem,1fr)_minmax(8rem,1.2fr)_minmax(10rem,1.4fr)]">
-                <Field data-invalid={!!errors.customer?.mobile || undefined}>
-                  <FieldLabel htmlFor="customer-mobile">Mobile</FieldLabel>
-                  <Input
-                    id="customer-mobile"
-                    type="tel"
-                    placeholder="+917075891626"
-                    disabled={isSubmitting}
-                    autoComplete="tel"
-                    ref={(element) => {
-                      mobileRegisterRef(element);
-                      mobileInputRef.current = element;
-                    }}
-                    onBlur={(event) => {
-                      mobileOnBlur(event);
-                      triggerCustomerLookup();
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        triggerCustomerLookup();
-                      }
-                    }}
-                    {...mobileRegister}
-                  />
-                  {customerLookup.status === "loading" ? (
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Loader2 className="size-3 animate-spin" aria-hidden />
-                      Looking up saved customer...
-                    </p>
-                  ) : customerLookup.status === "found" ? (
-                    <p className="mt-1 text-xs text-emerald-600">
-                      Saved customer autofill applied —{" "}
-                      {customerLookup.customerName}
-                    </p>
-                  ) : customerLookup.status === "not_found" ? (
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        No saved customer for this mobile.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={handleAutofillWalkInFromMobile}
-                      >
-                        Autofill walk-in
-                      </Button>
-                    </div>
-                  ) : customerLookup.status === "error" ? (
-                    <p className="mt-1 text-xs text-destructive">
-                      {customerLookup.message}
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Leave the mobile field or press Enter to search saved
-                      customers.
-                    </p>
-                  )}
-                  <FieldError errors={[errors.customer?.mobile]} />
-                </Field>
-
-                <Field data-invalid={!!errors.customer?.name || undefined}>
-                  <FieldLabel htmlFor="customer-name">Name</FieldLabel>
-                  <Input
-                    id="customer-name"
-                    placeholder="Customer name"
-                    disabled={isSubmitting}
-                    className={cn(
-                      customerLookup.status === "found" &&
-                        "border-emerald-500/30 bg-emerald-500/5",
-                    )}
-                    {...register("customer.name")}
-                  />
-                  <FieldError errors={[errors.customer?.name]} />
-                </Field>
-
-                <Field data-invalid={!!errors.customer?.email || undefined}>
-                  <FieldLabel htmlFor="customer-email">Email</FieldLabel>
-                  <Input
-                    id="customer-email"
-                    type="email"
-                    placeholder="email@example.com"
-                    disabled={isSubmitting}
-                    className={cn(
-                      customerLookup.status === "found" &&
-                        "border-emerald-500/30 bg-emerald-500/5",
-                    )}
-                    {...register("customer.email")}
-                  />
-                  <FieldError errors={[errors.customer?.email]} />
-                </Field>
-              </div>
-
-              <div className="border-t pt-5">
-                <button
-                  type="button"
-                  onClick={() => setIsAddressOpen((open) => !open)}
-                  className="flex w-full items-start gap-3 rounded-xl border bg-muted/20 p-3 text-left transition-colors hover:bg-muted/40"
-                  aria-expanded={isAddressOpen}
-                >
-                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                    <MapPin className="size-4" aria-hidden />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">
-                        Billing address
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Optional
-                      </span>
-                    </span>
-                    <span
-                      className={cn(
-                        "mt-0.5 block text-xs leading-snug",
-                        hasAddressValues
-                          ? "text-foreground"
-                          : "text-muted-foreground",
+              {!isCounterSale && (
+                <>
+                  <div className="grid gap-3 lg:grid-cols-[minmax(9rem,1fr)_minmax(8rem,1.2fr)_minmax(10rem,1.4fr)]">
+                    <Field data-invalid={!!errors.customer?.mobile || undefined}>
+                      <FieldLabel htmlFor="customer-mobile">Mobile</FieldLabel>
+                      <Input
+                        id="customer-mobile"
+                        type="tel"
+                        placeholder="+917075891626"
+                        disabled={isSubmitting}
+                        autoComplete="tel"
+                        ref={(element) => {
+                          mobileRegisterRef(element);
+                          mobileInputRef.current = element;
+                        }}
+                        onBlur={(event) => {
+                          mobileOnBlur(event);
+                          triggerCustomerLookup();
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            triggerCustomerLookup();
+                          }
+                        }}
+                        {...mobileRegister}
+                      />
+                      {customerLookup.status === "loading" ? (
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Loader2 className="size-3 animate-spin" aria-hidden />
+                          Looking up saved customer...
+                        </p>
+                      ) : customerLookup.status === "found" ? (
+                        <p className="mt-1 text-xs text-emerald-600">
+                          Saved customer autofill applied —{" "}
+                          {customerLookup.customerName}
+                        </p>
+                      ) : customerLookup.status === "not_found" ? (
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            No saved customer for this mobile.
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={handleAutofillWalkInFromMobile}
+                          >
+                            Autofill walk-in
+                          </Button>
+                        </div>
+                      ) : customerLookup.status === "error" ? (
+                        <p className="mt-1 text-xs text-destructive">
+                          {customerLookup.message}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Leave the mobile field or press Enter to search saved
+                          customers.
+                        </p>
                       )}
-                    >
-                      {hasAddressValues
-                        ? addressPreview
-                        : "Leave collapsed to omit — expand to add billing address"}
-                    </span>
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
-                      isAddressOpen && "rotate-180",
-                    )}
-                    aria-hidden
-                  />
-                </button>
+                      <FieldError errors={[errors.customer?.mobile]} />
+                    </Field>
 
-                {isAddressOpen ? (
-                  <div className="mt-4 space-y-4 rounded-xl border border-dashed p-4">
-                    <p className="text-xs text-muted-foreground">
-                      If you add any address field, line 1, city, state, and
-                      pincode are required. Line 2 is optional.
-                    </p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field
-                        className="sm:col-span-2"
-                        data-invalid={!!addressErrors?.line1 || undefined}
-                      >
-                        <FieldLabel htmlFor="address-line1">
-                          Address line 1
-                        </FieldLabel>
-                        <Input
-                          id="address-line1"
-                          placeholder="Flat 302, Green Residency"
-                          disabled={isSubmitting}
-                          {...register("customer.address.line1")}
-                        />
-                        <FieldError errors={[addressErrors?.line1]} />
-                      </Field>
+                    <Field data-invalid={!!errors.customer?.name || undefined}>
+                      <FieldLabel htmlFor="customer-name">Name</FieldLabel>
+                      <Input
+                        id="customer-name"
+                        placeholder="Customer name"
+                        disabled={isSubmitting}
+                        className={cn(
+                          customerLookup.status === "found" &&
+                            "border-emerald-500/30 bg-emerald-500/5",
+                        )}
+                        {...register("customer.name")}
+                      />
+                      <FieldError errors={[errors.customer?.name]} />
+                    </Field>
 
-                      <Field
-                        className="sm:col-span-2"
-                        data-invalid={!!addressErrors?.line2 || undefined}
-                      >
-                        <FieldLabel htmlFor="address-line2">
-                          Address line 2{" "}
-                          <span className="font-normal text-muted-foreground">
-                            (optional)
-                          </span>
-                        </FieldLabel>
-                        <Input
-                          id="address-line2"
-                          placeholder="Near city mall"
-                          disabled={isSubmitting}
-                          {...register("customer.address.line2")}
-                        />
-                        <FieldError errors={[addressErrors?.line2]} />
-                      </Field>
-
-                      <Field data-invalid={!!addressErrors?.city || undefined}>
-                        <FieldLabel htmlFor="address-city">City</FieldLabel>
-                        <Input
-                          id="address-city"
-                          placeholder="Bangalore"
-                          disabled={isSubmitting}
-                          {...register("customer.address.city")}
-                        />
-                        <FieldError errors={[addressErrors?.city]} />
-                      </Field>
-
-                      <Field data-invalid={!!addressErrors?.state || undefined}>
-                        <FieldLabel htmlFor="address-state">State</FieldLabel>
-                        <Input
-                          id="address-state"
-                          placeholder="Karnataka"
-                          disabled={isSubmitting}
-                          {...register("customer.address.state")}
-                        />
-                        <FieldError errors={[addressErrors?.state]} />
-                      </Field>
-
-                      <Field
-                        className="sm:col-span-2"
-                        data-invalid={!!addressErrors?.pincode || undefined}
-                      >
-                        <FieldLabel htmlFor="address-pincode">
-                          Pincode
-                        </FieldLabel>
-                        <Input
-                          id="address-pincode"
-                          placeholder="560102"
-                          disabled={isSubmitting}
-                          {...register("customer.address.pincode")}
-                        />
-                        <FieldError errors={[addressErrors?.pincode]} />
-                      </Field>
-                    </div>
+                    <Field data-invalid={!!errors.customer?.email || undefined}>
+                      <FieldLabel htmlFor="customer-email">Email</FieldLabel>
+                      <Input
+                        id="customer-email"
+                        type="email"
+                        placeholder="email@example.com"
+                        disabled={isSubmitting}
+                        className={cn(
+                          customerLookup.status === "found" &&
+                            "border-emerald-500/30 bg-emerald-500/5",
+                        )}
+                        {...register("customer.email")}
+                      />
+                      <FieldError errors={[errors.customer?.email]} />
+                    </Field>
                   </div>
-                ) : null}
-              </div>
+
+                  <div className="border-t pt-5">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddressOpen((open) => !open)}
+                      className="flex w-full items-start gap-3 rounded-xl border bg-muted/20 p-3 text-left transition-colors hover:bg-muted/40"
+                      aria-expanded={isAddressOpen}
+                    >
+                      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                        <MapPin className="size-4" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">
+                            Billing address
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Optional
+                          </span>
+                        </span>
+                        <span
+                          className={cn(
+                            "mt-0.5 block text-xs leading-snug",
+                            hasAddressValues
+                              ? "text-foreground"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {hasAddressValues
+                            ? addressPreview
+                            : "Leave collapsed to omit — expand to add billing address"}
+                        </span>
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
+                          isAddressOpen && "rotate-180",
+                        )}
+                        aria-hidden
+                      />
+                    </button>
+
+                    {isAddressOpen ? (
+                      <div className="mt-4 space-y-4 rounded-xl border border-dashed p-4">
+                        <p className="text-xs text-muted-foreground">
+                          If you add any address field, line 1, city, state, and
+                          pincode are required. Line 2 is optional.
+                        </p>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <Field
+                            className="sm:col-span-2"
+                            data-invalid={!!addressErrors?.line1 || undefined}
+                          >
+                            <FieldLabel htmlFor="address-line1">
+                              Address line 1
+                            </FieldLabel>
+                            <Input
+                              id="address-line1"
+                              placeholder="Flat 302, Green Residency"
+                              disabled={isSubmitting}
+                              {...register("customer.address.line1")}
+                            />
+                            <FieldError errors={[addressErrors?.line1]} />
+                          </Field>
+
+                          <Field
+                            className="sm:col-span-2"
+                            data-invalid={!!addressErrors?.line2 || undefined}
+                          >
+                            <FieldLabel htmlFor="address-line2">
+                              Address line 2{" "}
+                              <span className="font-normal text-muted-foreground">
+                                (optional)
+                              </span>
+                            </FieldLabel>
+                            <Input
+                              id="address-line2"
+                              placeholder="Near city mall"
+                              disabled={isSubmitting}
+                              {...register("customer.address.line2")}
+                            />
+                            <FieldError errors={[addressErrors?.line2]} />
+                          </Field>
+
+                          <Field data-invalid={!!addressErrors?.city || undefined}>
+                            <FieldLabel htmlFor="address-city">City</FieldLabel>
+                            <Input
+                              id="address-city"
+                              placeholder="Bangalore"
+                              disabled={isSubmitting}
+                              {...register("customer.address.city")}
+                            />
+                            <FieldError errors={[addressErrors?.city]} />
+                          </Field>
+
+                          <Field data-invalid={!!addressErrors?.state || undefined}>
+                            <FieldLabel htmlFor="address-state">State</FieldLabel>
+                            <Input
+                              id="address-state"
+                              placeholder="Karnataka"
+                              disabled={isSubmitting}
+                              {...register("customer.address.state")}
+                            />
+                            <FieldError errors={[addressErrors?.state]} />
+                          </Field>
+
+                          <Field
+                            className="sm:col-span-2"
+                            data-invalid={!!addressErrors?.pincode || undefined}
+                          >
+                            <FieldLabel htmlFor="address-pincode">
+                              Pincode
+                            </FieldLabel>
+                            <Input
+                              id="address-pincode"
+                              placeholder="560102"
+                              disabled={isSubmitting}
+                              {...register("customer.address.pincode")}
+                            />
+                            <FieldError errors={[addressErrors?.pincode]} />
+                          </Field>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -1050,7 +1074,7 @@ export function CreateInvoiceForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full"
+                  className="w-full hidden lg:flex"
                   disabled={!canBill}
                 >
                   {isSubmitting ? (
@@ -1083,11 +1107,11 @@ export function CreateInvoiceForm() {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-4 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-lg items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground">
+          <div className="min-w-0 flex-1 flex flex-col justify-center text-left whitespace-nowrap">
+            <p className="text-xs font-medium text-muted-foreground leading-none">
               {cartItemCount} item{cartItemCount === 1 ? "" : "s"}
             </p>
-            <p className="truncate text-lg font-semibold tabular-nums">
+            <p className="truncate text-base font-bold tabular-nums text-primary mt-1 leading-none">
               {formatCurrency(totals.grandTotal, "INR")}
             </p>
           </div>

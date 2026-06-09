@@ -1,16 +1,18 @@
 import type { CreateInvoiceRequest } from "@/lib/api/types/invoice.types";
 import { buildOptionalInvoiceAddress } from "@/lib/invoices/map-customer-lookup";
 import type { CreateInvoiceFormInput } from "@/lib/validations/invoice";
+import { isCounterSaleCustomer } from "@/lib/invoices/counter-sale";
 
 export function buildCreateInvoicePayload(
   data: CreateInvoiceFormInput,
 ): CreateInvoiceRequest {
   const address = buildOptionalInvoiceAddress(data.customer.address);
+  const isWalkIn = isCounterSaleCustomer(data.customer);
 
   return {
     customer: {
-      name: data.customer.name.trim(),
-      email: data.customer.email.trim(),
+      name: isWalkIn ? null : data.customer.name.trim(),
+      email: isWalkIn ? null : data.customer.email.trim(),
       mobile: data.customer.mobile.trim(),
       ...(address ? { address } : {}),
     },

@@ -236,63 +236,102 @@ export function InventoryView() {
                   <p className="text-xs max-w-xs mx-auto text-muted-foreground/75">No stock adjustments have been recorded in the system ledger yet.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-muted/10">
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-5">Date & Time</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">Product Details</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Variance</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Stock After</TableHead>
-                        <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-4">Remarks / Reason</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {logs.map((log) => (
-                        <TableRow key={log.id} className="hover:bg-muted/30 transition-colors duration-150 border-b border-border/40 last:border-b-0">
-                          <TableCell className="py-3 px-5 text-xs text-foreground font-medium tabular-nums">
-                            <span className="font-semibold block">{new Date(log.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
-                            <span className="text-[10px] text-muted-foreground/75 block mt-0.5">
-                              {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                            </span>
-                          </TableCell>
-                          <TableCell className="py-3 px-3">
-                            <div className="font-bold text-xs text-foreground tracking-tight">{log.product_name}</div>
-                            <div className="text-[9px] text-muted-foreground font-mono mt-0.5 tracking-wider">{log.sku}</div>
-                          </TableCell>
-                          <TableCell className="py-3 px-3 text-center">
-                            <span
-                              className={cn(
-                                "inline-flex items-center gap-1 font-black text-[10px] px-2.5 py-0.5 rounded-full border shadow-inner tabular-nums tracking-wide",
-                                log.type === "in"
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                  : log.type === "out"
-                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                                    : "bg-primary/10 text-primary border-primary/20"
-                              )}
-                            >
-                              {log.type === "in" ? (
-                                <ArrowUpRight className="size-3" />
-                              ) : log.type === "out" ? (
-                                <ArrowDownRight className="size-3" />
-                              ) : null}
-                              {log.type === "in" ? "+" : log.type === "out" ? "-" : ""}
-                              {log.quantity}
-                            </span>
-                          </TableCell>
-                          <TableCell className="py-3 px-3 text-center">
-                            <span className="text-xs font-black tabular-nums text-foreground">
-                              {log.stockAfterAction !== undefined ? log.stockAfterAction : "-"}
-                            </span>
-                          </TableCell>
-                          <TableCell className="py-3 px-4 text-xs text-muted-foreground/90 italic font-medium max-w-[160px] truncate" title={log.reason}>
-                            “{log.reason}”
-                          </TableCell>
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader className="bg-muted/10">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-5">Date & Time</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">Product Details</TableHead>
+                          <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Variance</TableHead>
+                          <TableHead className="hidden sm:table-cell text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Stock After</TableHead>
+                          <TableHead className="hidden md:table-cell text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-4">Remarks / Reason</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {logs.map((log) => (
+                          <TableRow key={log.id} className="hover:bg-muted/30 transition-colors duration-150 border-b border-border/40 last:border-b-0">
+                            <TableCell className="py-3 px-5 text-xs text-foreground font-medium tabular-nums">
+                              <span className="font-semibold block">{new Date(log.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+                              <span className="text-[10px] text-muted-foreground/75 block mt-0.5">
+                                {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-3 px-3">
+                              <div className="font-bold text-xs text-foreground tracking-tight">{log.product_name}</div>
+                              <div className="text-[9px] text-muted-foreground font-mono mt-0.5 tracking-wider">{log.sku}</div>
+                            </TableCell>
+                            <TableCell className="py-3 px-3 text-center">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 font-black text-[10px] px-2.5 py-0.5 rounded-full border shadow-inner tabular-nums tracking-wide",
+                                  log.type === "in"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                    : log.type === "out"
+                                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                      : "bg-primary/10 text-primary border-primary/20"
+                                )}
+                              >
+                                {log.type === "in" ? (
+                                  <ArrowUpRight className="size-3" />
+                                ) : log.type === "out" ? (
+                                  <ArrowDownRight className="size-3" />
+                                ) : null}
+                                {log.type === "in" ? "+" : log.type === "out" ? "-" : ""}
+                                {log.quantity}
+                              </span>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell py-3 px-3 text-center">
+                              <span className="text-xs font-black tabular-nums text-foreground">
+                                {log.stockAfterAction !== undefined ? log.stockAfterAction : "-"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell py-3 px-4 text-xs text-muted-foreground/90 italic font-medium max-w-[160px] truncate" title={log.reason}>
+                              “{log.reason}”
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Card List View */}
+                  <div className="divide-y divide-border/40 md:hidden">
+                    {logs.map((log) => (
+                      <div key={log.id} className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            {new Date(log.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 font-black text-[10px] px-2.5 py-0.5 rounded-full border shadow-inner",
+                              log.type === "in"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : log.type === "out"
+                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                  : "bg-primary/10 text-primary border-primary/20"
+                            )}
+                          >
+                            {log.type === "in" ? "+" : log.type === "out" ? "-" : ""}
+                            {log.quantity}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-bold text-xs text-foreground tracking-tight">{log.product_name}</p>
+                          <p className="text-[9px] text-muted-foreground font-mono mt-0.5">{log.sku}</p>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-border/20">
+                          <span>Stock after: <strong className="text-foreground">{log.stockAfterAction !== undefined ? log.stockAfterAction : "-"}</strong></span>
+                          {log.reason && (
+                            <span className="italic truncate max-w-[150px]">“{log.reason}”</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

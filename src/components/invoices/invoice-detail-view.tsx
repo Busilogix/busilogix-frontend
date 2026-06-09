@@ -240,15 +240,15 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t bg-muted/20 px-4 py-3 sm:px-5">
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => runAction("download", "PDF downloaded", `${invoice.invoice_number}.pdf downloaded.`)}>
+          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={() => runAction("download", "PDF downloaded", `${invoice.invoice_number}.pdf downloaded.`)}>
             <Download className="size-4" aria-hidden />
             PDF
           </Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={exportInvoiceCsv}>
+          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={exportInvoiceCsv}>
             <Download className="size-4" aria-hidden />
             CSV
           </Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => runAction("email", "Email queued", `Invoice ${invoice.invoice_number} would be emailed to ${invoice.customer_email}.`)}>
+          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={() => runAction("email", "Email queued", `Invoice ${invoice.invoice_number} would be emailed to ${invoice.customer_email}.`)}>
             <Mail className="size-4" aria-hidden />
             Email
           </Button>
@@ -256,7 +256,7 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
             <Button
               size="sm"
               variant="outline"
-              className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950"
+              className="flex-1 sm:flex-none text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950"
               disabled={busy}
               onClick={() => runAction("mark-paid", "Invoice marked as paid", `${invoice.invoice_number} is now counted as revenue.`)}
             >
@@ -268,7 +268,7 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
             <Button
               size="sm"
               variant="outline"
-              className="ml-auto text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+              className="flex-1 sm:flex-none sm:ml-auto text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
               disabled={busy}
               onClick={() => runAction("cancel", "Invoice cancelled", `${invoice.invoice_number} has been cancelled.`)}
             >
