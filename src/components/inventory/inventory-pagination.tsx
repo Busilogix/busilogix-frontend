@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const INVOICES_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const LOGS_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
-type InvoicePaginationProps = {
+type InventoryPaginationProps = {
   page: number;
   totalPages: number;
   totalItems: number;
@@ -25,16 +25,16 @@ type InvoicePaginationProps = {
   className?: string;
 };
 
-export function InvoicePagination({
+export function InventoryPagination({
   page,
   totalPages,
   totalItems,
   pageSize,
-  pageSizeOptions = INVOICES_PAGE_SIZE_OPTIONS,
+  pageSizeOptions = LOGS_PAGE_SIZE_OPTIONS,
   onPageChange,
   onPageSizeChange,
   className,
-}: InvoicePaginationProps) {
+}: InventoryPaginationProps) {
   const start = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalItems);
 
@@ -52,7 +52,7 @@ export function InvoicePagination({
             {start}–{end}
           </span>{" "}
           of <span className="font-semibold text-foreground">{totalItems}</span>{" "}
-          <span className="hidden xs:inline">invoices</span>
+          <span className="hidden xs:inline">logs</span>
         </p>
 
         <div className="flex items-center gap-2 sm:hidden">

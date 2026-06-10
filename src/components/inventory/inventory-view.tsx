@@ -11,7 +11,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import { ListPageHeader } from "@/components/layout/list-page-header";
 import { Badge } from "@/components/ui/badge";
@@ -38,16 +38,25 @@ import type { ProductRecord, StockAdjustmentLog } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import { inventoryService, productService, isApiError, type InventorySummaryData } from "@/lib/api";
 import { InventorySkeleton } from "./inventory-skeleton";
+import { InventoryPagination } from "./inventory-pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type MappedStockAdjustmentLog = StockAdjustmentLog & {
   stockAfterAction?: number;
 };
+
 
 export function InventoryView() {
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [logs, setLogs] = useState<MappedStockAdjustmentLog[]>([]);
   const [summary, setSummary] = useState<InventorySummaryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isLogsLoading, setIsLogsLoading] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -59,9 +68,10 @@ export function InventoryView() {
     }
   }, []);
 
-  const fetchLogs = useCallback(async () => {
+  const fetchLogs = useCallback(async (targetPage: number, targetPageSize: number) => {
+    setIsLogsLoading(true);
     try {
-      const result = await inventoryService.getLogs({ page: 1, size: 50 });
+      const result = await inventoryService.getLogs({ page: targetPage, size: targetPageSize });
       const mappedLogs: MappedStockAdjustmentLog[] = result.items.map((apiLog) => {
         const type =
           apiLog.quantityChange > 0
@@ -82,9 +92,13 @@ export function InventoryView() {
         };
       });
       setLogs(mappedLogs);
+      setTotalPages(result.totalPages);
+      setTotalItems(result.totalItems);
     } catch (err) {
       console.error("Failed to fetch inventory logs from backend:", err);
       setLogs([]);
+    } finally {
+      setIsLogsLoading(false);
     }
   }, []);
 
@@ -97,11 +111,14 @@ export function InventoryView() {
     }
   }, []);
 
+  const isMounted = useRef(false);
+
+  // Initial load
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
       try {
-        await Promise.all([fetchProducts(), fetchLogs(), fetchSummary()]);
+        await Promise.all([fetchProducts(), fetchLogs(1, pageSize), fetchSummary()]);
       } catch (err) {
         console.error("Failed to load inventory logs data:", err);
       } finally {
@@ -109,7 +126,23 @@ export function InventoryView() {
       }
     }
     loadData();
-  }, [fetchProducts, fetchLogs, fetchSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch logs when page/pageSize changes after initial mount
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    fetchLogs(page, pageSize);
+  }, [page, pageSize, fetchLogs]);
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1);
+  };
+
 
   const totalUnits = products.reduce((acc, p) => acc + p.stock, 0);
   const catalogItems = products.length;
@@ -229,7 +262,70 @@ export function InventoryView() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {logs.length === 0 ? (
+              {isLogsLoading ? (
+                <>
+                  {/* Desktop Table Skeleton View */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader className="bg-muted/10">
+                        <TableRow>
+                          <TableHead className="py-3 px-5"><Skeleton className="h-3 w-16" /></TableHead>
+                          <TableHead className="py-3 px-3"><Skeleton className="h-3 w-24" /></TableHead>
+                          <TableHead className="py-3 px-3 text-center flex justify-center"><Skeleton className="h-3 w-12" /></TableHead>
+                          <TableHead className="py-3 px-3 text-center"><Skeleton className="h-3 w-16" /></TableHead>
+                          <TableHead className="py-3 px-4"><Skeleton className="h-3 w-28" /></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Array.from({ length: pageSize }).map((_, index) => (
+                          <TableRow key={index} className="border-b border-border/40 last:border-b-0">
+                            <TableCell className="py-3 px-5 space-y-1.5">
+                              <Skeleton className="h-3.5 w-20" />
+                              <Skeleton className="h-3 w-16" />
+                            </TableCell>
+                            <TableCell className="py-3 px-3 space-y-1.5">
+                              <Skeleton className="h-3.5 w-28" />
+                              <Skeleton className="h-3 w-16" />
+                            </TableCell>
+                            <TableCell className="py-3 px-3">
+                              <div className="flex justify-center">
+                                <Skeleton className="h-5 w-14 rounded-full" />
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-3 px-3">
+                              <div className="flex justify-center">
+                                <Skeleton className="h-4 w-8" />
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-3 px-4">
+                              <Skeleton className="h-3.5 w-24" />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile Card Skeleton View */}
+                  <div className="divide-y divide-border/40 md:hidden">
+                    {Array.from({ length: pageSize }).map((_, index) => (
+                      <div key={index} className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-3 w-28" />
+                          <Skeleton className="h-5 w-12 rounded-full" />
+                        </div>
+                        <div className="space-y-1">
+                          <Skeleton className="h-3.5 w-40" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                        <div className="flex justify-between items-center pt-1 border-t border-border/20">
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : logs.length === 0 ? (
                 <div className="py-16 text-center text-sm text-muted-foreground space-y-2">
                   <ClipboardList className="size-8 text-muted-foreground/45 mx-auto" />
                   <p className="font-bold">No logs available</p>
@@ -335,6 +431,17 @@ export function InventoryView() {
               )}
             </CardContent>
           </Card>
+
+          {totalItems > 0 && (
+            <InventoryPagination
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          )}
         </div>
 
         {/* Sidebar adjustment & alerts */}

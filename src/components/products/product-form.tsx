@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Hash, IndianRupee, Layers, Loader2, Tag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -89,69 +89,81 @@ function ProductFormFields({
         </p>
       ) : null}
 
-      <FieldGroup className="gap-3">
-        <div className="grid gap-3 sm:grid-cols-2">
+      <FieldGroup className="gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field data-invalid={!!errors.name || undefined}>
-            <FieldLabel htmlFor={`${fieldIdPrefix}-name`} className="text-xs">
+            <FieldLabel htmlFor={`${fieldIdPrefix}-name`} className="text-sm font-medium">
               Product name
             </FieldLabel>
-            <Input
-              id={`${fieldIdPrefix}-name`}
-              placeholder="e.g. iPhone 15"
-              disabled={isSubmitting}
-              className="h-8 text-xs"
-              {...register("name")}
-            />
+            <div className="relative">
+              <Tag className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" aria-hidden />
+              <Input
+                id={`${fieldIdPrefix}-name`}
+                placeholder="e.g. iPhone 15"
+                disabled={isSubmitting}
+                className="pl-9 h-10 text-sm shadow-sm"
+                {...register("name")}
+              />
+            </div>
             <FieldError errors={[errors.name]} />
           </Field>
 
           <Field data-invalid={!!errors.sku || undefined}>
-            <FieldLabel htmlFor={`${fieldIdPrefix}-sku`} className="text-xs">
+            <FieldLabel htmlFor={`${fieldIdPrefix}-sku`} className="text-sm font-medium">
               SKU
             </FieldLabel>
-            <Input
-              id={`${fieldIdPrefix}-sku`}
-              placeholder="e.g. IPH15-128-BLK"
-              disabled={isSubmitting}
-              className="h-8 font-mono text-xs"
-              {...register("sku")}
-            />
+            <div className="relative">
+              <Hash className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" aria-hidden />
+              <Input
+                id={`${fieldIdPrefix}-sku`}
+                placeholder="e.g. IPH15-128-BLK"
+                disabled={isSubmitting}
+                className="pl-9 h-10 font-mono text-sm shadow-sm"
+                {...register("sku")}
+              />
+            </div>
             <FieldError errors={[errors.sku]} />
           </Field>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field data-invalid={!!errors.price || undefined}>
-            <FieldLabel htmlFor={`${fieldIdPrefix}-price`} className="text-xs">
+            <FieldLabel htmlFor={`${fieldIdPrefix}-price`} className="text-sm font-medium">
               Selling price
             </FieldLabel>
-            <Input
-              id={`${fieldIdPrefix}-price`}
-              type="number"
-              min={0}
-              step="0.01"
-              placeholder="79999.00"
-              disabled={isSubmitting}
-              className="h-8 text-xs"
-              {...register("price", { valueAsNumber: true })}
-            />
+            <div className="relative">
+              <IndianRupee className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" aria-hidden />
+              <Input
+                id={`${fieldIdPrefix}-price`}
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="79999.00"
+                disabled={isSubmitting}
+                className="pl-9 h-10 text-sm shadow-sm"
+                {...register("price", { valueAsNumber: true })}
+              />
+            </div>
             <FieldError errors={[errors.price]} />
           </Field>
 
           <Field data-invalid={!!errors.stock || undefined}>
-            <FieldLabel htmlFor={`${fieldIdPrefix}-stock`} className="text-xs">
+            <FieldLabel htmlFor={`${fieldIdPrefix}-stock`} className="text-sm font-medium">
               Stock quantity
             </FieldLabel>
-            <Input
-              id={`${fieldIdPrefix}-stock`}
-              type="number"
-              min={0}
-              step="1"
-              placeholder="50"
-              disabled={isSubmitting}
-              className="h-8 text-xs"
-              {...register("stock", { valueAsNumber: true })}
-            />
+            <div className="relative">
+              <Layers className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" aria-hidden />
+              <Input
+                id={`${fieldIdPrefix}-stock`}
+                type="number"
+                min={0}
+                step="1"
+                placeholder="50"
+                disabled={isSubmitting}
+                className="pl-9 h-10 text-sm shadow-sm"
+                {...register("stock", { valueAsNumber: true })}
+              />
+            </div>
             <FieldError errors={[errors.stock]} />
           </Field>
         </div>
@@ -159,23 +171,26 @@ function ProductFormFields({
         <Field data-invalid={!!errors.description || undefined}>
           <FieldLabel
             htmlFor={`${fieldIdPrefix}-description`}
-            className="text-xs"
+            className="text-sm font-medium"
           >
             Description
           </FieldLabel>
-          <Textarea
-            id={`${fieldIdPrefix}-description`}
-            placeholder="Apple iPhone 15 128GB Black"
-            rows={2}
-            disabled={isSubmitting}
-            className="text-xs"
-            {...register("description")}
-          />
+          <div className="relative">
+            <FileText className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground/60" aria-hidden />
+            <Textarea
+              id={`${fieldIdPrefix}-description`}
+              placeholder="Apple iPhone 15 128GB Black"
+              rows={3}
+              disabled={isSubmitting}
+              className="pl-9 pt-2.5 text-sm min-h-[90px] shadow-sm"
+              {...register("description")}
+            />
+          </div>
           <FieldError errors={[errors.description]} />
         </Field>
       </FieldGroup>
 
-      <div className="flex flex-col-reverse gap-2 border-t pt-3.5 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
         {onCancel ? (
           <Button
             type="button"
@@ -183,7 +198,7 @@ function ProductFormFields({
             size="sm"
             disabled={isSubmitting}
             onClick={onCancel}
-            className="h-8 px-3 text-xs"
+            className="shadow-sm"
           >
             Cancel
           </Button>
@@ -194,7 +209,7 @@ function ProductFormFields({
             size="sm"
             disabled={isSubmitting}
             render={<Link href="/products" />}
-            className="h-8 px-3 text-xs"
+            className="shadow-sm"
           >
             <ArrowLeft className="size-3.5" aria-hidden />
             Cancel
@@ -203,12 +218,12 @@ function ProductFormFields({
         <Button
           type="submit"
           size="sm"
-          className="h-8 px-3 text-xs"
+          className="shadow-sm"
           disabled={isSubmitting}
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="size-3 animate-spin" aria-hidden />
+              <Loader2 className="size-3.5 animate-spin mr-1.5" aria-hidden />
               {submittingLabel}
             </>
           ) : (

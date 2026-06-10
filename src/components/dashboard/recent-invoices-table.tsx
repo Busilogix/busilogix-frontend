@@ -29,7 +29,7 @@ type RecentInvoicesTableProps = {
 
 export function RecentInvoicesTable({ invoices }: RecentInvoicesTableProps) {
   return (
-    <Card size="sm" className="flex flex-col">
+    <Card size="sm" className="flex flex-col min-w-0">
       <CardHeader className="flex flex-row items-center justify-between border-b space-y-0">
         <div>
           <CardTitle>Recent invoices</CardTitle>
@@ -53,45 +53,44 @@ export function RecentInvoicesTable({ invoices }: RecentInvoicesTableProps) {
             />
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead className="hidden sm:table-cell">Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell>
-                    <Link
-                      href={`/invoices/${invoice.id}`}
-                      className="font-mono text-sm font-medium hover:text-primary hover:underline"
-                    >
-                      {invoice.invoice_number}
-                    </Link>
-                    <p className="text-xs text-muted-foreground sm:hidden">
-                      {invoice.customer_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatInvoiceDate(invoice.issue_date)}
-                    </p>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    {invoice.customer_name}
-                  </TableCell>
-                  <TableCell>
-                    <InvoiceStatusBadge status={invoice.status} />
-                  </TableCell>
-                  <TableCell className="text-right font-medium tabular-nums">
-                    {formatCurrency(invoice.total_amount, invoice.currency)}
-                  </TableCell>
+          <div className="overflow-x-auto w-full min-w-0">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {invoices.map((invoice) => (
+                  <TableRow key={invoice.id}>
+                    <TableCell>
+                      <Link
+                        href={`/invoices/${invoice.id}`}
+                        className="font-mono text-sm font-medium hover:text-primary hover:underline"
+                      >
+                        {invoice.invoice_number}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                        {formatInvoiceDate(invoice.issue_date)}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      {invoice.customer_name}
+                    </TableCell>
+                    <TableCell>
+                      <InvoiceStatusBadge status={invoice.status} />
+                    </TableCell>
+                    <TableCell className="text-right font-medium tabular-nums">
+                      {formatCurrency(invoice.total_amount, invoice.currency)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

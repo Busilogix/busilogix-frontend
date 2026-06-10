@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Package, Plus, Search, X } from "lucide-react";
+import { Package, Plus, Search, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 
 import { CreateProductModal } from "./create-product-modal";
 import { EditProductModal } from "./edit-product-modal";
+import { UploadProductsModal } from "./upload-products-modal";
+
 import { ProductsPageHeader } from "./products-page-header";
 import { ProductsPagination } from "./products-pagination";
 import { ProductsTable } from "./products-table";
@@ -65,6 +67,8 @@ export function ProductsList() {
   const [isStatsLoading, setIsStatsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
 
   const stockQuery = useMemo(
     () => stockFilterToQuery(stockFilter),
@@ -226,6 +230,28 @@ export function ProductsList() {
     }
   }
 
+  const headerActions = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsUploadModalOpen(true)}
+        className="shadow-sm"
+      >
+        <Upload className="size-4" aria-hidden />
+        Import CSV/XLSX
+      </Button>
+      <Button
+        size="sm"
+        className="shadow-sm"
+        onClick={() => setIsCreateModalOpen(true)}
+      >
+        <Plus className="size-4" aria-hidden />
+        Add product
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <ProductsPageHeader
@@ -236,13 +262,14 @@ export function ProductsList() {
         search={debouncedSearch}
         stockFilter={stockFilter}
         onStockFilterChange={setStockFilter}
+        actions={headerActions}
       />
 
       <div className="surface-card rounded-xl p-4 sm:p-5">
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Search & filters
         </p>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="relative min-w-0 flex-1">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -257,52 +284,34 @@ export function ProductsList() {
               aria-label="Search products"
             />
           </div>
-          <div
-            className="flex flex-wrap rounded-xl border bg-muted/30 p-1 self-start"
-            role="group"
-            aria-label="Stock level filter"
-          >
-            {STOCK_FILTER_OPTIONS.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setStockFilter(value)}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-xs font-medium transition-all",
-                  stockFilter === value
-                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
-                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-3">
+            <div
+              className="flex flex-wrap rounded-xl border bg-muted/30 p-1"
+              role="group"
+              aria-label="Stock level filter"
+            >
+              {STOCK_FILTER_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStockFilter(value)}
+                  className={cn(
+                    "rounded-lg px-3 py-2 text-xs font-medium transition-all",
+                    stockFilter === value
+                      ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
+                      : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             {isFiltered ? (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="flex-1 sm:flex-none">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
                 <X className="size-4" aria-hidden />
-                Clear
+                Clear filters
               </Button>
             ) : null}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void handleExportProducts()}
-              disabled={!hasProducts || isLoading}
-              className="flex-1 sm:flex-none"
-            >
-              <Download className="size-4" aria-hidden />
-              Export CSV
-            </Button>
-            <Button
-              size="sm"
-              className="shadow-sm flex-1 sm:flex-none"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <Plus className="size-4" aria-hidden />
-              Add product
-            </Button>
           </div>
         </div>
       </div>
@@ -326,6 +335,16 @@ export function ProductsList() {
           }
         }}
         onUpdated={() => {
+          void fetchProducts();
+          void refreshCatalogStats();
+        }}
+      />
+
+      <UploadProductsModal
+        open={isUploadModalOpen}
+        onOpenChange={setIsUploadModalOpen}
+        onUploaded={() => {
+          setPage(1);
           void fetchProducts();
           void refreshCatalogStats();
         }}

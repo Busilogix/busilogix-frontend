@@ -141,26 +141,26 @@ export function DashboardView() {
 
       {showGettingStarted ? <GettingStartedCard /> : null}
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-4">
         {quickActions.map((action) => (
           <Link
             key={action.href}
             href={action.href}
-            className="group flex items-start gap-4 rounded-2xl border border-primary/5 bg-gradient-to-br from-card to-muted/10 p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5"
+            className="group flex flex-col xs:flex-row items-center xs:items-start gap-2 sm:gap-4 rounded-xl sm:rounded-2xl border border-primary/5 bg-gradient-to-br from-card to-muted/10 p-2.5 sm:p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5"
           >
             <span
               className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-lg ring-1 transition-all duration-300 group-hover:scale-105",
+                "flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg ring-1 transition-all duration-300 group-hover:scale-105",
                 action.tone,
               )}
             >
               <action.icon className="size-4" aria-hidden />
             </span>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+            <div className="min-w-0 text-center xs:text-left">
+              <p className="text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate w-full">
                 {action.title}
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium hidden sm:block">
                 {action.description}
               </p>
             </div>
@@ -169,83 +169,83 @@ export function DashboardView() {
       </section>
 
       {/* Premium KPI Metrics Section */}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {/* Gross Sales */}
-        <div className="surface-card group relative overflow-hidden rounded-2xl border border-emerald-500/10 bg-gradient-to-br from-card via-card to-emerald-500/[0.02] p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div className="surface-card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-emerald-500/10 bg-gradient-to-br from-card via-card to-emerald-500/[0.02] p-3.5 sm:p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
           <div className="absolute top-0 left-0 h-[3px] w-full bg-emerald-500" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Gross Sales</span>
-            <span className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400">
-              <CircleDollarSign className="size-4 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-muted-foreground">Gross Sales</span>
+            <span className="rounded-lg bg-emerald-500/10 p-1.5 sm:p-2 text-emerald-600 dark:text-emerald-400">
+              <CircleDollarSign className="size-3.5 sm:size-4 shrink-0" />
             </span>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black tracking-tight text-foreground tabular-nums">
+          <div className="mt-2.5 sm:mt-4">
+            <h3 className="text-base sm:text-2xl font-black tracking-tight text-foreground tabular-nums leading-none sm:leading-normal">
               {formatCurrency(grossSales, "INR")}
             </h3>
-            <p className="mt-1 text-xs text-muted-foreground/80">Billing volume before deductions</p>
+            <p className="mt-1 text-xs text-muted-foreground/80 hidden sm:block">Billing volume before deductions</p>
           </div>
         </div>
 
         {/* Net Revenue */}
-        <div className="surface-card group relative overflow-hidden rounded-2xl border border-blue-500/10 bg-gradient-to-br from-card via-card to-blue-500/[0.02] p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div className="surface-card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-blue-500/10 bg-gradient-to-br from-card via-card to-blue-500/[0.02] p-3.5 sm:p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
           <div className="absolute top-0 left-0 h-[3px] w-full bg-blue-500" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Net Revenue</span>
-            <span className="rounded-lg bg-blue-500/10 p-2 text-blue-600 dark:text-blue-400">
-              <TrendingUp className="size-4 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-muted-foreground">Net Revenue</span>
+            <span className="rounded-lg bg-blue-500/10 p-1.5 sm:p-2 text-blue-600 dark:text-blue-400">
+              <TrendingUp className="size-3.5 sm:size-4 shrink-0" />
             </span>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black tracking-tight text-foreground tabular-nums">
+          <div className="mt-2.5 sm:mt-4">
+            <h3 className="text-base sm:text-2xl font-black tracking-tight text-foreground tabular-nums leading-none sm:leading-normal">
               {formatCurrency(netRevenue, "INR")}
             </h3>
-            <p className="mt-1 text-xs text-muted-foreground/80">Earnings after tax and discounts</p>
+            <p className="mt-1 text-xs text-muted-foreground/80 hidden sm:block">Earnings after tax and discounts</p>
           </div>
         </div>
 
         {/* Total Invoices */}
-        <div className="surface-card group relative overflow-hidden rounded-2xl border border-violet-500/10 bg-gradient-to-br from-card via-card to-violet-500/[0.02] p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div className="surface-card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-violet-500/10 bg-gradient-to-br from-card via-card to-violet-500/[0.02] p-3.5 sm:p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
           <div className="absolute top-0 left-0 h-[3px] w-full bg-violet-500" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Invoices</span>
-            <span className="rounded-lg bg-violet-500/10 p-2 text-violet-600 dark:text-violet-400">
-              <FileText className="size-4 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-muted-foreground">Invoices</span>
+            <span className="rounded-lg bg-violet-500/10 p-1.5 sm:p-2 text-violet-600 dark:text-violet-400">
+              <FileText className="size-3.5 sm:size-4 shrink-0" />
             </span>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black tracking-tight text-foreground tabular-nums">
+          <div className="mt-2.5 sm:mt-4">
+            <h3 className="text-base sm:text-2xl font-black tracking-tight text-foreground tabular-nums leading-none sm:leading-normal">
               {totalInvoices.toLocaleString()}
             </h3>
-            <p className="mt-1 text-xs text-muted-foreground/80">Issued invoice transactions count</p>
+            <p className="mt-1 text-xs text-muted-foreground/80 hidden sm:block">Issued invoice transactions count</p>
           </div>
         </div>
 
         {/* Low Stock Alerts */}
-        <div className="surface-card group relative overflow-hidden rounded-2xl border border-amber-500/10 bg-gradient-to-br from-card via-card to-amber-500/[0.02] p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div className="surface-card group relative overflow-hidden rounded-xl sm:rounded-2xl border border-amber-500/10 bg-gradient-to-br from-card via-card to-amber-500/[0.02] p-3.5 sm:p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
           <div className="absolute top-0 left-0 h-[3px] w-full bg-amber-500" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Low Stock</span>
-            <span className="rounded-lg bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
-              <Boxes className="size-4 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-muted-foreground">Low Stock</span>
+            <span className="rounded-lg bg-amber-500/10 p-1.5 sm:p-2 text-amber-600 dark:text-amber-400">
+              <Boxes className="size-3.5 sm:size-4 shrink-0" />
             </span>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-black tracking-tight text-foreground tabular-nums">
+          <div className="mt-2.5 sm:mt-4">
+            <h3 className="text-base sm:text-2xl font-black tracking-tight text-foreground tabular-nums leading-none sm:leading-normal">
               {lowStockProducts.toString()}
             </h3>
-            <p className="mt-1 text-xs text-muted-foreground/80">Out of {totalProducts} total catalog items</p>
+            <p className="mt-1 text-xs text-muted-foreground/80 hidden sm:block">Out of {totalProducts} total catalog items</p>
           </div>
         </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-2 min-w-0">
           <RecentInvoicesTable invoices={mappedInvoices} />
         </div>
 
         {/* Styled Top Selling Products Widget */}
-        <Card size="sm" className="surface-card rounded-2xl border border-primary/5 shadow-sm flex flex-col overflow-hidden">
+        <Card size="sm" className="surface-card rounded-2xl border border-primary/5 shadow-sm flex flex-col overflow-hidden min-w-0">
           <CardHeader className="border-b px-5 py-4 bg-muted/10">
             <CardTitle className="flex items-center gap-2 text-sm font-bold">
               <ShoppingBag className="size-4 text-primary" />
@@ -259,51 +259,53 @@ export function DashboardView() {
                 No product sales logged yet.
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="pl-5 font-bold">Product Item</TableHead>
-                    <TableHead className="text-right pr-5 font-bold">Qty Sold</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(() => {
-                    const maxQty = Math.max(...topProducts.map(p => p.quantitySold), 1);
-                    return topProducts.map((product, idx) => {
-                      const percentage = Math.min(100, Math.round((product.quantitySold / maxQty) * 100));
-                      const letterCode = product.productName.substring(0, 2).toUpperCase();
-                      const initialsColors = [
-                        "bg-blue-500/10 text-blue-500 border-blue-500/20",
-                        "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-                        "bg-violet-500/10 text-violet-500 border-violet-500/20",
-                        "bg-amber-500/10 text-amber-500 border-amber-500/20",
-                      ];
-                      const bgStyle = initialsColors[idx % initialsColors.length];
+              <div className="overflow-x-auto w-full min-w-0">
+                <Table className="min-w-[400px]">
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="pl-5 font-bold">Product Item</TableHead>
+                      <TableHead className="text-right pr-5 font-bold">Qty Sold</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(() => {
+                      const maxQty = Math.max(...topProducts.map(p => p.quantitySold), 1);
+                      return topProducts.map((product, idx) => {
+                        const percentage = Math.min(100, Math.round((product.quantitySold / maxQty) * 100));
+                        const letterCode = product.productName.substring(0, 2).toUpperCase();
+                        const initialsColors = [
+                          "bg-blue-500/10 text-blue-500 border-blue-500/20",
+                          "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+                          "bg-violet-500/10 text-violet-500 border-violet-500/20",
+                          "bg-amber-500/10 text-amber-500 border-amber-500/20",
+                        ];
+                        const bgStyle = initialsColors[idx % initialsColors.length];
 
-                      return (
-                        <TableRow key={product.productId} className="hover:bg-muted/40 transition-colors duration-150">
-                          <TableCell className="font-semibold text-xs text-foreground pl-5 py-3">
-                            <div className="flex items-center gap-3">
-                              <span className={cn("flex size-7 items-center justify-center rounded-lg border text-[10px] font-black tracking-wider", bgStyle)}>
-                                {letterCode}
-                              </span>
-                              <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="truncate max-w-[150px]">{product.productName}</span>
-                                <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden shadow-inner hidden sm:block mt-1">
-                                  <div className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full" style={{ width: `${percentage}%` }} />
+                        return (
+                          <TableRow key={product.productId} className="hover:bg-muted/40 transition-colors duration-150">
+                            <TableCell className="font-semibold text-xs text-foreground pl-5 py-3">
+                              <div className="flex items-center gap-3">
+                                <span className={cn("flex size-7 items-center justify-center rounded-lg border text-[10px] font-black tracking-wider", bgStyle)}>
+                                  {letterCode}
+                                </span>
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                  <span className="whitespace-nowrap font-bold">{product.productName}</span>
+                                  <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden shadow-inner mt-1">
+                                    <div className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full" style={{ width: `${percentage}%` }} />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-xs text-foreground pr-5 tabular-nums py-3">
-                            {product.quantitySold}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    });
-                  })()}
-                </TableBody>
-              </Table>
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-xs text-foreground pr-5 tabular-nums py-3">
+                              {product.quantitySold}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      });
+                    })()}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

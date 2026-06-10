@@ -14,6 +14,7 @@ type ProductsPageHeaderProps = {
   search: string;
   stockFilter: ProductStockFilter;
   onStockFilterChange: (filter: ProductStockFilter) => void;
+  actions?: React.ReactNode;
 };
 
 export function ProductsPageHeader({
@@ -24,12 +25,14 @@ export function ProductsPageHeader({
   search,
   stockFilter,
   onStockFilterChange,
+  actions,
 }: ProductsPageHeaderProps) {
   return (
     <div className="space-y-4">
       <ListPageHeader
         title="Products"
         description="Create and organize your product catalog, SKU details, and customer-facing pricing."
+        actions={actions}
       />
       <ProductsOverviewCards
         stats={stats}
