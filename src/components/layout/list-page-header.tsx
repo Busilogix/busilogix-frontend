@@ -23,6 +23,7 @@ type ListPageHeaderProps = {
     href: string;
     icon?: LucideIcon;
   };
+  actions?: React.ReactNode;
   metrics?: ListPageMetric[];
   className?: string;
 };
@@ -31,6 +32,7 @@ export function ListPageHeader({
   title,
   description,
   action,
+  actions,
   metrics = [],
   className,
 }: ListPageHeaderProps) {
@@ -48,7 +50,11 @@ export function ListPageHeader({
               {description}
             </p>
           </div>
-          {action ? (
+          {actions ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {actions}
+            </div>
+          ) : action ? (
             <Button
               render={<Link href={action.href} />}
               className="shrink-0 shadow-sm"

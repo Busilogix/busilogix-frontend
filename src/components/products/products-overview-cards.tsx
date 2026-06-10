@@ -65,18 +65,18 @@ function SnapshotStat({
     <>
       <span
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-lg ring-1",
+          "flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-lg ring-1",
           toneClasses[tone],
         )}
       >
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="mt-0.5 text-2xl font-bold tabular-nums tracking-tight text-foreground">
+        <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground truncate">{label}</p>
+        <p className="mt-0.5 text-base sm:text-2xl font-bold tabular-nums tracking-tight text-foreground leading-none sm:leading-normal">
           {value}
         </p>
-        <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+        <p className="mt-0.5 text-[10px] sm:text-xs leading-snug text-muted-foreground hidden sm:block">
           {description}
         </p>
       </div>
@@ -89,7 +89,7 @@ function SnapshotStat({
         type="button"
         onClick={onClick}
         className={cn(
-          "flex min-w-0 items-start gap-3 rounded-xl border p-3 text-left transition-colors",
+          "flex min-w-0 items-start gap-2 sm:gap-3 rounded-xl border p-2.5 sm:p-3 text-left transition-colors w-full",
           isActive
             ? "border-primary/30 bg-primary/5 shadow-sm"
             : "border-transparent bg-muted/20 hover:border-border hover:bg-muted/40",
@@ -101,7 +101,7 @@ function SnapshotStat({
   }
 
   return (
-    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-transparent bg-muted/20 p-3">
+    <div className="flex min-w-0 items-start gap-2 sm:gap-3 rounded-xl border border-transparent bg-muted/20 p-2.5 sm:p-3">
       {content}
     </div>
   );
@@ -110,17 +110,16 @@ function SnapshotStat({
 function OverviewSkeleton() {
   return (
     <Card className="surface-card overflow-hidden rounded-xl">
-      <CardContent className="p-5 sm:p-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <Skeleton className="h-7 w-40" />
             <Skeleton className="h-4 w-56" />
           </div>
-          <Skeleton className="h-14 w-28 rounded-xl" />
         </div>
-        <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 sm:mt-5 grid grid-cols-2 gap-2 border-t pt-4 sm:pt-5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-24 rounded-xl" />
+            <Skeleton key={index} className="h-16 sm:h-24 rounded-xl" />
           ))}
         </div>
       </CardContent>
@@ -164,11 +163,11 @@ export function ProductsOverviewCards({
 
   return (
     <Card className="surface-card overflow-hidden rounded-xl">
-      <CardContent className="p-5 sm:p-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+            <div className="flex items-center gap-3">
+              <span className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
                 {isFiltered ? (
                   <Search className="size-4" aria-hidden />
                 ) : (
@@ -176,32 +175,18 @@ export function ProductsOverviewCards({
                 )}
               </span>
               <div className="min-w-0">
-                <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                <h2 className="text-base sm:text-xl font-semibold tracking-tight text-foreground">
                   {isFiltered ? "Filtered catalog view" : "Catalog snapshot"}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {headlineDescription}
                 </p>
               </div>
             </div>
           </div>
-
-          <div className="flex shrink-0 items-center gap-3 rounded-xl border bg-muted/30 px-4 py-3">
-            <div className="text-right">
-              <p className="text-xs font-medium text-muted-foreground">
-                {headlineTitle}
-              </p>
-              <p className="text-3xl font-bold tabular-nums leading-none text-foreground">
-                {headlineValue}
-              </p>
-            </div>
-            <span className="flex size-11 items-center justify-center rounded-lg bg-background text-primary shadow-sm ring-1 ring-border/60">
-              <Package className="size-5" aria-hidden />
-            </span>
-          </div>
         </div>
 
-        <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 sm:mt-5 grid grid-cols-2 gap-2 border-t pt-4 sm:pt-5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
           <SnapshotStat
             icon={<Package className="size-4" aria-hidden />}
             label="Total products"
