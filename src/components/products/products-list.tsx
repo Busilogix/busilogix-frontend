@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Package, Plus, Search, X } from "lucide-react";
+import { Download, Package, Plus, Search, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 
 import { CreateProductModal } from "./create-product-modal";
 import { EditProductModal } from "./edit-product-modal";
+import { UploadProductsModal } from "./upload-products-modal";
+
 import { ProductsPageHeader } from "./products-page-header";
 import { ProductsPagination } from "./products-pagination";
 import { ProductsTable } from "./products-table";
@@ -65,6 +67,8 @@ export function ProductsList() {
   const [isStatsLoading, setIsStatsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
 
   const stockQuery = useMemo(
     () => stockFilterToQuery(stockFilter),
@@ -296,6 +300,15 @@ export function ProductsList() {
               Export CSV
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsUploadModalOpen(true)}
+              className="flex-1 sm:flex-none"
+            >
+              <Upload className="size-4" aria-hidden />
+              Import CSV/XLSX
+            </Button>
+            <Button
               size="sm"
               className="shadow-sm flex-1 sm:flex-none"
               onClick={() => setIsCreateModalOpen(true)}
@@ -326,6 +339,16 @@ export function ProductsList() {
           }
         }}
         onUpdated={() => {
+          void fetchProducts();
+          void refreshCatalogStats();
+        }}
+      />
+
+      <UploadProductsModal
+        open={isUploadModalOpen}
+        onOpenChange={setIsUploadModalOpen}
+        onUploaded={() => {
+          setPage(1);
           void fetchProducts();
           void refreshCatalogStats();
         }}

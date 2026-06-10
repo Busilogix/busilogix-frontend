@@ -109,6 +109,36 @@ class ProductService {
 
     return { message };
   }
+
+  async upload(file: File): Promise<ProductMutationResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await apiClient.post<BackendEnvelope>(
+      `/uploads/products`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    const { message } = parseAuthResponse(response);
+
+    return { message };
+  }
+
+  async downloadSample(): Promise<Blob> {
+    const response = await apiClient.get(
+      `/uploads/products/sample`,
+      {
+        responseType: "blob",
+      },
+    );
+    return response.data;
+  }
 }
 
 export const productService = new ProductService();
+
