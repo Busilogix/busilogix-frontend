@@ -142,7 +142,7 @@ export function PhoneInput({
   return (
     <div
       className={cn(
-        "relative flex items-center w-full h-10 rounded-xl border border-input bg-background/80 shadow-inner shadow-slate-950/5 transition-all outline-none focus-within:border-ring focus-within:bg-background focus-within:ring-3 focus-within:ring-ring/50",
+        "relative flex items-center w-full h-10 rounded-xl border border-input bg-background/80 shadow-inner shadow-slate-950/5 transition-[border-color,box-shadow,background-color] duration-200 ease-in-out outline-none focus-within:border-ring focus-within:bg-background focus-within:ring-3 focus-within:ring-ring/50",
         disabled && "pointer-events-none cursor-not-allowed bg-input/50 opacity-50 dark:disabled:bg-input/80"
       )}
       ref={dropdownRef}
@@ -151,7 +151,7 @@ export function PhoneInput({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-full shrink-0 items-center gap-1.5 rounded-l-xl border-r border-input/60 bg-slate-50/50 hover:bg-slate-100/70 px-3 text-sm transition-all focus:outline-none disabled:pointer-events-none disabled:opacity-50 dark:bg-input/10"
+        className="flex h-full shrink-0 items-center gap-1.5 rounded-l-xl border-r border-input/30 bg-slate-50/50 hover:bg-slate-100/70 px-3 text-sm transition-colors duration-200 focus:outline-none disabled:pointer-events-none disabled:opacity-50 dark:bg-input/10 dark:border-input/20"
       >
         <span className="text-base leading-none select-none">{selectedCountry.flag}</span>
         <span className="font-mono text-xs text-muted-foreground">{selectedCountry.dialCode}</span>
