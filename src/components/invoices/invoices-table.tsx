@@ -86,7 +86,7 @@ export function InvoicesTable({
                     <div className="flex flex-col gap-0.5">
                       <Link
                         href={`/invoices/${invoice.id}`}
-                        className="font-mono text-sm font-semibold hover:text-primary hover:underline"
+                        className="font-mono text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                       >
                         {invoice.invoice_number}
                       </Link>
@@ -183,7 +183,7 @@ export function InvoicesTable({
               <div className="flex items-center justify-between">
                 <Link
                   href={`/invoices/${invoice.id}`}
-                  className="font-mono text-sm font-bold text-foreground hover:text-primary hover:underline"
+                  className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   {invoice.invoice_number}
                 </Link>

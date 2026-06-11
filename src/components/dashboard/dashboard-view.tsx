@@ -122,7 +122,7 @@ export function DashboardView() {
     id: inv.invoiceId,
     invoice_number: inv.invoiceNumber,
     customer_id: "",
-    customer_name: inv.customerName,
+    customer_name: inv.customerName || "Walk-in Customer",
     status: "PAID" as const, // Default status for display mapping since api only has netAmount
     issue_date: inv.createdAt,
     due_date: inv.createdAt,

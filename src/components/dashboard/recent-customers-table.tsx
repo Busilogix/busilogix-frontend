@@ -67,14 +67,14 @@ export function RecentCustomersTable({ customers }: RecentCustomersTableProps) {
                       href={`/customers/${customer.id}/edit`}
                       className="font-medium hover:text-primary hover:underline"
                     >
-                      {customer.name}
+                      {customer.name || "Walk-in Customer"}
                     </Link>
                     <p className="text-xs text-muted-foreground md:hidden">
-                      {customer.email}
+                      {customer.email || "No Email"}
                     </p>
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground md:table-cell">
-                    {customer.email}
+                    {customer.email || "No Email"}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     {customer.phone}

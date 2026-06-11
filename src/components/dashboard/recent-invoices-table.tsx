@@ -69,7 +69,7 @@ export function RecentInvoicesTable({ invoices }: RecentInvoicesTableProps) {
                     <TableCell>
                       <Link
                         href={`/invoices/${invoice.id}`}
-                        className="font-mono text-sm font-medium hover:text-primary hover:underline"
+                        className="font-mono text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
                       >
                         {invoice.invoice_number}
                       </Link>

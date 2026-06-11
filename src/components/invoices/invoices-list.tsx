@@ -39,6 +39,7 @@ import type {
 } from "@/lib/invoices/types";
 import { invoiceService } from "@/lib/api/invoice.service";
 import { downloadCsv } from "@/lib/export/csv";
+import { triggerFileDownload } from "@/lib/utils";
 
 import { InvoicePagination } from "./invoice-pagination";
 import { InvoicesTable, type InvoiceAction } from "./invoices-table";
@@ -108,7 +109,7 @@ export function InvoicesList() {
           id: inv.id,
           invoice_number: inv.invoiceNumber,
           customer_id: inv.customer?.id || "",
-          customer_name: inv.customer?.name || "Unknown Customer",
+          customer_name: inv.customer?.name || "Walk-in Customer",
           status,
           issue_date: inv.createdAt,
           due_date: inv.createdAt,
@@ -168,6 +169,29 @@ export function InvoicesList() {
     );
   }
 
+  async function performMarkPaid(invoice: InvoiceListRecord) {
+    await invoiceService.update(invoice.id, { status: "PAID" });
+    refreshInvoices();
+    toast.success("Invoice marked as paid", { description: `${invoice.invoice_number} is now included in total revenue.` });
+  }
+
+  async function performDownloadPdf(invoice: InvoiceListRecord) {
+    const blob = await invoiceService.downloadPdf(invoice.id);
+    triggerFileDownload(blob, `${invoice.invoice_number}.pdf`);
+    toast.success("PDF downloaded", { description: `${invoice.invoice_number}.pdf downloaded successfully.` });
+  }
+
+  function performDuplicate() {
+    toast.error("Duplicate failed", { description: "Duplication is not supported." });
+  }
+
+  async function performEmailInvoice(invoice: InvoiceListRecord) {
+    await invoiceService.send(invoice.id);
+    toast.success("Email sent successfully", {
+      description: `Invoice ${invoice.invoice_number} has been emailed to ${invoice.customer_name}.`,
+    });
+  }
+
   async function handleAction(
     action: InvoiceAction,
     invoice: InvoiceListRecord,
@@ -177,56 +201,31 @@ export function InvoicesList() {
       return;
     }
 
-    // No action feedback state; toast will handle notifications
     setPendingActionId(invoice.id);
 
     try {
       await new Promise((resolve) => setTimeout(resolve, ACTION_DELAY_MS));
 
-      if (action === "mark-paid") {
-        await invoiceService.update(invoice.id, { status: "PAID" });
-        refreshInvoices();
-        toast.success("Invoice marked as paid", { description: `${invoice.invoice_number} is now included in total revenue.` });
-        return;
+      switch (action) {
+        case "mark-paid":
+          await performMarkPaid(invoice);
+          break;
+        case "download":
+          await performDownloadPdf(invoice);
+          break;
+        case "duplicate":
+          performDuplicate();
+          break;
+        case "email":
+          await performEmailInvoice(invoice);
+          break;
       }
-
-      if (action === "download") {
-        try {
-          const blob = await invoiceService.downloadPdf(invoice.id);
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", `${invoice.invoice_number}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          link.parentNode?.removeChild(link);
-          window.URL.revokeObjectURL(url);
-          toast.success("PDF downloaded", { description: `${invoice.invoice_number}.pdf downloaded successfully.` });
-        } catch (error) {
-          console.error("Failed to download PDF:", error);
-          toast.error("Download failed", { description: "Unable to download PDF from backend. Please try again." });
-        }
-        return;
-      }
-
-      if (action === "duplicate") {
-        toast.error("Duplicate failed", { description: "Duplication is not supported." });
-        return;
-      }
-
-      const messages: Record<
-        Exclude<InvoiceAction, "view" | "mark-paid" | "duplicate" | "download">,
-        { title: string; message: string }
-      > = {
-        email: {
-          title: "Email sent (preview)",
-          message: `Invoice ${invoice.invoice_number} would be emailed to ${invoice.customer_name}. API integration pending.`,
-        },
-      };
-
-      toast.success(messages[action].title, { description: messages[action].message });
-    } catch {
-      toast.error("Action failed", { description: "Something went wrong. Please try again." });
+    } catch (err: unknown) {
+      console.error(`Action ${action} failed:`, err);
+      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      toast.error("Action failed", {
+        description: msg,
+      });
     } finally {
       setPendingActionId(null);
     }

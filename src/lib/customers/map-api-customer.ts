@@ -36,7 +36,7 @@ export function mapApiCustomerToRecord(customer: ApiCustomer): CustomerRecord {
 }
 
 export function getCustomerDisplayName(customer: CustomerRecord): string {
-  return customer.name.trim() || customer.phone.trim() || "Unnamed customer";
+  return customer.name.trim() || "Walk-in Customer";
 }
 
 export function mapApiCustomerToFormInput(
