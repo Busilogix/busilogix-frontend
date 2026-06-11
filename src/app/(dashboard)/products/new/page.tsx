@@ -5,10 +5,22 @@ import { PageContainer } from "@/components/layout/page-container";
 import { ProductForm } from "@/components/products/product-form";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { sharedOpenGraph, sharedTwitter } from "@/app/shared-metadata";
 
 export const metadata: Metadata = {
   title: "Add Product",
   description: "Create a new product catalog item",
+  openGraph: {
+    ...sharedOpenGraph,
+    title: "Add Product | Busilogix",
+    description: "Create a new product catalog item",
+    url: "/products/new",
+  },
+  twitter: {
+    ...sharedTwitter,
+    title: "Add Product | Busilogix",
+    description: "Create a new product catalog item",
+  },
 };
 
 export default function NewProductPage() {

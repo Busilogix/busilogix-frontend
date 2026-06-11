@@ -2,6 +2,7 @@ export { AppLogo } from "./app-logo";
 export { ListPageHeader, type ListPageMetric } from "./list-page-header";
 export { SidebarHeader } from "./sidebar-brand";
 export { AppNavbar } from "./app-navbar";
+export { AppFooter } from "./app-footer";
 export { AppShell } from "./app-shell";
 export { AppSidebar } from "./app-sidebar";
 export { EmptyState } from "./empty-state";
