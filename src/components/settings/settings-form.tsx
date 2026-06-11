@@ -325,7 +325,7 @@ export function SettingsForm() {
               </div>
 
               <Field data-invalid={!!errors.gst_number || undefined}>
-                <FieldLabel htmlFor="gst_number">GST number</FieldLabel>
+                <FieldLabel htmlFor="gst_number">GST number (optional)</FieldLabel>
                 <Input
                   id="gst_number"
                   placeholder="27AABCU9603R1ZM"

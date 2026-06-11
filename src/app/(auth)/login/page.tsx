@@ -20,13 +20,23 @@ export const metadata: Metadata = {
 };
 
 type LoginPageProps = {
-  searchParams: Promise<{ registered?: string }>;
+  searchParams: Promise<{ registered?: string; error?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const registeredMessage =
     params.registered === "1" ? "Account created — sign in to continue." : null;
+  const errorMessage =
+    params.error === "oauth_failed"
+      ? "Google sign in failed. Please try again."
+      : null;
 
-  return <LoginForm registeredMessage={registeredMessage} />;
+  return (
+    <LoginForm
+      registeredMessage={registeredMessage}
+      errorMessage={errorMessage}
+    />
+  );
 }
+
