@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { CustomerForm, CustomerFormHeader } from "@/components/customers";
+import { CustomerForm } from "@/components/customers";
 import { PageContainer } from "@/components/layout/page-container";
 
 type EditCustomerPageProps = {
@@ -24,11 +24,11 @@ export default async function EditCustomerPage({
   const { id } = await params;
 
   return (
-    <PageContainer>
-      <div className="space-y-6">
-        <CustomerFormHeader mode="edit" />
-        <CustomerForm mode="edit" customerId={id} />
-      </div>
+    <PageContainer
+      title="Edit customer"
+      description="Update contact and billing details used across invoices and customer records."
+    >
+      <CustomerForm mode="edit" customerId={id} />
     </PageContainer>
   );
 }

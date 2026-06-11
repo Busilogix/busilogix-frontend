@@ -53,7 +53,7 @@ export function RecentInvoicesTable({ invoices }: RecentInvoicesTableProps) {
             />
           </div>
         ) : (
-          <div className="overflow-x-auto w-full min-w-0">
+          <div className="overflow-x-auto w-full min-w-0 scrollbar-thin">
             <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>

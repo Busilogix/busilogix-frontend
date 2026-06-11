@@ -259,8 +259,8 @@ export function DashboardView() {
                 No product sales logged yet.
               </div>
             ) : (
-              <div className="overflow-x-auto w-full min-w-0">
-                <Table className="min-w-[400px]">
+              <div className="overflow-x-auto w-full min-w-0 scrollbar-thin">
+                <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30">
                       <TableHead className="pl-5 font-bold">Product Item</TableHead>
@@ -283,13 +283,13 @@ export function DashboardView() {
 
                         return (
                           <TableRow key={product.productId} className="hover:bg-muted/40 transition-colors duration-150">
-                            <TableCell className="font-semibold text-xs text-foreground pl-5 py-3">
+                            <TableCell className="font-semibold text-xs text-foreground pl-5 py-3 whitespace-normal min-w-0">
                               <div className="flex items-center gap-3">
                                 <span className={cn("flex size-7 items-center justify-center rounded-lg border text-[10px] font-black tracking-wider", bgStyle)}>
                                   {letterCode}
                                 </span>
                                 <div className="flex flex-col gap-0.5 min-w-0">
-                                  <span className="whitespace-nowrap font-bold">{product.productName}</span>
+                                  <span className="font-bold line-clamp-1">{product.productName}</span>
                                   <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden shadow-inner mt-1">
                                     <div className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full" style={{ width: `${percentage}%` }} />
                                   </div>

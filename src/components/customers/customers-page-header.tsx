@@ -18,6 +18,7 @@ type CustomersPageHeaderProps = {
   dateRange?: DateRange;
   activeDatePreset: CustomerDatePreset;
   onDatePresetChange: (preset: CustomerDatePreset) => void;
+  actions?: React.ReactNode;
 };
 
 export function CustomersPageHeader({
@@ -29,12 +30,14 @@ export function CustomersPageHeader({
   dateRange,
   activeDatePreset,
   onDatePresetChange,
+  actions,
 }: CustomersPageHeaderProps) {
   return (
     <div className="space-y-4">
       <ListPageHeader
         title="Customers"
         description="Manage contact, billing, and tax details so invoices stay accurate and easy to send."
+        actions={actions}
       />
       <CustomersOverviewCards
         stats={stats}

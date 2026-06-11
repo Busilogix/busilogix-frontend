@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { CustomerForm, CustomerFormHeader } from "@/components/customers";
+import { CustomerForm } from "@/components/customers";
 import { PageContainer } from "@/components/layout/page-container";
 
 export const metadata: Metadata = {
@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function NewCustomerPage() {
   return (
-    <PageContainer>
-      <div className="space-y-6">
-        <CustomerFormHeader mode="create" />
-        <CustomerForm mode="create" />
-      </div>
+    <PageContainer
+      title="Add customer"
+      description="Capture contact and billing details so you can create invoices faster with accurate customer information."
+    >
+      <CustomerForm mode="create" />
     </PageContainer>
   );
 }

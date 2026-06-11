@@ -51,91 +51,90 @@ export function CustomersTable({ customers, totalItems }: CustomersTableProps) {
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Customer</TableHead>
-            <TableHead className="hidden md:table-cell">Contact</TableHead>
-            <TableHead className="hidden xl:table-cell">Location</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {customers.map((customer) => {
-            const displayName = getCustomerDisplayName(customer);
+      <div className="overflow-x-auto w-full min-w-0">
+        <Table className="min-w-[750px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Customer</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {customers.map((customer) => {
+              const displayName = getCustomerDisplayName(customer);
 
-            return (
-              <TableRow key={customer.id} className="group">
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <CustomerAvatar name={displayName} />
-                    <div className="min-w-0">
-                      <Link
-                        href={`/customers/${customer.id}`}
-                        className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
-                      >
-                        {displayName}
-                      </Link>
-                      <p className="text-xs text-muted-foreground md:hidden">
-                        {customer.email}
+              return (
+                <TableRow key={customer.id} className="group">
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <CustomerAvatar name={displayName} />
+                      <div className="min-w-0">
+                        <Link
+                          href={`/customers/${customer.id}`}
+                          className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
+                        >
+                          {displayName}
+                        </Link>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1 text-sm">
+                      <p className="flex items-center gap-1.5 text-muted-foreground">
+                        <Mail className="size-3.5 shrink-0" aria-hidden />
+                        <span className="truncate">{customer.email}</span>
+                      </p>
+                      <p className="flex items-center gap-1.5 text-muted-foreground">
+                        <Phone className="size-3.5 shrink-0" aria-hidden />
+                        <span>{customer.phone || "—"}</span>
                       </p>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <div className="space-y-1 text-sm">
-                    <p className="flex items-center gap-1.5 text-muted-foreground">
-                      <Mail className="size-3.5 shrink-0" aria-hidden />
-                      <span className="truncate">{customer.email}</span>
+                  </TableCell>
+                  <TableCell>
+                    <p className="flex max-w-xs items-start gap-1.5 text-sm text-muted-foreground">
+                      <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      <span className="line-clamp-2">{customer.address}</span>
                     </p>
-                    <p className="flex items-center gap-1.5 text-muted-foreground">
-                      <Phone className="size-3.5 shrink-0" aria-hidden />
-                      <span>{customer.phone || "—"}</span>
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden xl:table-cell">
-                  <p className="flex max-w-xs items-start gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                    <span className="line-clamp-2">{customer.address}</span>
-                  </p>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="sm:hidden"
-                      aria-label={`View ${displayName}`}
-                      render={<Link href={`/customers/${customer.id}`} />}
-                    >
-                      <Eye className="size-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="hidden sm:inline-flex"
-                      render={<Link href={`/customers/${customer.id}/edit`} />}
-                    >
-                      <Pencil className="size-3.5" aria-hidden />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="sm:hidden"
-                      aria-label={`Edit ${displayName}`}
-                      render={<Link href={`/customers/${customer.id}/edit`} />}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="sm:hidden"
+                        aria-label={`View ${displayName}`}
+                        render={<Link href={`/customers/${customer.id}`} />}
+                      >
+                        <Eye className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="hidden sm:inline-flex"
+                        render={<Link href={`/customers/${customer.id}/edit`} />}
+                      >
+                        <Pencil className="size-3.5" aria-hidden />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="sm:hidden"
+                        aria-label={`Edit ${displayName}`}
+                        render={<Link href={`/customers/${customer.id}/edit`} />}
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

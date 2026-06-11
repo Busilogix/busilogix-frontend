@@ -221,6 +221,28 @@ export function CustomersList() {
     }
   }
 
+  const headerActions = (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => void handleExportCustomers()}
+        disabled={!hasCustomers || isLoading}
+      >
+        <Download className="size-4" aria-hidden />
+        Export CSV
+      </Button>
+      <Button
+        size="sm"
+        render={<Link href="/customers/new" />}
+        className="shadow-sm"
+      >
+        <Plus className="size-4" aria-hidden />
+        Add customer
+      </Button>
+    </>
+  );
+
   return (
     <div className="space-y-6">
       <CustomersPageHeader
@@ -232,6 +254,7 @@ export function CustomersList() {
         dateRange={dateRange}
         activeDatePreset={datePreset}
         onDatePresetChange={handleDatePresetChange}
+        actions={headerActions}
       />
 
       <div className="surface-card rounded-xl p-4 sm:p-5">
@@ -261,31 +284,17 @@ export function CustomersList() {
             placeholder="Dates"
           />
 
-          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            {isFiltered ? (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="size-4" aria-hidden />
-                Clear
-              </Button>
-            ) : null}
+          {isFiltered ? (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={() => void handleExportCustomers()}
-              disabled={!hasCustomers || isLoading}
+              onClick={clearFilters}
+              className="shrink-0"
             >
-              <Download className="size-4" aria-hidden />
-              Export CSV
+              <X className="size-4" aria-hidden />
+              Clear filters
             </Button>
-            <Button
-              size="sm"
-              render={<Link href="/customers/new" />}
-              className="shadow-sm"
-            >
-              <Plus className="size-4" aria-hidden />
-              Add customer
-            </Button>
-          </div>
+          ) : null}
         </div>
       </div>
 

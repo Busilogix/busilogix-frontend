@@ -232,11 +232,34 @@ export function InvoicesList() {
     }
   }
 
+  const headerActions = (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleExportInvoices}
+        disabled={!hasInvoices}
+      >
+        <Download className="size-4" aria-hidden />
+        Export CSV
+      </Button>
+      <Button
+        size="sm"
+        render={<Link href="/invoices/new" />}
+        className="shadow-sm"
+      >
+        <Plus className="size-4" aria-hidden />
+        Create invoice
+      </Button>
+    </>
+  );
+
   return (
     <div className="space-y-6">
       <ListPageHeader
         title="Invoices"
         description="Create, review, send, and track invoices from one billing workspace."
+        actions={headerActions}
       />
 
       {/* Toast notifications are displayed via Sonner; no UI block needed here */}
@@ -278,32 +301,17 @@ export function InvoicesList() {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {hasActiveFilters ? (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="flex-1 sm:flex-none">
-                <X className="size-4" aria-hidden />
-                Clear
-              </Button>
-            ) : null}
+          {hasActiveFilters ? (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={handleExportInvoices}
-              disabled={!hasInvoices}
-              className="flex-1 sm:flex-none"
+              onClick={clearFilters}
+              className="shrink-0"
             >
-              <Download className="size-4" aria-hidden />
-              Export CSV
+              <X className="size-4" aria-hidden />
+              Clear filters
             </Button>
-            <Button
-              size="sm"
-              render={<Link href="/invoices/new" />}
-              className="shadow-sm flex-1 sm:flex-none"
-            >
-              <Plus className="size-4" aria-hidden />
-              Create invoice
-            </Button>
-          </div>
+          ) : null}
         </div>
       </div>
 
