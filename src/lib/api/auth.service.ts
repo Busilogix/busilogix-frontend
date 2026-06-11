@@ -49,10 +49,6 @@ class AuthService {
 
   logout(): void {
     clearTokens();
-
-    void apiClient
-      .post(`${AUTH_BASE}/logout`, undefined, { timeout: 3_000 })
-      .catch(() => undefined);
   }
 
   async refreshToken(
