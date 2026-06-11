@@ -7,15 +7,15 @@ export const sharedOpenGraph = {
   siteName: "Busilogix",
   images: [
     {
-      url: "/Busilogix.png",
+      url: "/og-banner.png",
       width: 1200,
       height: 630,
-      alt: "Busilogix Preview Image",
+      alt: "Busilogix – Intelligent Commerce Operations Platform",
     },
   ],
 };
 
 export const sharedTwitter = {
   card: "summary_large_image",
-  images: ["/Busilogix.png"],
+  images: ["/og-banner.png"],
 };
