@@ -16,13 +16,12 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
 import { authService } from "@/lib/api/auth.service";
 import { isApiError } from "@/lib/api/errors";
-import { formatMobileNumber } from "@/lib/utils";
 import { signupSchema, type SignupFormValues } from "@/lib/validations/auth";
 
 import { AuthCard, AuthCardLink } from "./auth-card";
+import { GoogleLoginButton } from "./google-login-button";
 
 export function SignupForm() {
   const router = useRouter();
@@ -32,21 +31,17 @@ export function SignupForm() {
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", email: "", mobile: "", password: "" },
+    defaultValues: { name: "", email: "", password: "" },
   });
 
   async function onSubmit(data: SignupFormValues) {
     setIsLoading(true);
 
     try {
-      await authService.signup({
-        ...data,
-        mobile: formatMobileNumber(data.mobile),
-      });
+      await authService.signup(data);
       router.push("/login?registered=1");
     } catch (error) {
       const message = isApiError(error)
@@ -95,46 +90,26 @@ export function SignupForm() {
             <FieldError errors={[errors.name]} />
           </Field>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field data-invalid={!!errors.email || undefined}>
-              <FieldLabel htmlFor="signup-email">Email address</FieldLabel>
-              <div className="relative">
-                <Mail
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="you@company.com"
-                  autoComplete="email"
-                  disabled={isLoading}
-                  aria-invalid={!!errors.email}
-                  className="pl-9"
-                  {...register("email")}
-                />
-              </div>
-              <FieldError errors={[errors.email]} />
-            </Field>
-
-            <Field data-invalid={!!errors.mobile || undefined}>
-              <FieldLabel htmlFor="signup-mobile">Mobile</FieldLabel>
-              <Controller
-                control={control}
-                name="mobile"
-                render={({ field }) => (
-                  <PhoneInput
-                    id="signup-mobile"
-                    disabled={isLoading}
-                    placeholder="98765 43210"
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
+          <Field data-invalid={!!errors.email || undefined}>
+            <FieldLabel htmlFor="signup-email">Email address</FieldLabel>
+            <div className="relative">
+              <Mail
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
               />
-              <FieldError errors={[errors.mobile]} />
-            </Field>
-          </div>
+              <Input
+                id="signup-email"
+                type="email"
+                placeholder="you@company.com"
+                autoComplete="email"
+                disabled={isLoading}
+                aria-invalid={!!errors.email}
+                className="pl-9"
+                {...register("email")}
+              />
+            </div>
+            <FieldError errors={[errors.email]} />
+          </Field>
 
           <Field data-invalid={!!errors.password || undefined}>
             <FieldLabel htmlFor="signup-password">Password</FieldLabel>
@@ -187,7 +162,18 @@ export function SignupForm() {
             )}
           </Button>
 
-          <p className="text-center text-[11px] text-muted-foreground">
+          <div className="relative my-4 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border/80" />
+            </div>
+            <span className="relative bg-background px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+              Or continue with
+            </span>
+          </div>
+
+          <GoogleLoginButton disabled={isLoading} />
+
+          <p className="text-center text-[11px] text-muted-foreground pt-1">
             By signing up, you agree to our{" "}
             <Link
               href="/terms"

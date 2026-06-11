@@ -6,7 +6,6 @@ export type LoginRequest = {
 export type SignupRequest = {
   name: string;
   email: string;
-  mobile: string;
   password: string;
 };
 

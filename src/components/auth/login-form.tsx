@@ -22,12 +22,16 @@ import { isApiError } from "@/lib/api/errors";
 import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
 
 import { AuthCard, AuthCardLink } from "./auth-card";
+import { FormMessage } from "./form-message";
+import { GoogleLoginButton } from "./google-login-button";
+
 
 type LoginFormProps = {
   registeredMessage?: string | null;
+  errorMessage?: string | null;
 };
 
-export function LoginForm({ registeredMessage }: LoginFormProps) {
+export function LoginForm({ registeredMessage, errorMessage }: LoginFormProps) {
   const router = useRouter();
   const { setUserEmail } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -82,6 +86,14 @@ export function LoginForm({ registeredMessage }: LoginFormProps) {
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {errorMessage && (
+          <FormMessage
+            type="error"
+            title="Sign in failed"
+            message={errorMessage}
+            className="mb-4"
+          />
+        )}
         <FieldGroup className="gap-4">
           <Field data-invalid={!!errors.email || undefined}>
             <FieldLabel htmlFor="login-email">Email address</FieldLabel>
@@ -164,6 +176,17 @@ export function LoginForm({ registeredMessage }: LoginFormProps) {
             )}
           </Button>
         </div>
+
+        <div className="relative my-6 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border/80" />
+          </div>
+          <span className="relative bg-background px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+            Or continue with
+          </span>
+        </div>
+
+        <GoogleLoginButton disabled={isLoading} />
       </form>
     </AuthCard>
   );

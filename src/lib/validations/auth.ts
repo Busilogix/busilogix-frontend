@@ -21,13 +21,6 @@ export const signupSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Enter a valid email address"),
-  mobile: z
-    .string()
-    .min(1, "Mobile number is required")
-    .regex(
-      /^[+]?[\d\s()-]{10,15}$/,
-      "Enter a valid mobile number (10–15 digits)",
-    ),
   password: z
     .string()
     .min(1, "Password is required")

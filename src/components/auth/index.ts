@@ -5,3 +5,5 @@ export { FormMessage } from "./form-message";
 export { GuestGuard } from "./guest-guard";
 export { LoginForm } from "./login-form";
 export { SignupForm } from "./signup-form";
+export { GoogleLoginButton } from "./google-login-button";
+

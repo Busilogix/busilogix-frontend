@@ -25,9 +25,8 @@ export const profileFormSchema = z.object({
   postal_code: z.string().min(1, "Postal code is required"),
   gst_number: z
     .string()
-    .min(1, "GST number is required")
     .refine(
-      (value) => gstPattern.test(value.trim().toUpperCase()),
+      (value) => !value.trim() || gstPattern.test(value.trim().toUpperCase()),
       "Enter a valid 15-character GST number",
     ),
 });

@@ -65,3 +65,20 @@ export function clearTokens(): void {
 export function hasAccessToken(): boolean {
   return Boolean(getAccessToken());
 }
+
+export function saveToken(token: string): void {
+  setTokens({ accessToken: token });
+}
+
+export function getToken(): string | null {
+  return getAccessToken();
+}
+
+export function removeToken(): void {
+  clearTokens();
+}
+
+export function isAuthenticated(): boolean {
+  return hasAccessToken();
+}
+
