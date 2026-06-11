@@ -27,7 +27,7 @@ export function AuthCard({
   className,
 }: AuthCardProps) {
   return (
-    <div className={cn("w-full max-w-md", className)}>
+    <div className={cn("w-full max-w-[480px]", className)}>
       <div className="mb-5 flex justify-center lg:hidden">
         <AppLogo variant="auth" href="/login" />
       </div>
