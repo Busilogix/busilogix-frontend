@@ -5,6 +5,7 @@ import { InvoiceForm } from "@/components/invoices";
 import { PageContainer } from "@/components/layout/page-container";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { sharedOpenGraph, sharedTwitter } from "@/app/shared-metadata";
 
 type EditInvoicePageProps = {
   params: Promise<{ id: string }>;
@@ -14,10 +15,23 @@ export async function generateMetadata({
   params,
 }: EditInvoicePageProps): Promise<Metadata> {
   const { id } = await params;
+  const title = `Edit Invoice #${id}`;
+  const description = `Update details, items, tax, and totals for invoice ${id}.`;
 
   return {
-    title: "Edit Invoice",
-    description: `Edit invoice ${id}`,
+    title,
+    description,
+    openGraph: {
+      ...sharedOpenGraph,
+      title: `${title} | Busilogix`,
+      description,
+      url: `/invoices/${id}/edit`,
+    },
+    twitter: {
+      ...sharedTwitter,
+      title: `${title} | Busilogix`,
+      description,
+    },
   };
 }
 

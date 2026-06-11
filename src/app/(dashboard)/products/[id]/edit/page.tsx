@@ -5,6 +5,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { ProductForm } from "@/components/products/product-form";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { sharedOpenGraph, sharedTwitter } from "@/app/shared-metadata";
 
 type EditProductPageProps = {
   params: Promise<{ id: string }>;
@@ -14,10 +15,23 @@ export async function generateMetadata({
   params,
 }: EditProductPageProps): Promise<Metadata> {
   const { id } = await params;
+  const title = `Edit Product #${id}`;
+  const description = `Update details, SKU, pricing, and settings for product ${id}.`;
 
   return {
-    title: "Edit Product",
-    description: `Edit product ${id}`,
+    title,
+    description,
+    openGraph: {
+      ...sharedOpenGraph,
+      title: `${title} | Busilogix`,
+      description,
+      url: `/products/${id}/edit`,
+    },
+    twitter: {
+      ...sharedTwitter,
+      title: `${title} | Busilogix`,
+      description,
+    },
   };
 }
 

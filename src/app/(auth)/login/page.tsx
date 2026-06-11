@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/components/auth";
+import { sharedOpenGraph, sharedTwitter } from "@/app/shared-metadata";
 
 export const metadata: Metadata = {
   title: "Sign in",
   description: "Sign in to your Busilogix account",
+  openGraph: {
+    ...sharedOpenGraph,
+    title: "Sign in | Busilogix",
+    description: "Sign in to your Busilogix account",
+    url: "/login",
+  },
+  twitter: {
+    ...sharedTwitter,
+    title: "Sign in | Busilogix",
+    description: "Sign in to your Busilogix account",
+  },
 };
 
 type LoginPageProps = {

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth-provider";
 
 import "./globals.css";
+import { BASE_URL, sharedOpenGraph, sharedTwitter } from "./shared-metadata";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: {
     default: "Busilogix",
     template: "%s | Busilogix",
@@ -26,6 +28,19 @@ export const metadata: Metadata = {
   icons: {
     icon: "/Busilogix.png",
     apple: "/Busilogix.png",
+  },
+  openGraph: {
+    ...sharedOpenGraph,
+    title: "Busilogix",
+    description:
+      "Professional invoicing and business management platform for modern teams.",
+    url: "/",
+  },
+  twitter: {
+    ...sharedTwitter,
+    title: "Busilogix",
+    description:
+      "Professional invoicing and business management platform for modern teams.",
   },
 };
 

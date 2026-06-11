@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { sharedOpenGraph, sharedTwitter } from "@/app/shared-metadata";
+
 import { CustomerDetailView } from "@/components/customers";
 import { PageContainer } from "@/components/layout/page-container";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,10 +16,23 @@ export async function generateMetadata({
   params,
 }: CustomerDetailPageProps): Promise<Metadata> {
   const { id } = await params;
+  const title = `Customer Profile #${id}`;
+  const description = `Review details, invoice history, paid revenue, and pending balances for customer ${id}.`;
 
   return {
-    title: "Customer Profile",
-    description: `Customer ${id} profile`,
+    title,
+    description,
+    openGraph: {
+      ...sharedOpenGraph,
+      title: `${title} | Busilogix`,
+      description,
+      url: `/customers/${id}`,
+    },
+    twitter: {
+      ...sharedTwitter,
+      title: `${title} | Busilogix`,
+      description,
+    },
   };
 }
 
