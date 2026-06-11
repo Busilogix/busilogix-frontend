@@ -69,19 +69,21 @@ function CustomerFormSection({
   children,
 }: CustomerFormSectionProps) {
   return (
-    <Card className="surface-card h-full rounded-xl">
-      <CardHeader className="border-b px-4 py-3 sm:px-5">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15">
+    <Card className="surface-card h-full rounded-xl gap-3 py-3 sm:gap-4 sm:py-4">
+      <CardHeader className="border-b px-3 pt-2.5 pb-2.5 sm:px-5 sm:pt-4 sm:pb-3.5">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15 sm:size-9">
             {icon}
           </span>
           <div>
-            <CardTitle className="text-sm">{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
+            <CardTitle className="text-xs font-semibold sm:text-sm">{title}</CardTitle>
+            <CardDescription className="text-[10px] leading-tight sm:text-xs">
+              {description}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-5 sm:p-5">{children}</CardContent>
+      <CardContent className="px-3 pt-3.5 sm:px-5 sm:pt-5">{children}</CardContent>
     </Card>
   );
 }
@@ -219,7 +221,7 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
         <FormMessage type="error" title="Save failed" message={submitError} />
       ) : null}
 
-      <div className="surface-card rounded-xl border-primary/10 bg-primary/5 p-4 sm:p-5">
+      <div className="surface-card rounded-xl border-primary/10 bg-primary/5 p-3 sm:p-5">
         <p className="text-sm font-semibold text-foreground">
           {isCreate ? "Before you create an invoice" : "Keep records accurate"}
         </p>
@@ -240,12 +242,12 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
               : "Mobile is read-only on edit"
           }
         >
-          <FieldGroup>
+          <FieldGroup className="gap-3 sm:gap-5">
             <Field data-invalid={!!errors.mobile || undefined}>
               <FieldLabel htmlFor="mobile">
                 Mobile number <span className="text-destructive">*</span>
               </FieldLabel>
-              <FieldDescription>
+              <FieldDescription className="text-[11px] leading-tight sm:text-xs">
                 {isCreate
                   ? "Include country code, e.g. +91 70072 69286."
                   : "Saved at creation and cannot be updated."}
@@ -259,7 +261,7 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
                   id="mobile"
                   type="tel"
                   placeholder="+917007269286"
-                  className="pl-9"
+                  className="h-10 text-sm pl-9"
                   disabled={isSubmitting || !isCreate}
                   readOnly={!isCreate}
                   aria-invalid={!!errors.mobile}
@@ -271,22 +273,29 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
 
             <Field data-invalid={!!errors.name || undefined}>
               <FieldLabel htmlFor="name">Customer name</FieldLabel>
-              <FieldDescription>
+              <FieldDescription className="text-[11px] leading-tight sm:text-xs">
                 Optional. Shown on invoices and lists.
               </FieldDescription>
-              <Input
-                id="name"
-                placeholder="Dhruv Gupta"
-                disabled={isSubmitting}
-                aria-invalid={!!errors.name}
-                {...register("name")}
-              />
+              <div className="relative">
+                <User
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  id="name"
+                  placeholder="Dhruv Gupta"
+                  className="h-10 text-sm pl-9"
+                  disabled={isSubmitting}
+                  aria-invalid={!!errors.name}
+                  {...register("name")}
+                />
+              </div>
               <FieldError errors={[errors.name]} />
             </Field>
 
             <Field data-invalid={!!errors.email || undefined}>
               <FieldLabel htmlFor="email">Email address</FieldLabel>
-              <FieldDescription>
+              <FieldDescription className="text-[11px] leading-tight sm:text-xs">
                 Optional. Used for invoice emails and reminders.
               </FieldDescription>
               <div className="relative">
@@ -298,7 +307,7 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
                   id="email"
                   type="email"
                   placeholder="billing@company.com"
-                  className="pl-9"
+                  className="h-10 text-sm pl-9"
                   disabled={isSubmitting}
                   aria-invalid={!!errors.email}
                   {...register("email")}
@@ -314,28 +323,36 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
           title="Billing address"
           description="Optional — required fields apply only when address is added"
         >
-          <FieldGroup>
+          <FieldGroup className="gap-3 sm:gap-5">
             <Field data-invalid={!!addressErrors?.line1 || undefined}>
               <FieldLabel htmlFor="address-line1">Address line 1</FieldLabel>
-              <FieldDescription>Street, building, or area.</FieldDescription>
-              <Input
-                id="address-line1"
-                placeholder="100 Market Street"
-                disabled={isSubmitting}
-                aria-invalid={!!addressErrors?.line1}
-                {...register("address.line1")}
-              />
+              <FieldDescription className="text-[11px] leading-tight sm:text-xs">Street, building, or area.</FieldDescription>
+              <div className="relative">
+                <MapPin
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <Input
+                  id="address-line1"
+                  placeholder="100 Market Street"
+                  className="h-10 text-sm pl-9"
+                  disabled={isSubmitting}
+                  aria-invalid={!!addressErrors?.line1}
+                  {...register("address.line1")}
+                />
+              </div>
               <FieldError errors={[addressErrors?.line1]} />
             </Field>
 
             <Field data-invalid={!!addressErrors?.line2 || undefined}>
               <FieldLabel htmlFor="address-line2">Address line 2</FieldLabel>
-              <FieldDescription>
+              <FieldDescription className="text-[11px] leading-tight sm:text-xs">
                 Optional apartment, suite, or landmark.
               </FieldDescription>
               <Input
                 id="address-line2"
                 placeholder="Suite 4B"
+                className="h-10 text-sm px-3"
                 disabled={isSubmitting}
                 aria-invalid={!!addressErrors?.line2}
                 {...register("address.line2")}
@@ -349,6 +366,7 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
                 <Input
                   id="address-city"
                   placeholder="Bengaluru"
+                  className="h-10 text-sm px-3"
                   disabled={isSubmitting}
                   aria-invalid={!!addressErrors?.city}
                   {...register("address.city")}
@@ -361,6 +379,7 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
                 <Input
                   id="address-state"
                   placeholder="Karnataka"
+                  className="h-10 text-sm px-3"
                   disabled={isSubmitting}
                   aria-invalid={!!addressErrors?.state}
                   {...register("address.state")}
@@ -374,6 +393,7 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
               <Input
                 id="address-pincode"
                 placeholder="560100"
+                className="h-10 text-sm px-3"
                 disabled={isSubmitting}
                 aria-invalid={!!addressErrors?.pincode}
                 {...register("address.pincode")}
@@ -384,7 +404,7 @@ export function CustomerForm({ mode, customerId }: CustomerFormProps) {
         </CustomerFormSection>
       </div>
 
-      <div className="surface-card sticky bottom-4 z-10 flex flex-col gap-3 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="surface-card sticky bottom-4 z-10 flex flex-col gap-2.5 rounded-xl px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <p className="text-sm text-muted-foreground">
           {isCreate
             ? "Customer will be saved to your account after creation."

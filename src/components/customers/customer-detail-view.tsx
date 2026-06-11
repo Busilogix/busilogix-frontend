@@ -22,14 +22,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCustomerById } from "@/lib/customers/mock-store";
+import { customerService } from "@/lib/api/customer.service";
+import { invoiceService } from "@/lib/api/invoice.service";
+import { mapApiCustomerToRecord } from "@/lib/customers/map-api-customer";
 import type { CustomerRecord } from "@/lib/customers/types";
 import { formatCurrency, formatInvoiceDate } from "@/lib/invoices/format";
-import { getAllInvoices } from "@/lib/invoices/mock-store";
 import type { InvoiceDetailRecord } from "@/lib/invoices/types";
 import { cn } from "@/lib/utils";
-
-const LOAD_DELAY_MS = 500;
 
 type CustomerDetailViewProps = {
   customerId: string;
@@ -41,18 +40,65 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const record = getCustomerById(customerId);
-      setCustomer(record ?? null);
-      setInvoices(
-        getAllInvoices().filter(
-          (invoice) => invoice.customer_id === customerId,
-        ),
-      );
-      setIsLoading(false);
-    }, LOAD_DELAY_MS);
+    let active = true;
 
-    return () => clearTimeout(timer);
+    async function loadCustomerAndInvoices() {
+      setIsLoading(true);
+      try {
+        const apiCustomer = await customerService.getById(customerId);
+        if (!active) return;
+        setCustomer(mapApiCustomerToRecord(apiCustomer));
+
+        const res = await invoiceService.list({ size: 200 });
+        if (!active) return;
+
+        const customerInvoices = res.items.filter(
+          (inv) => inv.customer?.id === customerId,
+        );
+
+        const mappedInvoices = customerInvoices.map(
+          (inv): InvoiceDetailRecord => ({
+            id: inv.id,
+            invoice_number: inv.invoiceNumber,
+            customer_id: customerId,
+            customer_name: inv.customer?.name || "",
+            customer_email: inv.customer?.email || "",
+            customer_phone: inv.customer?.mobile || "",
+            status: inv.status as any,
+            issue_date: inv.createdAt,
+            due_date: inv.createdAt,
+            currency: "INR",
+            subtotal: inv.totalAmount,
+            tax_amount:
+              (inv.cgstAmount || 0) +
+              (inv.sgstAmount || 0) +
+              (inv.igstAmount || 0),
+            total_amount: inv.netAmount,
+            notes: "",
+            line_items: [],
+            created_at: inv.createdAt,
+            updated_at: inv.createdAt,
+          }),
+        );
+
+        setInvoices(mappedInvoices);
+      } catch (err) {
+        console.error("Failed to load customer profile details:", err);
+        if (active) {
+          setCustomer(null);
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadCustomerAndInvoices();
+
+    return () => {
+      active = false;
+    };
   }, [customerId]);
 
   const stats = useMemo(() => {
@@ -94,7 +140,7 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden">
-        <CardContent className="relative grid gap-6 pt-7 lg:grid-cols-[1fr_auto] lg:items-start">
+        <CardContent className="relative grid gap-4 p-4 pt-6 sm:p-6 sm:pt-7 lg:grid-cols-[1fr_auto] lg:items-start">
           <div
             className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary/30 to-transparent"
             aria-hidden
@@ -140,30 +186,30 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card className="interactive-card">
-          <CardContent className="pt-6">
-            <FileText className="size-5 text-violet-600" aria-hidden />
-            <p className="mt-3 text-sm text-muted-foreground">Invoices</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums">
+          <CardContent className="p-3 sm:p-6 text-center sm:text-left">
+            <FileText className="inline-block size-4 text-violet-600 sm:block sm:size-5" aria-hidden />
+            <p className="mt-2 truncate text-[10px] text-muted-foreground sm:text-sm">Invoices</p>
+            <p className="mt-0.5 text-base font-bold tabular-nums tracking-tight sm:text-2xl">
               {stats.invoiceCount}
             </p>
           </CardContent>
         </Card>
         <Card className="interactive-card">
-          <CardContent className="pt-6">
-            <Wallet className="size-5 text-emerald-600" aria-hidden />
-            <p className="mt-3 text-sm text-muted-foreground">Paid revenue</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums">
+          <CardContent className="p-3 sm:p-6 text-center sm:text-left">
+            <Wallet className="inline-block size-4 text-emerald-600 sm:block sm:size-5" aria-hidden />
+            <p className="mt-2 truncate text-[10px] text-muted-foreground sm:text-sm">Paid revenue</p>
+            <p className="mt-0.5 truncate text-base font-bold tabular-nums tracking-tight sm:text-2xl">
               {formatCurrency(stats.paid, stats.currency)}
             </p>
           </CardContent>
         </Card>
         <Card className="interactive-card">
-          <CardContent className="pt-6">
-            <Receipt className="size-5 text-amber-600" aria-hidden />
-            <p className="mt-3 text-sm text-muted-foreground">Pending</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums">
+          <CardContent className="p-3 sm:p-6 text-center sm:text-left">
+            <Receipt className="inline-block size-4 text-amber-600 sm:block sm:size-5" aria-hidden />
+            <p className="mt-2 truncate text-[10px] text-muted-foreground sm:text-sm">Pending</p>
+            <p className="mt-0.5 truncate text-base font-bold tabular-nums tracking-tight sm:text-2xl">
               {formatCurrency(stats.pending, stats.currency)}
             </p>
           </CardContent>
@@ -188,39 +234,41 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
               />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Issue Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      <Link
-                        href={`/invoices/${invoice.id}`}
-                        className="font-mono font-medium hover:text-primary hover:underline"
-                      >
-                        {invoice.invoice_number}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatInvoiceDate(invoice.issue_date)}
-                    </TableCell>
-                    <TableCell>
-                      <InvoiceStatusBadge status={invoice.status} />
-                    </TableCell>
-                    <TableCell className="text-right font-medium tabular-nums">
-                      {formatCurrency(invoice.total_amount, invoice.currency)}
-                    </TableCell>
+            <div className="overflow-x-auto w-full min-w-0">
+              <Table className="min-w-[500px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice</TableHead>
+                    <TableHead>Issue Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <Link
+                          href={`/invoices/${invoice.id}`}
+                          className="font-mono font-medium hover:text-primary hover:underline"
+                        >
+                          {invoice.invoice_number}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatInvoiceDate(invoice.issue_date)}
+                      </TableCell>
+                      <TableCell>
+                        <InvoiceStatusBadge status={invoice.status} />
+                      </TableCell>
+                      <TableCell className="text-right font-medium tabular-nums">
+                        {formatCurrency(invoice.total_amount, invoice.currency)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

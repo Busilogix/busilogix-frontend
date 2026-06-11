@@ -1,7 +1,7 @@
 "use client";
 
 import { Package, Plus, Search, Upload, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { toast } from "sonner";
 
 import { FormMessage } from "@/components/auth/form-message";
@@ -208,26 +208,67 @@ export function ProductsList() {
     }
   }
 
+  const stockUpdateTimeouts = useRef<Record<string, NodeJS.Timeout>>({});
+  const stockPendingValues = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const timeouts = stockUpdateTimeouts.current;
+    return () => {
+      Object.values(timeouts).forEach(clearTimeout);
+    };
+  }, []);
+
   async function handleStockAdjust(product: any, newStock: number) {
     if (newStock < 0) return;
-    try {
-      await productService.update(product.id, {
-        name: product.name,
-        sku: product.sku,
-        sellingPrice: product.price,
-        stockQuantity: newStock,
-        description: product.description || undefined,
-      });
-      toast.success("Stock updated", {
-        description: `${product.name} stock adjusted to ${newStock}.`,
-      });
-      void fetchProducts();
-      void refreshCatalogStats();
-    } catch (error) {
-      toast.error("Failed to update stock", {
-        description: "Something went wrong while adjusting stock.",
-      });
+
+    // 1. Optimistically update local UI state immediately
+    setResult((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((item) =>
+          item.id === product.id ? { ...item, stock: newStock, stockQuantity: newStock } : item
+        ),
+      };
+    });
+
+    // 2. Track the pending final stock quantity
+    stockPendingValues.current[product.id] = newStock;
+
+    // 3. Clear existing debounce timer for this product
+    if (stockUpdateTimeouts.current[product.id]) {
+      clearTimeout(stockUpdateTimeouts.current[product.id]);
     }
+
+    // 4. Schedule a single API call after the debounce period (800ms)
+    stockUpdateTimeouts.current[product.id] = setTimeout(async () => {
+      const finalStock = stockPendingValues.current[product.id];
+      if (finalStock === undefined) return;
+
+      // Clean up tracking references
+      delete stockPendingValues.current[product.id];
+      delete stockUpdateTimeouts.current[product.id];
+
+      try {
+        await productService.update(product.id, {
+          name: product.name,
+          sku: product.sku,
+          sellingPrice: product.price,
+          stockQuantity: finalStock,
+          description: product.description || undefined,
+        });
+        toast.success("Stock updated", {
+          description: `${product.name} stock adjusted to ${finalStock}.`,
+        });
+        void refreshCatalogStats();
+      } catch (error) {
+        toast.error("Failed to update stock", {
+          description: `Unable to adjust stock for ${product.name}.`,
+        });
+        // Revert to database state on failure
+        void fetchProducts();
+      }
+    }, 800);
   }
 
   const headerActions = (

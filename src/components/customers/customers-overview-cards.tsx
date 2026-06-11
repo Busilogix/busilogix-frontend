@@ -60,43 +60,41 @@ function SnapshotStat({
     <>
       <span
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-lg ring-1",
+          "flex size-7 shrink-0 items-center justify-center rounded-lg ring-1 sm:size-9 *:[svg]:size-3.5 sm:*:[svg]:size-4",
           toneClasses[tone],
         )}
       >
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="mt-0.5 text-2xl font-bold tabular-nums tracking-tight text-foreground">
+        <p className="truncate text-[10px] font-medium text-muted-foreground sm:text-xs">{label}</p>
+        <p className="mt-0.5 text-base font-bold tabular-nums tracking-tight text-foreground sm:text-2xl">
           {value}
         </p>
-        <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+        <p className="mt-0.5 hidden text-xs leading-snug text-muted-foreground sm:block">
           {description}
         </p>
       </div>
     </>
   );
 
+  const cardClasses = cn(
+    "flex min-w-0 items-start gap-2 rounded-xl border py-1.5 px-2 text-left transition-colors sm:gap-3 sm:p-3",
+    isActive
+      ? "border-primary/30 bg-primary/5 shadow-sm"
+      : "border-transparent bg-muted/20 hover:border-border hover:bg-muted/40",
+  );
+
   if (onClick) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={cn(
-          "flex min-w-0 items-start gap-3 rounded-xl border p-3 text-left transition-colors",
-          isActive
-            ? "border-primary/30 bg-primary/5 shadow-sm"
-            : "border-transparent bg-muted/20 hover:border-border hover:bg-muted/40",
-        )}
-      >
+      <button type="button" onClick={onClick} className={cardClasses}>
         {content}
       </button>
     );
   }
 
   return (
-    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-transparent bg-muted/20 p-3">
+    <div className={cn(cardClasses, "hover:border-transparent hover:bg-muted/20")}>
       {content}
     </div>
   );
@@ -104,18 +102,17 @@ function SnapshotStat({
 
 function OverviewSkeleton() {
   return (
-    <Card className="surface-card overflow-hidden rounded-xl">
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-7 w-40" />
-            <Skeleton className="h-4 w-56" />
+    <Card className="surface-card overflow-hidden rounded-xl py-2.5 sm:py-4">
+      <CardContent className="p-3 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="space-y-1.5">
+            <Skeleton className="h-5 w-32 sm:h-7 sm:w-40" />
+            <Skeleton className="h-3 w-48 sm:h-4 sm:w-56" />
           </div>
-          <Skeleton className="h-14 w-28 rounded-xl" />
         </div>
-        <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-3.5 grid grid-cols-2 gap-2 border-t pt-3.5 sm:mt-5 sm:gap-3 sm:pt-5 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-24 rounded-xl" />
+            <Skeleton key={index} className="h-16 rounded-xl sm:h-24" />
           ))}
         </div>
       </CardContent>
@@ -149,11 +146,6 @@ export function CustomersOverviewCards({
     dateRange?.to,
   );
 
-  const headlineValue = isFiltered
-    ? matchingCount.toLocaleString()
-    : catalog.total.toLocaleString();
-
-  const headlineTitle = isFiltered ? "Matching customers" : "Customer base";
   const headlineDescription = isFiltered
     ? [search.trim() ? `Search: “${search.trim()}”` : null, dateRangeLabel]
         .filter(Boolean)
@@ -163,45 +155,31 @@ export function CustomersOverviewCards({
   const hasDateFilter = hasDateRangeFilter(dateRange);
 
   return (
-    <Card className="surface-card overflow-hidden rounded-xl">
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="surface-card overflow-hidden rounded-xl py-2.5 sm:py-4">
+      <CardContent className="p-3 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 sm:size-10">
                 {isFiltered ? (
-                  <Search className="size-4" aria-hidden />
+                  <Search className="size-3.5 sm:size-4" aria-hidden />
                 ) : (
-                  <UsersRound className="size-4" aria-hidden />
+                  <UsersRound className="size-3.5 sm:size-4" aria-hidden />
                 )}
               </span>
               <div className="min-w-0">
-                <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-xl">
                   {isFiltered ? "Filtered customer view" : "Customer snapshot"}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   {headlineDescription}
                 </p>
               </div>
             </div>
           </div>
-
-          <div className="flex shrink-0 items-center gap-3 rounded-xl border bg-muted/30 px-4 py-3">
-            <div className="text-right">
-              <p className="text-xs font-medium text-muted-foreground">
-                {headlineTitle}
-              </p>
-              <p className="text-3xl font-bold tabular-nums leading-none text-foreground">
-                {headlineValue}
-              </p>
-            </div>
-            <span className="flex size-11 items-center justify-center rounded-lg bg-background text-primary shadow-sm ring-1 ring-border/60">
-              <Users className="size-5" aria-hidden />
-            </span>
-          </div>
         </div>
 
-        <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-3.5 grid grid-cols-2 gap-2 border-t pt-3.5 sm:mt-5 sm:gap-3 sm:pt-5 lg:grid-cols-4">
           <SnapshotStat
             icon={<Users className="size-4" aria-hidden />}
             label="Total customers"
