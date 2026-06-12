@@ -52,3 +52,29 @@ export type RefreshTokenRequest = {
 };
 
 export type RefreshTokenResponse = AuthTokenResponse;
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ForgotPasswordResponse = {
+  message: string;
+};
+
+export type ResetPasswordRequest = {
+  token: string;
+  newPassword?: string;
+};
+
+export type ResetPasswordResponse = {
+  message: string;
+};
+
+export type ResendVerificationRequest = {
+  email: string;
+};
+
+export type ResendVerificationResponse = {
+  message: string;
+};
+
