@@ -35,6 +35,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import {
   Select,
   SelectContent,
@@ -472,18 +473,6 @@ export function CreateInvoiceForm() {
     };
   }, [focusQuickAdd, handleSubmit, onSubmit]);
 
-  const {
-    ref: mobileRegisterRef,
-    onBlur: mobileOnBlur,
-    ...mobileRegister
-  } = register("customer.mobile", {
-    onChange: () => {
-      lastLookupMobileRef.current = null;
-      if (customerLookup.status !== "idle") {
-        setCustomerLookup({ status: "idle" });
-      }
-    },
-  });
 
   const triggerCustomerLookup = useCallback(() => {
     const mobile = customerMobile?.trim() ?? "";
@@ -572,27 +561,38 @@ export function CreateInvoiceForm() {
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(9rem,1fr)_minmax(8rem,1.2fr)_minmax(10rem,1.4fr)]">
                     <Field data-invalid={!!errors.customer?.mobile || undefined}>
                       <FieldLabel htmlFor="customer-mobile">Mobile</FieldLabel>
-                      <Input
-                        id="customer-mobile"
-                        type="tel"
-                        placeholder="+917075891626"
-                        disabled={isSubmitting}
-                        autoComplete="tel"
-                        ref={(element) => {
-                          mobileRegisterRef(element);
-                          mobileInputRef.current = element;
-                        }}
-                        onBlur={(event) => {
-                          mobileOnBlur(event);
-                          triggerCustomerLookup();
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            triggerCustomerLookup();
-                          }
-                        }}
-                        {...mobileRegister}
+                      <Controller
+                        control={control}
+                        name="customer.mobile"
+                        render={({ field }) => (
+                          <PhoneInput
+                            id="customer-mobile"
+                            placeholder="+917075891626"
+                            disabled={isSubmitting}
+                            ref={(element) => {
+                              field.ref(element);
+                              mobileInputRef.current = element;
+                            }}
+                            value={field.value ?? ""}
+                            onChange={(val) => {
+                              field.onChange(val);
+                              lastLookupMobileRef.current = null;
+                              if (customerLookup.status !== "idle") {
+                                setCustomerLookup({ status: "idle" });
+                              }
+                            }}
+                            onBlur={() => {
+                              field.onBlur();
+                              triggerCustomerLookup();
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                triggerCustomerLookup();
+                              }
+                            }}
+                          />
+                        )}
                       />
                       {customerLookup.status === "loading" ? (
                         <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
