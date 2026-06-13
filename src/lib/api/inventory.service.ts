@@ -6,6 +6,8 @@ import type {
   InventoryLogListParams,
   InventoryLogListResult,
   InventorySummaryData,
+  BulkUploadAuditListPage,
+  BulkUploadAuditListResult,
 } from "./types/inventory.types";
 import { parseAuthResponse } from "./utils/auth-response";
 
@@ -67,6 +69,37 @@ class InventoryService {
     }
 
     return data;
+  }
+
+  async getUploadAudits(params: { page?: number; size?: number } = {}): Promise<BulkUploadAuditListResult> {
+    const page = params.page ? params.page - 1 : 0; // Backend is 0-indexed
+    const size = params.size ?? 10;
+
+    const response = await apiClient.get<BackendEnvelope<BulkUploadAuditListPage>>(
+      `${INVENTORY_BASE}/upload-audits`,
+      {
+        params: { page, size },
+      },
+    );
+
+    const { data } = parseAuthResponse(response);
+
+    if (!data) {
+      throw new ApiError("Upload audits response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+
+    return {
+      items: data.content,
+      page: data.page + 1,
+      pageSize: data.size,
+      totalItems: data.totalElements,
+      totalPages: Math.max(1, data.totalPages),
+      hasNext: data.hasNext,
+      hasPrevious: data.hasPrevious,
+    };
   }
 }
 

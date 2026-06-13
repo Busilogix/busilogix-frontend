@@ -68,6 +68,9 @@ export type {
   InventoryLogListParams,
   InventoryLogListResult,
   InventorySummaryData,
+  BulkUploadAudit,
+  BulkUploadAuditListPage,
+  BulkUploadAuditListResult,
 } from "./types/inventory.types";
 
 export { dashboardService } from "./dashboard.service";

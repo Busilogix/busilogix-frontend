@@ -9,6 +9,11 @@ import {
   PlusCircle,
   Search,
   Activity,
+  UploadCloud,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
@@ -32,7 +37,7 @@ import {
 } from "@/components/ui/table";
 import type { StockAdjustmentLog } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
-import { inventoryService, type InventorySummaryData } from "@/lib/api";
+import { inventoryService, type InventorySummaryData, type BulkUploadAudit } from "@/lib/api";
 import {
   Select,
   SelectContent,
@@ -76,17 +81,36 @@ function formatActionLabel(action: string) {
   return action.replace(/_/g, " ");
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
 export function InventoryView() {
   const [logs, setLogs] = useState<MappedStockAdjustmentLog[]>([]);
   const [summary, setSummary] = useState<InventorySummaryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Pagination states
+  // Tabs state
+  const [activeTab, setActiveTab] = useState<"ledger" | "uploads">("ledger");
+
+  // Pagination states for Ledger Logs
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [isLogsLoading, setIsLogsLoading] = useState(false);
+
+  // Pagination states for Bulk Upload Audits
+  const [uploads, setUploads] = useState<BulkUploadAudit[]>([]);
+  const [isUploadsLoading, setIsUploadsLoading] = useState(false);
+  const [uploadsPage, setUploadsPage] = useState(1);
+  const [uploadsPageSize, setUploadsPageSize] = useState(10);
+  const [uploadsTotalPages, setUploadsTotalPages] = useState(1);
+  const [uploadsTotalItems, setUploadsTotalItems] = useState(0);
 
   // Client-side search and filters
   const [logSearchQuery, setLogSearchQuery] = useState("");
@@ -131,6 +155,24 @@ export function InventoryView() {
     }
   }, []);
 
+  const fetchUploads = useCallback(async (targetPage: number, targetPageSize: number) => {
+    setIsUploadsLoading(true);
+    try {
+      const result = await inventoryService.getUploadAudits({
+        page: targetPage,
+        size: targetPageSize,
+      });
+      setUploads(result.items);
+      setUploadsTotalPages(result.totalPages);
+      setUploadsTotalItems(result.totalItems);
+    } catch (err) {
+      console.error("Failed to fetch upload audits:", err);
+      setUploads([]);
+    } finally {
+      setIsUploadsLoading(false);
+    }
+  }, []);
+
   const fetchSummary = useCallback(async () => {
     try {
       const result = await inventoryService.getSummary();
@@ -149,7 +191,8 @@ export function InventoryView() {
       try {
         await Promise.all([
           fetchLogs(1, pageSize, actionFilter === "ALL" ? undefined : actionFilter),
-          fetchSummary()
+          fetchSummary(),
+          fetchUploads(1, uploadsPageSize)
         ]);
       } catch (err) {
         console.error("Failed to load inventory logs data:", err);
@@ -167,8 +210,20 @@ export function InventoryView() {
       isMounted.current = true;
       return;
     }
-    fetchLogs(page, pageSize, actionFilter === "ALL" ? undefined : actionFilter);
-  }, [page, pageSize, actionFilter, fetchLogs]);
+    if (activeTab === "ledger") {
+      fetchLogs(page, pageSize, actionFilter === "ALL" ? undefined : actionFilter);
+    }
+  }, [page, pageSize, actionFilter, activeTab, fetchLogs]);
+
+  // Fetch uploads when uploadsPage/uploadsPageSize changes after initial mount
+  useEffect(() => {
+    if (!isMounted.current) {
+      return;
+    }
+    if (activeTab === "uploads") {
+      fetchUploads(uploadsPage, uploadsPageSize);
+    }
+  }, [uploadsPage, uploadsPageSize, activeTab, fetchUploads]);
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
@@ -285,205 +340,402 @@ export function InventoryView() {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Main Ledger Logs Section */}
             <div className="lg:col-span-2 space-y-6">
-              <Card className="surface-card rounded-2xl border border-primary/5 bg-gradient-to-br from-card via-card to-primary/[0.005] shadow-sm hover:border-primary/10 hover:shadow-md hover:shadow-primary/[0.01] transition-all duration-300">
-                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 px-5 py-4 bg-muted/5">
-                  <div>
-                    <CardTitle className="text-sm font-black tracking-tight text-foreground flex items-center gap-2">
-                      <ClipboardList className="size-4 text-primary animate-pulse" />
-                      Inventory Adjustment Logs
-                    </CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                      Real-time ledger recording product stock modifications and inventory events
-                    </CardDescription>
-                  </div>
+              {/* Tab Selector */}
+              <div className="flex border-b border-border/40 space-x-6 mb-2">
+                <button
+                  onClick={() => setActiveTab("ledger")}
+                  className={cn(
+                    "pb-3 text-xs font-black uppercase tracking-wider transition-all duration-200 border-b-2",
+                    activeTab === "ledger"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Ledger Logs
+                </button>
+                <button
+                  onClick={() => setActiveTab("uploads")}
+                  className={cn(
+                    "pb-3 text-xs font-black uppercase tracking-wider transition-all duration-200 border-b-2",
+                    activeTab === "uploads"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Bulk Upload Audits
+                </button>
+              </div>
 
-                  {/* Log Filter Dropdown */}
-                  <div className="w-full sm:w-auto">
-                    <Select
-                      value={actionFilter}
-                      onValueChange={(value) => {
-                        setActionFilter(value as InventoryAction | "ALL");
-                        setPage(1);
-                      }}
-                    >
-                      <SelectTrigger className="h-9 w-full sm:w-44 bg-background">
-                        <SelectValue placeholder="Filter by action" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">All Actions</SelectItem>
-                        <SelectItem value="PRODUCT_CREATED">Product Created</SelectItem>
-                        <SelectItem value="STOCK_ADDED">Stock Added</SelectItem>
-                        <SelectItem value="STOCK_SOLD">Stock Sold</SelectItem>
-                        <SelectItem value="STOCK_ADJUSTED">Stock Adjusted</SelectItem>
-                        <SelectItem value="PRICE_UPDATED">Price Updated</SelectItem>
-                        <SelectItem value="PRODUCT_DELETED">Product Deleted</SelectItem>
-                        <SelectItem value="BULK_IMPORTED">Bulk Imported</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardHeader>
+              {activeTab === "ledger" ? (
+                <>
+                  <Card className="surface-card rounded-2xl border border-primary/5 bg-gradient-to-br from-card via-card to-primary/[0.005] shadow-sm hover:border-primary/10 hover:shadow-md hover:shadow-primary/[0.01] transition-all duration-300">
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 px-5 py-4 bg-muted/5">
+                      <div>
+                        <CardTitle className="text-sm font-black tracking-tight text-foreground flex items-center gap-2">
+                          <ClipboardList className="size-4 text-primary animate-pulse" />
+                          Inventory Adjustment Logs
+                        </CardTitle>
+                        <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                          Real-time ledger recording product stock modifications and inventory events
+                        </CardDescription>
+                      </div>
 
-                <div className="px-5 pt-4">
-                  {/* Search Input Bar */}
-                  <div className="relative w-full">
-                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
-                    <Input
-                      type="search"
-                      placeholder="Search log by product name, SKU, or remarks..."
-                      value={logSearchQuery}
-                      onChange={(e) => setLogSearchQuery(e.target.value)}
-                      className="pl-9 h-10 w-full bg-background border-border"
-                    />
-                  </div>
-                </div>
+                      {/* Log Filter Dropdown */}
+                      <div className="w-full sm:w-auto">
+                        <Select
+                          value={actionFilter}
+                          onValueChange={(value) => {
+                            setActionFilter(value as InventoryAction | "ALL");
+                            setPage(1);
+                          }}
+                        >
+                          <SelectTrigger className="h-9 w-full sm:w-44 bg-background">
+                            <SelectValue placeholder="Filter by action" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ALL">All Actions</SelectItem>
+                            <SelectItem value="PRODUCT_CREATED">Product Created</SelectItem>
+                            <SelectItem value="STOCK_ADDED">Stock Added</SelectItem>
+                            <SelectItem value="STOCK_SOLD">Stock Sold</SelectItem>
+                            <SelectItem value="STOCK_ADJUSTED">Stock Adjusted</SelectItem>
+                            <SelectItem value="PRICE_UPDATED">Price Updated</SelectItem>
+                            <SelectItem value="PRODUCT_DELETED">Product Deleted</SelectItem>
+                            <SelectItem value="BULK_IMPORTED">Bulk Imported</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardHeader>
 
-                <CardContent className="p-0 pt-4">
-                  {isLogsLoading ? (
-                    <div className="divide-y divide-border/40">
-                      {Array.from({ length: pageSize }).map((_, index) => (
-                        <div key={index} className="p-4 flex items-center justify-between">
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-36" />
-                            <Skeleton className="h-3.5 w-24" />
-                          </div>
-                          <Skeleton className="h-6 w-16 rounded-full" />
+                    <div className="px-5 pt-4">
+                      {/* Search Input Bar */}
+                      <div className="relative w-full">
+                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                        <Input
+                          type="search"
+                          placeholder="Search log by product name, SKU, or remarks..."
+                          value={logSearchQuery}
+                          onChange={(e) => setLogSearchQuery(e.target.value)}
+                          className="pl-9 h-10 w-full bg-background border-border"
+                        />
+                      </div>
+                    </div>
+
+                    <CardContent className="p-0 pt-4">
+                      {isLogsLoading ? (
+                        <div className="divide-y divide-border/40">
+                          {Array.from({ length: pageSize }).map((_, index) => (
+                            <div key={index} className="p-4 flex items-center justify-between">
+                              <div className="space-y-2">
+                                <Skeleton className="h-4 w-36" />
+                                <Skeleton className="h-3.5 w-24" />
+                              </div>
+                              <Skeleton className="h-6 w-16 rounded-full" />
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : filteredAndSearchedLogs.length === 0 ? (
-                    <div className="py-16 text-center text-sm text-muted-foreground space-y-2">
-                      <ClipboardList className="size-8 text-muted-foreground/45 mx-auto" />
-                      <p className="font-bold">No logs available</p>
-                      <p className="text-xs max-w-xs mx-auto text-muted-foreground/75">No stock adjustments have been recorded in the system ledger yet.</p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Desktop Table View */}
-                      <div className="hidden md:block [&_[data-slot=table-container]]:overflow-x-hidden">
-                        <Table>
-                          <TableHeader className="bg-muted/10">
-                            <TableRow className="hover:bg-transparent">
-                              <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-5">Date & Time</TableHead>
-                              <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">Product Details</TableHead>
-                              <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Action</TableHead>
-                              <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Variance</TableHead>
-                              <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Stock After</TableHead>
-                              <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-4">Remarks / Reason</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
+                      ) : filteredAndSearchedLogs.length === 0 ? (
+                        <div className="py-16 text-center text-sm text-muted-foreground space-y-2">
+                          <ClipboardList className="size-8 text-muted-foreground/45 mx-auto" />
+                          <p className="font-bold">No logs available</p>
+                          <p className="text-xs max-w-xs mx-auto text-muted-foreground/75">No stock adjustments have been recorded in the system ledger yet.</p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Desktop Table View */}
+                          <div className="hidden md:block [&_[data-slot=table-container]]:overflow-x-hidden">
+                            <Table>
+                              <TableHeader className="bg-muted/10">
+                                <TableRow className="hover:bg-transparent">
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-5">Date & Time</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">Product Details</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Action</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Variance</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Stock After</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-4">Remarks / Reason</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {filteredAndSearchedLogs.map((log) => (
+                                  <TableRow key={log.id} className="hover:bg-muted/30 transition-colors duration-150 border-b border-border/40 last:border-b-0">
+                                    <TableCell className="py-3 px-5 text-xs text-foreground font-medium tabular-nums">
+                                      <span className="font-semibold block">{new Date(log.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+                                      <span className="text-[10px] text-muted-foreground/75 block mt-0.5">
+                                        {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 whitespace-normal">
+                                      <div className="font-bold text-xs text-foreground tracking-tight">{log.product_name}</div>
+                                      <div className="text-[9px] text-muted-foreground font-mono mt-0.5 tracking-wider">{log.sku}</div>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 text-center">
+                                      <Badge
+                                        className={cn(
+                                          "text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm select-none uppercase tracking-wide",
+                                          getActionBadgeStyle(log.action)
+                                        )}
+                                        variant="outline"
+                                      >
+                                        {formatActionLabel(log.action)}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 text-center">
+                                      <span
+                                        className={cn(
+                                          "inline-flex items-center gap-1 font-black text-[10px] px-2.5 py-0.5 rounded-full border shadow-inner tabular-nums tracking-wide",
+                                          log.type === "in"
+                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                            : log.type === "out"
+                                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                              : "bg-primary/10 text-primary border-primary/20"
+                                        )}
+                                      >
+                                        {log.type === "in" ? (
+                                          <ArrowUpRight className="size-3" />
+                                        ) : log.type === "out" ? (
+                                          <ArrowDownRight className="size-3" />
+                                        ) : null}
+                                        {log.type === "in" ? "+" : log.type === "out" ? "-" : ""}
+                                        {log.quantity}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 text-center">
+                                      <span className="text-xs font-black tabular-nums text-foreground">
+                                        {log.stockAfterAction !== undefined ? log.stockAfterAction : "-"}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-xs text-muted-foreground/90 italic font-medium whitespace-normal max-w-[160px] truncate" title={log.reason}>
+                                      {log.reason ? `“${log.reason}”` : <span className="text-muted-foreground/30 italic">No remarks</span>}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+
+                          {/* Mobile Card List View */}
+                          <div className="divide-y divide-border/40 md:hidden">
                             {filteredAndSearchedLogs.map((log) => (
-                              <TableRow key={log.id} className="hover:bg-muted/30 transition-colors duration-150 border-b border-border/40 last:border-b-0">
-                                <TableCell className="py-3 px-5 text-xs text-foreground font-medium tabular-nums">
-                                  <span className="font-semibold block">{new Date(log.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
-                                  <span className="text-[10px] text-muted-foreground/75 block mt-0.5">
-                                    {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              <div key={log.id} className="p-4 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] text-muted-foreground font-semibold">
+                                    {new Date(log.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                   </span>
-                                </TableCell>
-                                <TableCell className="py-3 px-3 whitespace-normal">
-                                  <div className="font-bold text-xs text-foreground tracking-tight">{log.product_name}</div>
-                                  <div className="text-[9px] text-muted-foreground font-mono mt-0.5 tracking-wider">{log.sku}</div>
-                                </TableCell>
-                                <TableCell className="py-3 px-3 text-center">
                                   <Badge
                                     className={cn(
-                                      "text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm select-none uppercase tracking-wide",
+                                      "text-[8px] font-bold px-1.5 py-0 rounded-full border shadow-sm uppercase tracking-wide",
                                       getActionBadgeStyle(log.action)
                                     )}
                                     variant="outline"
                                   >
                                     {formatActionLabel(log.action)}
                                   </Badge>
-                                </TableCell>
-                                <TableCell className="py-3 px-3 text-center">
-                                  <span
-                                    className={cn(
-                                      "inline-flex items-center gap-1 font-black text-[10px] px-2.5 py-0.5 rounded-full border shadow-inner tabular-nums tracking-wide",
+                                </div>
+                                <div>
+                                  <p className="font-bold text-xs text-foreground tracking-tight">{log.product_name}</p>
+                                  <p className="text-[9px] text-muted-foreground font-mono mt-0.5">{log.sku}</p>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-border/20">
+                                  <span className="flex items-center gap-1">
+                                    Var:
+                                    <strong className={cn(
+                                      "font-black text-[10px] px-1 py-0.5 rounded border shadow-sm",
                                       log.type === "in"
                                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                         : log.type === "out"
                                           ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                                           : "bg-primary/10 text-primary border-primary/20"
-                                    )}
-                                  >
-                                    {log.type === "in" ? (
-                                      <ArrowUpRight className="size-3" />
-                                    ) : log.type === "out" ? (
-                                      <ArrowDownRight className="size-3" />
-                                    ) : null}
-                                    {log.type === "in" ? "+" : log.type === "out" ? "-" : ""}
-                                    {log.quantity}
+                                    )}>
+                                      {log.type === "in" ? "+" : log.type === "out" ? "-" : ""}{log.quantity}
+                                    </strong>
                                   </span>
-                                </TableCell>
-                                <TableCell className="py-3 px-3 text-center">
-                                  <span className="text-xs font-black tabular-nums text-foreground">
-                                    {log.stockAfterAction !== undefined ? log.stockAfterAction : "-"}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="py-3 px-4 text-xs text-muted-foreground/90 italic font-medium whitespace-normal max-w-[160px] truncate" title={log.reason}>
-                                  {log.reason ? `“${log.reason}”` : <span className="text-muted-foreground/30 italic">No remarks</span>}
-                                </TableCell>
-                              </TableRow>
+                                  <span>Stock after: <strong className="text-foreground">{log.stockAfterAction !== undefined ? log.stockAfterAction : "-"}</strong></span>
+                                </div>
+                              </div>
                             ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-
-                      {/* Mobile Card List View */}
-                      <div className="divide-y divide-border/40 md:hidden">
-                        {filteredAndSearchedLogs.map((log) => (
-                          <div key={log.id} className="p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-muted-foreground font-semibold">
-                                {new Date(log.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                              </span>
-                              <Badge
-                                className={cn(
-                                  "text-[8px] font-bold px-1.5 py-0 rounded-full border shadow-sm uppercase tracking-wide",
-                                  getActionBadgeStyle(log.action)
-                                )}
-                                variant="outline"
-                              >
-                                {formatActionLabel(log.action)}
-                              </Badge>
-                            </div>
-                            <div>
-                              <p className="font-bold text-xs text-foreground tracking-tight">{log.product_name}</p>
-                              <p className="text-[9px] text-muted-foreground font-mono mt-0.5">{log.sku}</p>
-                            </div>
-                            <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-border/20">
-                              <span className="flex items-center gap-1">
-                                Var:
-                                <strong className={cn(
-                                  "font-black text-[10px] px-1 py-0.5 rounded border shadow-sm",
-                                  log.type === "in"
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                    : log.type === "out"
-                                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                                      : "bg-primary/10 text-primary border-primary/20"
-                                )}>
-                                  {log.type === "in" ? "+" : log.type === "out" ? "-" : ""}{log.quantity}
-                                </strong>
-                              </span>
-                              <span>Stock after: <strong className="text-foreground">{log.stockAfterAction !== undefined ? log.stockAfterAction : "-"}</strong></span>
-                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
 
-              {totalItems > 0 && (
-                <InventoryPagination
-                  page={page}
-                  totalPages={totalPages}
-                  totalItems={totalItems}
-                  pageSize={pageSize}
-                  onPageChange={setPage}
-                  onPageSizeChange={handlePageSizeChange}
-                />
+                  {totalItems > 0 && (
+                    <InventoryPagination
+                      page={page}
+                      totalPages={totalPages}
+                      totalItems={totalItems}
+                      pageSize={pageSize}
+                      onPageChange={setPage}
+                      onPageSizeChange={handlePageSizeChange}
+                    />
+                  )}
+                </>
+              ) : (
+                <>
+                  <Card className="surface-card rounded-2xl border border-primary/5 bg-gradient-to-br from-card via-card to-primary/[0.005] shadow-sm hover:border-primary/10 hover:shadow-md hover:shadow-primary/[0.01] transition-all duration-300">
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 px-5 py-4 bg-muted/5">
+                      <div>
+                        <CardTitle className="text-sm font-black tracking-tight text-foreground flex items-center gap-2">
+                          <UploadCloud className="size-4 text-primary animate-pulse" />
+                          Bulk Upload Audits
+                        </CardTitle>
+                        <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                          Audit log of bulk product catalog uploads and processing results
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-0">
+                      {isUploadsLoading ? (
+                        <div className="divide-y divide-border/40">
+                          {Array.from({ length: uploadsPageSize }).map((_, index) => (
+                            <div key={index} className="p-4 flex items-center justify-between">
+                              <div className="space-y-2">
+                                <Skeleton className="h-4 w-36" />
+                                <Skeleton className="h-3.5 w-24" />
+                              </div>
+                              <Skeleton className="h-6 w-16 rounded-full" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : uploads.length === 0 ? (
+                        <div className="py-16 text-center text-sm text-muted-foreground space-y-2">
+                          <UploadCloud className="size-8 text-muted-foreground/45 mx-auto" />
+                          <p className="font-bold">No uploads available</p>
+                          <p className="text-xs max-w-xs mx-auto text-muted-foreground/75">No bulk upload operations have been recorded yet.</p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Desktop Table View */}
+                          <div className="hidden md:block [&_[data-slot=table-container]]:overflow-x-hidden">
+                            <Table>
+                              <TableHeader className="bg-muted/10">
+                                <TableRow className="hover:bg-transparent">
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-5">Date & Time</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">File Info</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Status</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Processed</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">Uploaded By</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-4">Remarks / Error</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {uploads.map((audit) => (
+                                  <TableRow key={audit.id} className="hover:bg-muted/30 transition-colors duration-150 border-b border-border/40 last:border-b-0">
+                                    <TableCell className="py-3 px-5 text-xs text-foreground font-medium tabular-nums">
+                                      <span className="font-semibold block">{new Date(audit.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
+                                      <span className="text-[10px] text-muted-foreground/75 block mt-0.5">
+                                        {new Date(audit.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 whitespace-normal">
+                                      <div className="font-bold text-xs text-foreground tracking-tight flex items-center gap-1.5">
+                                        <FileText className="size-3.5 text-muted-foreground flex-shrink-0" />
+                                        {audit.filename}
+                                      </div>
+                                      <div className="text-[9px] text-muted-foreground font-mono mt-0.5 tracking-wider">
+                                        {formatFileSize(audit.fileSize)}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 text-center">
+                                      <Badge
+                                        className={cn(
+                                          "text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm select-none uppercase tracking-wide inline-flex items-center gap-1",
+                                          audit.status === "SUCCESS"
+                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                        )}
+                                        variant="outline"
+                                      >
+                                        {audit.status === "SUCCESS" ? (
+                                          <CheckCircle2 className="size-3" />
+                                        ) : (
+                                          <XCircle className="size-3" />
+                                        )}
+                                        {audit.status}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 text-center">
+                                      <span className="text-xs font-black tabular-nums text-foreground">
+                                        {audit.processedCount}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="py-3 px-3 text-xs font-medium text-foreground">
+                                      {audit.uploadedBy}
+                                    </TableCell>
+                                    <TableCell className="py-3 px-4 text-xs text-muted-foreground/90 italic font-medium whitespace-normal max-w-[200px]" title={audit.errorMessage || ""}>
+                                      {audit.status === "SUCCESS" ? (
+                                        <span className="text-emerald-500 dark:text-emerald-400">Processed successfully</span>
+                                      ) : (
+                                        <span className="text-rose-500 dark:text-rose-400 font-semibold flex items-start gap-1">
+                                          <AlertCircle className="size-3.5 mt-0.5 flex-shrink-0" />
+                                          {audit.errorMessage || "Unknown error"}
+                                        </span>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+
+                          {/* Mobile Card List View */}
+                          <div className="divide-y divide-border/40 md:hidden">
+                            {uploads.map((audit) => (
+                              <div key={audit.id} className="p-4 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] text-muted-foreground font-semibold">
+                                    {new Date(audit.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {new Date(audit.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                  <Badge
+                                    className={cn(
+                                      "text-[8px] font-bold px-1.5 py-0 rounded-full border shadow-sm uppercase tracking-wide inline-flex items-center gap-0.5",
+                                      audit.status === "SUCCESS"
+                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                    )}
+                                    variant="outline"
+                                  >
+                                    {audit.status}
+                                  </Badge>
+                                </div>
+                                <div>
+                                  <p className="font-bold text-xs text-foreground tracking-tight flex items-center gap-1">
+                                    <FileText className="size-3 text-muted-foreground" />
+                                    {audit.filename}
+                                  </p>
+                                  <p className="text-[9px] text-muted-foreground mt-0.5">{formatFileSize(audit.fileSize)}</p>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-border/20">
+                                  <span>Uploaded by: <strong className="text-foreground">{audit.uploadedBy}</strong></span>
+                                  <span>Processed: <strong className="text-foreground">{audit.processedCount}</strong></span>
+                                </div>
+                                {audit.errorMessage && (
+                                  <div className="text-[9px] text-rose-500 bg-rose-500/5 border border-rose-500/10 rounded p-1.5 mt-1">
+                                    <strong>Error:</strong> {audit.errorMessage}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {uploadsTotalItems > 0 && (
+                    <InventoryPagination
+                      page={uploadsPage}
+                      totalPages={uploadsTotalPages}
+                      totalItems={uploadsTotalItems}
+                      pageSize={uploadsPageSize}
+                      onPageChange={setUploadsPage}
+                      onPageSizeChange={(newSize) => {
+                        setUploadsPageSize(newSize);
+                        setUploadsPage(1);
+                      }}
+                    />
+                  )}
+                </>
               )}
             </div>
 

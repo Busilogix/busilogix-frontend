@@ -62,3 +62,38 @@ export type InventorySummaryData = {
   mostActiveProducts: ActiveProductSummary[];
 };
 
+export type BulkUploadAudit = {
+  id: string;
+  storeId: string;
+  uploadedBy: string;
+  filename: string;
+  fileSize: number;
+  processedCount: number;
+  status: "SUCCESS" | "FAILED";
+  errorMessage: string | null;
+  createdAt: string;
+};
+
+export type BulkUploadAuditListPage = {
+  content: BulkUploadAudit[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  isFirst: boolean;
+  isLast: boolean;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
+
+export type BulkUploadAuditListResult = {
+  items: BulkUploadAudit[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
+
+
