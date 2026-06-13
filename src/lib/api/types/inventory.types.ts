@@ -22,9 +22,19 @@ export type InventoryLogListPage = {
   hasPrevious: boolean;
 };
 
+export type InventoryAction =
+  | "PRODUCT_CREATED"
+  | "STOCK_ADDED"
+  | "STOCK_SOLD"
+  | "STOCK_ADJUSTED"
+  | "PRICE_UPDATED"
+  | "PRODUCT_DELETED"
+  | "BULK_IMPORTED";
+
 export type InventoryLogListParams = {
   page?: number; // 1-indexed in frontend
   size?: number;
+  action?: InventoryAction;
 };
 
 export type InventoryLogListResult = {
