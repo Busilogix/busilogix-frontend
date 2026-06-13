@@ -1,11 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+  RefreshCw,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,9 +32,11 @@ import { AuthCard, AuthCardLink } from "./auth-card";
 import { GoogleLoginButton } from "./google-login-button";
 
 export function SignupForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCount, setResendCount] = useState(0);
 
   const {
     register,
@@ -39,22 +49,130 @@ export function SignupForm() {
 
   async function onSubmit(data: SignupFormValues) {
     setIsLoading(true);
-
     try {
       await authService.signup(data);
-      router.push("/login?registered=1");
+      setRegisteredEmail(data.email);
     } catch (error) {
       const message = isApiError(error)
         ? error.message
         : "Unable to create your account. Please try again.";
-      toast.error("Registration failed", {
-        description: message,
-      });
+      toast.error("Registration failed", { description: message });
     } finally {
       setIsLoading(false);
     }
   }
 
+  async function handleResend() {
+    if (!registeredEmail || isResending) return;
+    setIsResending(true);
+    try {
+      await authService.resendVerification({ email: registeredEmail });
+      setResendCount((c) => c + 1);
+      toast.success("Verification email resent", {
+        description: `Another link has been sent to ${registeredEmail}`,
+      });
+    } catch (error) {
+      const message = isApiError(error)
+        ? error.message
+        : "Failed to resend. Please try again.";
+      toast.error("Could not resend", { description: message });
+    } finally {
+      setIsResending(false);
+    }
+  }
+
+  /* ── Post-signup: check-your-email state ─────────────────────────────── */
+  if (registeredEmail) {
+    return (
+      <AuthCard
+        title="Check your inbox"
+        description="One last step — verify your email to activate your account"
+        footer={
+          <AuthCardLink
+            text="Already have an account?"
+            linkText="Sign in"
+            href="/login"
+          />
+        }
+      >
+        <div className="space-y-6 py-2">
+          {/* Icon + email pill */}
+          <div className="flex flex-col items-center gap-3 pt-1 text-center">
+            <div className="relative">
+              <div
+                className="flex size-16 items-center justify-center rounded-2xl shadow-lg"
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.55 0.20 252) 0%, oklch(0.45 0.22 260) 100%)",
+                }}
+              >
+                <Mail className="size-8 text-white drop-shadow" aria-hidden />
+              </div>
+              <span className="absolute -right-1.5 -bottom-1.5 flex size-6 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background">
+                <CheckCircle2 className="size-3.5 text-white" aria-hidden />
+              </span>
+            </div>
+
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary">
+              <Mail className="size-3" aria-hidden />
+              {registeredEmail}
+            </div>
+          </div>
+
+          {/* What happens next */}
+          <div className="space-y-3 rounded-xl border bg-muted/30 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              What happens next
+            </p>
+            <ul className="space-y-2">
+              {[
+                "We just sent a verification link to your email",
+                "Open the email and click the link inside",
+                "You'll be taken to a page confirming your account",
+                "Then sign in and start using Busilogix",
+              ].map((step, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Spam tip */}
+          <p className="text-center text-xs text-muted-foreground/70">
+            Can't find the email?{" "}
+            <span className="text-muted-foreground">Check your spam folder</span>
+            {" "}or request another one below.
+          </p>
+
+          {/* Resend */}
+          <Button
+            variant="outline"
+            className="w-full font-semibold"
+            onClick={handleResend}
+            disabled={isResending}
+          >
+            {isResending ? (
+              <>
+                <Loader2 className="animate-spin" aria-hidden />
+                Resending...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="size-4" aria-hidden />
+                {resendCount > 0 ? "Resend again" : "Resend verification email"}
+              </>
+            )}
+          </Button>
+        </div>
+      </AuthCard>
+    );
+  }
+
+  /* ── Signup form ─────────────────────────────────────────────────────── */
   return (
     <AuthCard
       title="Create your account"

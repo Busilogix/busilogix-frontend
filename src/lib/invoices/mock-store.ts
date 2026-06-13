@@ -224,6 +224,7 @@ export const INVOICE_STATUS_OPTIONS: {
 }[] = [
     { value: "all", label: "All statuses" },
     { value: "DRAFT", label: "Draft" },
+    { value: "DUE", label: "Due" },
     { value: "PAID", label: "Paid" },
     { value: "OVERDUE", label: "Overdue" },
     { value: "CANCELLED", label: "Cancelled" },
@@ -240,7 +241,7 @@ export type InvoiceStats = {
 export function getInvoiceStats(): InvoiceStats {
   const all = getAllInvoices();
   const pending = all.filter(
-    (invoice) => invoice.status === "OVERDUE",
+    (invoice) => invoice.status === "OVERDUE" || invoice.status === "DUE",
   );
 
   return {

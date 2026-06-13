@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Mail, Pencil, Phone, Receipt, Wallet } from "lucide-react";
+import { FileText, Mail, MapPin, Pencil, Phone, Receipt, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -49,20 +49,21 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
         if (!active) return;
         setCustomer(mapApiCustomerToRecord(apiCustomer));
 
-        const res = await invoiceService.list({ size: 200 });
+        const res = await invoiceService.list({
+          size: 200,
+          customerMobile: apiCustomer.mobile,
+        });
         if (!active) return;
 
-        const customerInvoices = res.items.filter(
-          (inv) => inv.customer?.id === customerId,
-        );
+        const customerInvoices = res.items;
 
         const mappedInvoices = customerInvoices.map(
           (inv): InvoiceDetailRecord => ({
             id: inv.id,
             invoice_number: inv.invoiceNumber,
             customer_id: customerId,
-            customer_name: inv.customer?.name || "",
-            customer_email: inv.customer?.email || "",
+            customer_name: inv.customer?.name || "Walk-in Customer",
+            customer_email: inv.customer?.email || "No Email",
             customer_phone: inv.customer?.mobile || "",
             status: inv.status as any,
             issue_date: inv.createdAt,
@@ -107,7 +108,7 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
       .reduce((sum, invoice) => sum + invoice.total_amount, 0);
     const pending = invoices
       .filter(
-        (invoice) => invoice.status === "OVERDUE",
+        (invoice) => invoice.status === "OVERDUE" || invoice.status === "DUE",
       )
       .reduce((sum, invoice) => sum + invoice.total_amount, 0);
 
@@ -138,140 +139,268 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="overflow-hidden">
-        <CardContent className="relative grid gap-4 p-4 pt-6 sm:p-6 sm:pt-7 lg:grid-cols-[1fr_auto] lg:items-start">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary/30 to-transparent"
-            aria-hidden
-          />
-          <div>
-            <p className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              Customer profile
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              {customer.name}
-            </h2>
-            <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <Mail className="size-4 text-primary" aria-hidden />
-                {customer.email}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left Main Column */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Profile Hero Card */}
+        <Card className="overflow-hidden border border-border/60 shadow-sm relative">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-primary/60" />
+          <CardContent className="p-3 sm:p-4 md:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-row items-center gap-3 min-w-0 w-full sm:w-auto">
+              {/* Avatar Circle */}
+              <div className="size-10 sm:size-12 md:size-14 rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm sm:text-base md:text-lg font-bold flex items-center justify-center shadow-md shrink-0">
+                {getInitials(customer.name || "Walk-in Customer") || "?"}
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="size-4 text-primary" aria-hidden />
-                {customer.phone}
+              
+              <div className="text-left min-w-0">
+                <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-foreground truncate">
+                  {customer.name || "Walk-in Customer"}
+                </h2>
+                <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">
+                  Record: #{customer.id.slice(0, 8)}
+                </p>
               </div>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {customer.address}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 lg:justify-end">
-            <Link
-              href={`/customers/${customer.id}/edit`}
-              className={cn(buttonVariants({ variant: "default", size: "sm" }))}
-            >
-              <Pencil className="size-4" aria-hidden />
-              Edit customer
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              render={<Link href="/invoices/new" />}
-            >
-              <Receipt className="size-4" aria-hidden />
-              Create invoice
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <Card className="interactive-card">
-          <CardContent className="p-3 sm:p-6 text-center sm:text-left">
-            <FileText className="inline-block size-4 text-violet-600 sm:block sm:size-5" aria-hidden />
-            <p className="mt-2 truncate text-[10px] text-muted-foreground sm:text-sm">Invoices</p>
-            <p className="mt-0.5 text-base font-bold tabular-nums tracking-tight sm:text-2xl">
-              {stats.invoiceCount}
-            </p>
+            <div className="flex gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0 justify-center">
+              <Link
+                href={`/customers/${customer.id}/edit`}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 sm:h-8 md:h-9 text-xs md:text-sm gap-1.5 flex-1 sm:flex-none justify-center")}
+              >
+                <Pencil className="size-3 sm:size-3.5 md:size-4" aria-hidden />
+                Edit Info
+              </Link>
+              <Link
+                href="/invoices/new"
+                className={cn(buttonVariants({ variant: "default", size: "sm" }), "h-7 sm:h-8 md:h-9 text-xs md:text-sm gap-1.5 bg-primary hover:bg-primary/95 text-primary-foreground border-none shadow-sm flex-1 sm:flex-none justify-center")}
+              >
+                <Receipt className="size-3 sm:size-3.5 md:size-4" aria-hidden />
+                Create Invoice
+              </Link>
+            </div>
           </CardContent>
         </Card>
-        <Card className="interactive-card">
-          <CardContent className="p-3 sm:p-6 text-center sm:text-left">
-            <Wallet className="inline-block size-4 text-emerald-600 sm:block sm:size-5" aria-hidden />
-            <p className="mt-2 truncate text-[10px] text-muted-foreground sm:text-sm">Paid revenue</p>
-            <p className="mt-0.5 truncate text-base font-bold tabular-nums tracking-tight sm:text-2xl">
-              {formatCurrency(stats.paid, stats.currency)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="interactive-card">
-          <CardContent className="p-3 sm:p-6 text-center sm:text-left">
-            <Receipt className="inline-block size-4 text-amber-600 sm:block sm:size-5" aria-hidden />
-            <p className="mt-2 truncate text-[10px] text-muted-foreground sm:text-sm">Pending</p>
-            <p className="mt-0.5 truncate text-base font-bold tabular-nums tracking-tight sm:text-2xl">
-              {formatCurrency(stats.pending, stats.currency)}
-            </p>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          {/* Invoices Stat */}
+          <Card className="group relative overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-sm hover:border-primary/30">
+            <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+            <CardContent className="p-2 sm:p-3 flex flex-col items-start text-left gap-1.5 w-full min-w-0">
+              <div className="p-1 rounded-md bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors shrink-0">
+                <FileText className="size-3.5 sm:size-4" aria-hidden />
+              </div>
+              <div className="space-y-0.5 min-w-0 w-full">
+                <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">Invoices</p>
+                <p className="text-xs sm:text-base font-black text-foreground tabular-nums tracking-tight truncate">
+                  {stats.invoiceCount}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Paid Revenue Stat */}
+          <Card className="group relative overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-sm hover:border-emerald-500/30">
+            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+            <CardContent className="p-2 sm:p-3 flex flex-col items-start text-left gap-1.5 w-full min-w-0">
+              <div className="p-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20 transition-colors shrink-0">
+                <Wallet className="size-3.5 sm:size-4" aria-hidden />
+              </div>
+              <div className="space-y-0.5 min-w-0 w-full">
+                <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">Paid</p>
+                <p className="text-xs sm:text-base font-black text-foreground tabular-nums tracking-tight truncate">
+                  {formatCurrency(stats.paid, stats.currency)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pending Stat */}
+          <Card className="group relative overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-sm hover:border-amber-500/30">
+            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+            <CardContent className="p-2 sm:p-3 flex flex-col items-start text-left gap-1.5 w-full min-w-0">
+              <div className="p-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500/20 transition-colors shrink-0">
+                <Receipt className="size-3.5 sm:size-4" aria-hidden />
+              </div>
+              <div className="space-y-0.5 min-w-0 w-full">
+                <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">Pending</p>
+                <p className="text-xs sm:text-base font-black text-foreground tabular-nums tracking-tight truncate">
+                  {formatCurrency(stats.pending, stats.currency)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Invoice History Card */}
+        <Card className="border border-border/60 shadow-sm overflow-hidden">
+          <CardHeader className="p-3 sm:p-4 border-b bg-muted/10">
+            <CardTitle className="text-base font-semibold">Invoice history</CardTitle>
+            <CardDescription className="text-xs">
+              All records of invoices associated with this customer
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {invoices.length === 0 ? (
+              <div className="p-6 text-center">
+                <EmptyState
+                  icon={FileText}
+                  title="No invoices for this customer"
+                  description="Create an invoice and select this customer to see it here."
+                  action={{ label: "Create invoice", href: "/invoices/new" }}
+                />
+              </div>
+            ) : (
+              <div className="overflow-x-auto w-full min-w-0">
+                <Table className="min-w-[500px]">
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="h-9 px-3 py-2 text-xs">Invoice</TableHead>
+                      <TableHead className="h-9 px-3 py-2 text-xs">Issue Date</TableHead>
+                      <TableHead className="h-9 px-3 py-2 text-xs">Status</TableHead>
+                      <TableHead className="h-9 px-3 py-2 text-xs text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((invoice) => (
+                      <TableRow key={invoice.id} className="group hover:bg-muted/30 transition-colors">
+                        <TableCell className="px-3 py-2 text-xs sm:text-sm font-medium">
+                          <Link
+                            href={`/invoices/${invoice.id}`}
+                            className="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            {invoice.invoice_number}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-muted-foreground text-xs sm:text-sm">
+                          {formatInvoiceDate(invoice.issue_date)}
+                        </TableCell>
+                        <TableCell className="px-3 py-2">
+                          <InvoiceStatusBadge status={invoice.status} />
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right font-semibold tabular-nums text-foreground text-xs sm:text-sm">
+                          {formatCurrency(invoice.total_amount, invoice.currency)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle>Customer invoices</CardTitle>
-          <CardDescription>
-            Invoice history connected to this customer record.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {invoices.length === 0 ? (
-            <div className="p-6">
-              <EmptyState
-                icon={FileText}
-                title="No invoices for this customer"
-                description="Create an invoice and select this customer to see it here."
-                action={{ label: "Create invoice", href: "/invoices/new" }}
-              />
+      {/* Right Sidebar Column */}
+      <div className="space-y-6">
+        {/* Contact Info Card */}
+        <Card className="border border-border/60 shadow-sm">
+          <CardHeader className="p-3 border-b bg-muted/10">
+            <CardTitle className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/80">
+              Contact Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3.5 sm:p-4.5 space-y-3">
+            {/* Email row */}
+            <div className="flex gap-2.5 items-start">
+              <div className="size-7 sm:size-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <Mail className="size-3.5 sm:size-4" aria-hidden />
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-[10px] text-muted-foreground font-semibold">Email address</p>
+                {customer.email ? (
+                  <a
+                    href={`mailto:${customer.email}`}
+                    className="text-xs sm:text-sm font-medium text-foreground hover:text-blue-600 hover:underline break-all transition-colors"
+                  >
+                    {customer.email}
+                  </a>
+                ) : (
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground/60 italic">No Email</p>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto w-full min-w-0">
-              <Table className="min-w-[500px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice</TableHead>
-                    <TableHead>Issue Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell>
-                        <Link
-                          href={`/invoices/${invoice.id}`}
-                          className="font-mono font-medium hover:text-primary hover:underline"
-                        >
-                          {invoice.invoice_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatInvoiceDate(invoice.issue_date)}
-                      </TableCell>
-                      <TableCell>
-                        <InvoiceStatusBadge status={invoice.status} />
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">
-                        {formatCurrency(invoice.total_amount, invoice.currency)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+
+            {/* Phone row */}
+            <div className="flex gap-2.5 items-start">
+              <div className="size-7 sm:size-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <Phone className="size-3.5 sm:size-4" aria-hidden />
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-[10px] text-muted-foreground font-semibold">Phone number</p>
+                {customer.phone ? (
+                  <a
+                    href={`tel:${customer.phone}`}
+                    className="text-xs sm:text-sm font-medium text-foreground hover:text-emerald-600 hover:underline break-all transition-colors"
+                  >
+                    {customer.phone}
+                  </a>
+                ) : (
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground/60 italic">No Phone</p>
+                )}
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* Address row */}
+            <div className="flex gap-2.5 items-start">
+              <div className="size-7 sm:size-8 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                <MapPin className="size-3.5 sm:size-4" aria-hidden />
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-[10px] text-muted-foreground font-semibold">Billing address</p>
+                {customer.address ? (
+                  <p className="text-xs sm:text-sm font-medium text-foreground leading-relaxed">
+                    {customer.address}
+                  </p>
+                ) : (
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground/60 italic">No Address</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions Card */}
+        <Card className="border border-border/60 shadow-sm">
+          <CardHeader className="p-3 border-b bg-muted/10">
+            <CardTitle className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/80">
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-2 sm:p-2.5 space-y-0.5">
+            <Link
+              href="/invoices/new"
+              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted text-xs sm:text-sm font-medium transition-colors text-foreground"
+            >
+              <Receipt className="size-3.5 text-indigo-500 shrink-0" />
+              <span>Create new invoice</span>
+            </Link>
+            <Link
+              href={`/customers/${customer.id}/edit`}
+              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted text-xs sm:text-sm font-medium transition-colors text-foreground"
+            >
+              <Pencil className="size-3.5 text-purple-500 shrink-0" />
+              <span>Edit customer profile</span>
+            </Link>
+            <Link
+              href="/customers"
+              className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted text-xs sm:text-sm font-medium transition-colors text-foreground"
+            >
+              <Users className="size-3.5 text-slate-500 shrink-0" />
+              <span>Back to directory</span>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }

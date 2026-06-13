@@ -15,6 +15,12 @@ const statusConfig: Record<
     variant: "secondary",
     className: "",
   },
+  DUE: {
+    label: "Due",
+    variant: "outline",
+    className:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-400",
+  },
   PAID: {
     label: "Paid",
     variant: "outline",

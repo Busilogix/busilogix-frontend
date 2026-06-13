@@ -16,13 +16,19 @@ class InventoryService {
     const page = params.page ? params.page - 1 : 0; // Backend is 0-indexed
     const size = params.size ?? 50;
 
+    const queryParams: Record<string, string | number | undefined> = {
+      page,
+      size,
+    };
+
+    if (params.action) {
+      queryParams.action = params.action;
+    }
+
     const response = await apiClient.get<BackendEnvelope<InventoryLogListPage>>(
       `${INVENTORY_BASE}/logs`,
       {
-        params: {
-          page,
-          size,
-        },
+        params: queryParams,
       },
     );
 

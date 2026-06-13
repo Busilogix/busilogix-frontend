@@ -76,7 +76,7 @@ export function InvoiceLineItems({
                 </Button>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-[1fr_80px_110px_90px_110px_40px] md:items-start md:gap-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_80px_110px_90px_110px_40px] md:items-start md:gap-3">
                 <Field data-invalid={!!rowErrors?.item_name || undefined}>
                   <FieldLabel
                     htmlFor={`line_items.${index}.item_name`}

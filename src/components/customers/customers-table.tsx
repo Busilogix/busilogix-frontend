@@ -84,7 +84,7 @@ export function CustomersTable({ customers, totalItems }: CustomersTableProps) {
                     <div className="space-y-1 text-sm">
                       <p className="flex items-center gap-1.5 text-muted-foreground">
                         <Mail className="size-3.5 shrink-0" aria-hidden />
-                        <span className="truncate">{customer.email}</span>
+                        <span className="truncate">{customer.email || "No Email"}</span>
                       </p>
                       <p className="flex items-center gap-1.5 text-muted-foreground">
                         <Phone className="size-3.5 shrink-0" aria-hidden />
@@ -95,7 +95,7 @@ export function CustomersTable({ customers, totalItems }: CustomersTableProps) {
                   <TableCell>
                     <p className="flex max-w-xs items-start gap-1.5 text-sm text-muted-foreground">
                       <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                      <span className="line-clamp-2">{customer.address}</span>
+                      <span className="line-clamp-2">{customer.address || "No Address"}</span>
                     </p>
                   </TableCell>
                   <TableCell className="text-right">

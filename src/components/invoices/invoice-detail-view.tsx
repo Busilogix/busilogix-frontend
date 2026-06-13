@@ -12,7 +12,6 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 
@@ -35,6 +34,7 @@ import { invoiceService } from "@/lib/api/invoice.service";
 import type { BackendInvoice } from "@/lib/api/types/invoice.types";
 
 import { downloadCsv } from "@/lib/export/csv";
+import { triggerFileDownload } from "@/lib/utils";
 
 import { InvoiceDetailSkeleton } from "./invoice-detail-skeleton";
 import { InvoiceStatusBadge } from "./invoice-status-badge";
@@ -50,7 +50,7 @@ function mapApiInvoiceToDetailRecord(apiInvoice: BackendInvoice): InvoiceDetailR
     id: apiInvoice.id,
     invoice_number: apiInvoice.invoiceNumber,
     customer_id: apiInvoice.customer?.id || "",
-    customer_name: apiInvoice.customer?.name || "Unknown Customer",
+    customer_name: apiInvoice.customer?.name || "Walk-in Customer",
     customer_email: apiInvoice.customer?.email || "",
     customer_phone: apiInvoice.customer?.mobile || "",
     customer_address: apiInvoice.customer?.address,
@@ -84,12 +84,10 @@ type InvoiceDetailViewProps = {
   invoiceId: string;
 };
 
-export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
-  const router = useRouter();
+function useInvoiceDetail(invoiceId: string) {
   const [invoice, setInvoice] = useState<InvoiceDetailRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -133,51 +131,113 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
     };
   }, [invoiceId]);
 
-  async function runAction(
-    action: "download" | "email" | "mark-paid" | "cancel",
-    label: string,
-    message: string,
+  return {
+    invoice,
+    setInvoice,
+    isLoading,
+    notFound,
+  };
+}
+
+function useInvoiceActions(
+  invoice: InvoiceDetailRecord | null,
+  setInvoice: React.Dispatch<React.SetStateAction<InvoiceDetailRecord | null>>,
+) {
+  const [pendingAction, setPendingAction] = useState<"download" | "email" | "mark-paid" | "cancel" | null>(null);
+
+  async function performAction(
+    actionName: "download" | "email" | "mark-paid" | "cancel",
+    actionFn: () => Promise<void>,
+    successTitle: string,
+    successDescription: string,
   ) {
-    if (!invoice) return;
-
-    setPendingAction(action);
-
+    setPendingAction(actionName);
     try {
-      if (action === "mark-paid") {
-        const updated = await invoiceService.update(invoice.id, { status: "PAID" });
-        setInvoice(mapApiInvoiceToDetailRecord(updated));
-      }
-
-      if (action === "cancel") {
-        const updated = await invoiceService.cancel(invoice.id);
-        setInvoice(mapApiInvoiceToDetailRecord(updated));
-      }
-
-      if (action === "download") {
-        try {
-          const blob = await invoiceService.downloadPdf(invoice.id);
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", `${invoice.invoice_number}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          link.parentNode?.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        } catch (error) {
-          console.error("Failed to download PDF:", error);
-          throw error;
-        }
-      }
-
-
-      toast.success(label, { description: message });
-    } catch {
-      toast.error("Action failed: Something went wrong. Please try again.");
+      await actionFn();
+      toast.success(successTitle, { description: successDescription });
+    } catch (err: unknown) {
+      console.error(`Action ${actionName} failed:`, err);
+      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      toast.error("Action failed", { description: msg });
     } finally {
       setPendingAction(null);
     }
   }
+
+  async function handleDownloadPdf() {
+    if (!invoice) return;
+    await performAction(
+      "download",
+      async () => {
+        const blob = await invoiceService.downloadPdf(invoice.id);
+        triggerFileDownload(blob, `${invoice.invoice_number}.pdf`);
+      },
+      "PDF downloaded",
+      `${invoice.invoice_number}.pdf downloaded.`
+    );
+  }
+
+  async function handleEmailAction() {
+    if (!invoice) return;
+    if (!invoice.customer_email) {
+      toast.error("Missing Email", { description: "Customer does not have a registered email address." });
+      return;
+    }
+    await performAction(
+      "email",
+      async () => {
+        await invoiceService.send(invoice.id);
+      },
+      "Email sent successfully",
+      `Invoice ${invoice.invoice_number} has been sent to ${invoice.customer_email}.`
+    );
+  }
+
+  async function handleMarkPaid() {
+    if (!invoice) return;
+    await performAction(
+      "mark-paid",
+      async () => {
+        const updated = await invoiceService.markAsPaid(invoice.id);
+        setInvoice(mapApiInvoiceToDetailRecord(updated));
+      },
+      "Invoice marked as paid",
+      `${invoice.invoice_number} is now counted as revenue.`
+    );
+  }
+
+  async function handleCancel() {
+    if (!invoice) return;
+    await performAction(
+      "cancel",
+      async () => {
+        const updated = await invoiceService.cancel(invoice.id);
+        setInvoice(mapApiInvoiceToDetailRecord(updated));
+      },
+      "Invoice cancelled",
+      `${invoice.invoice_number} has been cancelled.`
+    );
+  }
+
+  return {
+    pendingAction,
+    busy: pendingAction !== null,
+    handleDownloadPdf,
+    handleEmailAction,
+    handleMarkPaid,
+    handleCancel,
+  };
+}
+
+export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
+  const { invoice, setInvoice, isLoading, notFound } = useInvoiceDetail(invoiceId);
+  const {
+    busy,
+    handleDownloadPdf,
+    handleEmailAction,
+    handleMarkPaid,
+    handleCancel,
+  } = useInvoiceActions(invoice, setInvoice);
 
   function exportInvoiceCsv() {
     if (!invoice) return;
@@ -207,7 +267,6 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
     );
   }
 
-  const busy = pendingAction !== null;
   const canMarkPaid = invoice.status !== "PAID" && invoice.status !== "CANCELLED";
 
   return (
@@ -226,7 +285,9 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="font-mono text-lg font-bold tracking-tight sm:text-xl">
-                  {invoice.invoice_number}
+                  <Link href={`/invoices/${invoice.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                    {invoice.invoice_number}
+                  </Link>
                 </h1>
                 <InvoiceStatusBadge status={invoice.status} />
               </div>
@@ -240,7 +301,7 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t bg-muted/20 px-4 py-3 sm:px-5">
-          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={() => runAction("download", "PDF downloaded", `${invoice.invoice_number}.pdf downloaded.`)}>
+          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={handleDownloadPdf}>
             <Download className="size-4" aria-hidden />
             PDF
           </Button>
@@ -248,7 +309,7 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
             <Download className="size-4" aria-hidden />
             CSV
           </Button>
-          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={() => runAction("email", "Email queued", `Invoice ${invoice.invoice_number} would be emailed to ${invoice.customer_email}.`)}>
+          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={handleEmailAction}>
             <Mail className="size-4" aria-hidden />
             Email
           </Button>
@@ -258,7 +319,7 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
               variant="outline"
               className="flex-1 sm:flex-none text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950"
               disabled={busy}
-              onClick={() => runAction("mark-paid", "Invoice marked as paid", `${invoice.invoice_number} is now counted as revenue.`)}
+              onClick={handleMarkPaid}
             >
               <CheckCircle2 className="size-4" aria-hidden />
               Mark Paid
@@ -270,7 +331,7 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
               variant="outline"
               className="flex-1 sm:flex-none sm:ml-auto text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
               disabled={busy}
-              onClick={() => runAction("cancel", "Invoice cancelled", `${invoice.invoice_number} has been cancelled.`)}
+              onClick={handleCancel}
             >
               <XCircle className="size-4" aria-hidden />
               Cancel Invoice
@@ -355,12 +416,10 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
                 {/* Contact Column */}
                 <div className="space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 block mb-1">Contact</span>
-                  {invoice.customer_email && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
-                      <span className="break-all font-medium text-foreground/90">{invoice.customer_email}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Mail className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                    <span className="break-all font-medium text-foreground/90">{invoice.customer_email || "No Email"}</span>
+                  </div>
                   {invoice.customer_phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
@@ -370,40 +429,43 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
                 </div>
 
                 {/* Address Column */}
-                {invoice.customer_address && (
-                  <div className="space-y-2 sm:border-l sm:pl-4 lg:border-l-0 lg:pl-0 xl:border-l xl:pl-4 border-muted/50 min-w-0">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 block mb-1">Address</span>
-                    {(() => {
-                      const line1Text = [
-                        invoice.customer_address.line1,
-                        invoice.customer_address.line2,
-                      ].filter(Boolean).join(", ");
-                      const line2Text = `${invoice.customer_address.city}, ${invoice.customer_address.state} ${invoice.customer_address.pincode}`;
+                <div className="space-y-2 sm:border-l sm:pl-4 lg:border-l-0 lg:pl-0 xl:border-l xl:pl-4 border-muted/50 min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 block mb-1">Address</span>
+                  {invoice.customer_address ? (() => {
+                    const line1Text = [
+                      invoice.customer_address.line1,
+                      invoice.customer_address.line2,
+                    ].filter(Boolean).join(", ");
+                    const line2Text = `${invoice.customer_address.city}, ${invoice.customer_address.state} ${invoice.customer_address.pincode}`;
 
-                      return (
-                        <div className="relative min-w-0 group cursor-pointer">
-                          {/* Default state: Truncated two lines */}
-                          <div className="flex items-start gap-2 group-hover:hidden min-w-0">
-                            <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/70" aria-hidden />
-                            <div className="text-foreground/90 text-sm text-left leading-tight truncate w-full min-w-0">
-                              <p className="font-medium truncate">{line1Text}</p>
-                              <p className="text-xs text-muted-foreground truncate mt-0.5">{line2Text}</p>
-                            </div>
-                          </div>
-                          {/* Hover state: Full wrapped multi-line */}
-                          <div className="hidden group-hover:flex items-start gap-2 min-w-0">
-                            <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/70" aria-hidden />
-                            <div className="space-y-0.5 text-foreground/90 text-sm leading-relaxed text-left break-words">
-                              <p className="font-semibold">{invoice.customer_address.line1}</p>
-                              {invoice.customer_address.line2 && <p className="font-medium">{invoice.customer_address.line2}</p>}
-                              <p className="font-medium">{invoice.customer_address.city}, {invoice.customer_address.state} {invoice.customer_address.pincode}</p>
-                            </div>
+                    return (
+                      <div className="relative min-w-0 group cursor-pointer">
+                        {/* Default state: Truncated two lines */}
+                        <div className="flex items-start gap-2 group-hover:hidden min-w-0">
+                          <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                          <div className="text-foreground/90 text-sm text-left leading-tight truncate w-full min-w-0">
+                            <p className="font-medium truncate">{line1Text}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{line2Text}</p>
                           </div>
                         </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                        {/* Hover state: Full wrapped multi-line */}
+                        <div className="hidden group-hover:flex items-start gap-2 min-w-0">
+                          <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                          <div className="space-y-0.5 text-foreground/90 text-sm leading-relaxed text-left break-words">
+                            <p className="font-semibold">{invoice.customer_address.line1}</p>
+                            {invoice.customer_address.line2 && <p className="font-medium">{invoice.customer_address.line2}</p>}
+                            <p className="font-medium">{invoice.customer_address.city}, {invoice.customer_address.state} {invoice.customer_address.pincode}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })() : (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+                      <span className="font-medium text-foreground/90">No Address</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

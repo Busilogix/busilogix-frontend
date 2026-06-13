@@ -5,12 +5,10 @@ import type {
   ApiInvoice,
   CreateInvoiceRequest,
   CreateInvoiceResponse,
-  Invoice,
   BackendInvoice,
   InvoiceListParams,
   InvoiceListPage,
   InvoiceListResult,
-  UpdateInvoiceRequest,
 } from "./types/invoice.types";
 import { parseAuthResponse } from "./utils/auth-response";
 
@@ -21,7 +19,7 @@ class InvoiceService {
     const page = params.page ? params.page - 1 : 0; // Backend is 0-indexed
     const size = params.size ?? 20;
 
-    const queryParams: Record<string, any> = {
+    const queryParams: Record<string, string | number | undefined> = {
       page,
       size,
     };
@@ -37,6 +35,9 @@ class InvoiceService {
     }
     if (params.endDate) {
       queryParams.endDate = params.endDate;
+    }
+    if (params.customerMobile) {
+      queryParams.customerMobile = params.customerMobile;
     }
 
     const response = await apiClient.get<BackendEnvelope<InvoiceListPage>>(
@@ -97,21 +98,6 @@ class InvoiceService {
     return { message, invoice: data };
   }
 
-  async update(id: string, payload: UpdateInvoiceRequest): Promise<BackendInvoice> {
-    const response = await apiClient.put<BackendEnvelope<BackendInvoice>>(
-      `${INVOICES_BASE}/${id}`,
-      payload,
-    );
-
-    const { data } = parseAuthResponse(response);
-    if (!data) {
-      throw new ApiError("Invoice response did not include data.", {
-        statusCode: response.status,
-        errorCode: "INVALID_RESPONSE",
-      });
-    }
-    return data;
-  }
 
   async delete(id: string): Promise<void> {
     await apiClient.delete(`${INVOICES_BASE}/${id}`);
@@ -120,6 +106,7 @@ class InvoiceService {
   async send(id: string): Promise<BackendInvoice> {
     const response = await apiClient.post<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}/send`,
+      {},
     );
 
     const { data } = parseAuthResponse(response);
@@ -135,6 +122,7 @@ class InvoiceService {
   async cancel(id: string): Promise<BackendInvoice> {
     const response = await apiClient.patch<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}/cancel`,
+      {},
     );
 
     const { data } = parseAuthResponse(response);
@@ -154,6 +142,33 @@ class InvoiceService {
     );
 
     return response.data;
+  }
+  /**
+   * Marks an invoice as PAID (PATCH /invoices/{id}/mark-paid).
+   * Transitions from DUE or OVERDUE → PAID and triggers a payment-confirmation email.
+   */
+  async markAsPaid(id: string): Promise<BackendInvoice> {
+    const response = await apiClient.patch<BackendEnvelope<BackendInvoice>>(
+      `${INVOICES_BASE}/${id}/mark-paid`,
+      {},
+    );
+
+    const { data } = parseAuthResponse(response);
+    if (!data) {
+      throw new ApiError("Mark-as-paid response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+    return data;
+  }
+
+  /**
+   * Sends an overdue reminder email and transitions the invoice to OVERDUE
+   * (POST /invoices/{id}/remind-overdue).
+   */
+  async remindOverdue(id: string): Promise<void> {
+    await apiClient.post(`${INVOICES_BASE}/${id}/remind-overdue`, {});
   }
 }
 

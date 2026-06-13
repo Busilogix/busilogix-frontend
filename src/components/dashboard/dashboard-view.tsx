@@ -51,13 +51,13 @@ const quickActions = [
   {
     title: "Add product",
     description: "Expand your catalog",
-    href: "/products/new",
+    href: "/products",
     icon: Plus,
     tone: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/15",
   },
   {
-    title: "Adjust stock",
-    description: "Update inventory",
+    title: "Inventory updates",
+    description: "View stock updates",
     href: "/inventory",
     icon: Boxes,
     tone: "bg-amber-500/10 text-amber-600 ring-amber-500/15",
@@ -122,7 +122,7 @@ export function DashboardView() {
     id: inv.invoiceId,
     invoice_number: inv.invoiceNumber,
     customer_id: "",
-    customer_name: inv.customerName,
+    customer_name: inv.customerName || "Walk-in Customer",
     status: "PAID" as const, // Default status for display mapping since api only has netAmount
     issue_date: inv.createdAt,
     due_date: inv.createdAt,

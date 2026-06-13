@@ -4,11 +4,17 @@ import type { ApiResponse } from "./types/api.types";
 import type {
   AuthUser,
   BackendEnvelope,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
   LoginTokenData,
   RefreshTokenRequest,
   RefreshTokenResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  ResendVerificationRequest,
+  ResendVerificationResponse,
   SignupRequest,
   SignupResponse,
 } from "./types/auth.types";
@@ -76,6 +82,54 @@ class AuthService {
     }
 
     return data;
+  }
+
+  async forgotPassword(
+    payload: ForgotPasswordRequest,
+  ): Promise<ForgotPasswordResponse> {
+    const response = await apiClient.post<BackendEnvelope>(
+      `${AUTH_BASE}/forgot-password`,
+      payload,
+    );
+
+    const { message } = parseAuthResponse(response);
+
+    return { message };
+  }
+
+  async resetPassword(
+    payload: ResetPasswordRequest,
+  ): Promise<ResetPasswordResponse> {
+    const response = await apiClient.post<BackendEnvelope>(
+      `${AUTH_BASE}/reset-password`,
+      payload,
+    );
+
+    const { message } = parseAuthResponse(response);
+
+    return { message };
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    const response = await apiClient.get<BackendEnvelope>(
+      `${AUTH_BASE}/verify-email`,
+      { params: { token } },
+    );
+
+    parseAuthResponse(response);
+  }
+
+  async resendVerification(
+    payload: ResendVerificationRequest,
+  ): Promise<ResendVerificationResponse> {
+    const response = await apiClient.post<BackendEnvelope>(
+      `${AUTH_BASE}/resend-verification`,
+      payload,
+    );
+
+    const { message } = parseAuthResponse(response);
+
+    return { message };
   }
 }
 

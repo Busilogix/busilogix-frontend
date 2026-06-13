@@ -6,4 +6,9 @@ export { GuestGuard } from "./guest-guard";
 export { LoginForm } from "./login-form";
 export { SignupForm } from "./signup-form";
 export { GoogleLoginButton } from "./google-login-button";
+export { ForgotPasswordForm } from "./forgot-password-form";
+export { ResetPasswordForm } from "./reset-password-form";
+export { ResendVerificationForm } from "./resend-verification-form";
+export { VerifyEmailView } from "./verify-email-view";
+
 

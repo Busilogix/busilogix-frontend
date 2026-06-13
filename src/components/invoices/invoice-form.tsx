@@ -186,7 +186,7 @@ function EditInvoiceForm({ invoiceId }: { invoiceId?: string }) {
         </p>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-7 lg:col-span-2">
           <Card>
             <CardHeader className="border-b">
@@ -219,7 +219,7 @@ function EditInvoiceForm({ invoiceId }: { invoiceId?: string }) {
                   <FieldError errors={[errors.customer_name]} />
                 </Field>
 
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field data-invalid={!!errors.customer_email || undefined}>
                     <FieldLabel htmlFor="customer_email">
                       Customer email
@@ -294,7 +294,7 @@ function EditInvoiceForm({ invoiceId }: { invoiceId?: string }) {
                   <FieldError errors={[errors.invoice_number]} />
                 </Field>
 
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field data-invalid={!!errors.issue_date || undefined}>
                     <FieldLabel htmlFor="issue_date">Issue date</FieldLabel>
                     <FieldDescription>
