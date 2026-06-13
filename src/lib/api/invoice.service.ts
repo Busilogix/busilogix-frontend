@@ -121,6 +121,7 @@ class InvoiceService {
   async cancel(id: string): Promise<BackendInvoice> {
     const response = await apiClient.patch<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}/cancel`,
+      {},
     );
 
     const { data } = parseAuthResponse(response);
@@ -148,6 +149,7 @@ class InvoiceService {
   async markAsPaid(id: string): Promise<BackendInvoice> {
     const response = await apiClient.patch<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}/mark-paid`,
+      {},
     );
 
     const { data } = parseAuthResponse(response);
