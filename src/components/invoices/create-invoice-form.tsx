@@ -177,9 +177,8 @@ export function CreateInvoiceForm() {
       customerAddress ?? createDefaultCreateInvoiceValues().customer.address,
   });
 
-  const taxSummaryLabel = `${Number(taxPercentage) || 0}% · ${
-    taxType === "INTRA_STATE" ? "Intra-state" : "Inter-state"
-  }`;
+  const taxSummaryLabel = `${Number(taxPercentage) || 0}% · ${taxType === "INTRA_STATE" ? "Intra-state" : "Inter-state"
+    }`;
   const hasDiscount = Number(discountAmount) > 0;
   const discountPreview = hasDiscount
     ? `${formatCurrency(Number(discountAmount), "INR")} off`
@@ -501,7 +500,7 @@ export function CreateInvoiceForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6 pb-24 lg:pb-6"
+      className="space-y-6 pb-6"
       noValidate
     >
       <InvoiceFormProgress
@@ -519,7 +518,7 @@ export function CreateInvoiceForm() {
         </p>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-5 lg:col-span-2">
           <Card>
             <CardHeader className="border-b py-4">
@@ -570,7 +569,7 @@ export function CreateInvoiceForm() {
 
               {!isCounterSale && (
                 <>
-                  <div className="grid gap-3 lg:grid-cols-[minmax(9rem,1fr)_minmax(8rem,1.2fr)_minmax(10rem,1.4fr)]">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(9rem,1fr)_minmax(8rem,1.2fr)_minmax(10rem,1.4fr)]">
                     <Field data-invalid={!!errors.customer?.mobile || undefined}>
                       <FieldLabel htmlFor="customer-mobile">Mobile</FieldLabel>
                       <Input
@@ -641,7 +640,7 @@ export function CreateInvoiceForm() {
                         disabled={isSubmitting}
                         className={cn(
                           customerLookup.status === "found" &&
-                            "border-emerald-500/30 bg-emerald-500/5",
+                          "border-emerald-500/30 bg-emerald-500/5",
                         )}
                         {...register("customer.name")}
                       />
@@ -657,7 +656,7 @@ export function CreateInvoiceForm() {
                         disabled={isSubmitting}
                         className={cn(
                           customerLookup.status === "found" &&
-                            "border-emerald-500/30 bg-emerald-500/5",
+                          "border-emerald-500/30 bg-emerald-500/5",
                         )}
                         {...register("customer.email")}
                       />
@@ -712,7 +711,7 @@ export function CreateInvoiceForm() {
                           If you add any address field, line 1, city, state, and
                           pincode are required. Line 2 is optional.
                         </p>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <Field
                             className="sm:col-span-2"
                             data-invalid={!!addressErrors?.line1 || undefined}

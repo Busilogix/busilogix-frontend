@@ -104,7 +104,7 @@ export function CreateInvoiceLineItems({
                 </Button>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-[1fr_120px_110px_110px_40px] md:items-start md:gap-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_120px_110px_110px_40px] md:items-start md:gap-3">
                 <Field data-invalid={!!rowErrors?.productId || undefined}>
                   <FieldLabel className="md:sr-only">Product</FieldLabel>
                   <Controller
