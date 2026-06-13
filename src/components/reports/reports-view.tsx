@@ -620,14 +620,22 @@ export function ReportsView() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {intervals.map((item) => (
-                      <TableRow key={item.label} className="hover:bg-muted/40 transition-colors duration-150">
-                        <TableCell className="font-mono text-xs pl-5 font-semibold text-foreground">{item.label}</TableCell>
-                        <TableCell className="text-right font-semibold text-xs text-muted-foreground tabular-nums">{item.invoiceCount}</TableCell>
-                        <TableCell className="text-right font-semibold text-xs text-emerald-600 tabular-nums">{formatCurrency(item.grossSales, "INR")}</TableCell>
-                        <TableCell className="text-right font-bold text-xs text-indigo-600 dark:text-indigo-400 pr-5 tabular-nums">{formatCurrency(item.netRevenue, "INR")}</TableCell>
+                    {intervals.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8 font-medium">
+                          No data available
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      intervals.map((item) => (
+                        <TableRow key={item.label} className="hover:bg-muted/40 transition-colors duration-150">
+                          <TableCell className="font-mono text-xs pl-5 font-semibold text-foreground">{item.label}</TableCell>
+                          <TableCell className="text-right font-semibold text-xs text-muted-foreground tabular-nums">{item.invoiceCount}</TableCell>
+                          <TableCell className="text-right font-semibold text-xs text-emerald-600 tabular-nums">{formatCurrency(item.grossSales, "INR")}</TableCell>
+                          <TableCell className="text-right font-bold text-xs text-indigo-600 dark:text-indigo-400 pr-5 tabular-nums">{formatCurrency(item.netRevenue, "INR")}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

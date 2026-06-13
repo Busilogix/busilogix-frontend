@@ -56,7 +56,7 @@ const quickActions = [
     tone: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/15",
   },
   {
-    title: "View inventory updates",
+    title: "Inventory updates",
     description: "View stock updates",
     href: "/inventory",
     icon: Boxes,
