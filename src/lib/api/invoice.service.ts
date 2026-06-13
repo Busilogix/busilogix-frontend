@@ -19,7 +19,7 @@ class InvoiceService {
     const page = params.page ? params.page - 1 : 0; // Backend is 0-indexed
     const size = params.size ?? 20;
 
-    const queryParams: Record<string, any> = {
+    const queryParams: Record<string, string | number | undefined> = {
       page,
       size,
     };
@@ -106,6 +106,7 @@ class InvoiceService {
   async send(id: string): Promise<BackendInvoice> {
     const response = await apiClient.post<BackendEnvelope<BackendInvoice>>(
       `${INVOICES_BASE}/${id}/send`,
+      {},
     );
 
     const { data } = parseAuthResponse(response);
@@ -167,7 +168,7 @@ class InvoiceService {
    * (POST /invoices/{id}/remind-overdue).
    */
   async remindOverdue(id: string): Promise<void> {
-    await apiClient.post(`${INVOICES_BASE}/${id}/remind-overdue`);
+    await apiClient.post(`${INVOICES_BASE}/${id}/remind-overdue`, {});
   }
 }
 

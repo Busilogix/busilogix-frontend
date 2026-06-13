@@ -16,7 +16,7 @@ class InventoryService {
     const page = params.page ? params.page - 1 : 0; // Backend is 0-indexed
     const size = params.size ?? 50;
 
-    const queryParams: Record<string, any> = {
+    const queryParams: Record<string, string | number | undefined> = {
       page,
       size,
     };

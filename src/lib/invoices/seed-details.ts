@@ -7,7 +7,7 @@ import {
 } from "./calculations";
 import type { InvoiceDetailRecord, InvoiceLineItemRecord } from "./types";
 
-const SEED_INVOICES: any[] = [];
+const SEED_INVOICES: InvoiceDetailRecord[] = [];
 
 const customerById = Object.fromEntries(
   SEED_CUSTOMERS.map((customer) => [customer.id, customer]),
