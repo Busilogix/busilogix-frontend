@@ -819,9 +819,18 @@ export function CreateInvoiceForm() {
                   Loading products...
                 </p>
               ) : products.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No products in catalog. Add products before billing.
-                </p>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    No products in catalog. Add products before billing.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    render={<Link href="/products" />}
+                  >
+                    Add Product
+                  </Button>
+                </div>
               ) : (
                 <>
                   <ProductQuickChips
