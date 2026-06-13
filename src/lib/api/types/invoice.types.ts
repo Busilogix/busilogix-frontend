@@ -59,47 +59,7 @@ export type CreateInvoiceResponse = {
   invoice: ApiInvoice;
 };
 
-/** @deprecated Legacy list/detail shape — migrate when list API is integrated */
-export type InvoiceStatus = "DRAFT" | "PAID" | "OVERDUE" | "CANCELLED";
-
-/** @deprecated Legacy list/detail shape — migrate when list API is integrated */
-export type InvoiceLineItem = {
-  id?: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  amount: number;
-};
-
-/** @deprecated Legacy list/detail shape — migrate when list API is integrated */
-export type Invoice = {
-  id: string;
-  invoice_number: string;
-  customer_id: string;
-  customer_name?: string;
-  status: InvoiceStatus;
-  issue_date: string;
-  due_date: string;
-  currency: string;
-  subtotal: number;
-  tax_amount: number;
-  total_amount: number;
-  line_items: InvoiceLineItem[];
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-};
-
-/** @deprecated Legacy — migrate when update API is integrated */
-export type UpdateInvoiceRequest = Partial<{
-  customer_id: string;
-  issue_date: string;
-  due_date: string;
-  currency: string;
-  line_items: Omit<InvoiceLineItem, "id">[];
-  notes: string;
-  status: InvoiceStatus;
-}>;
+export type InvoiceStatus = "DRAFT" | "DUE" | "PAID" | "OVERDUE" | "CANCELLED";
 
 export type InvoiceListParams = {
   page?: number; // 1-indexed in frontend
@@ -108,6 +68,7 @@ export type InvoiceListParams = {
   status?: InvoiceStatus;
   startDate?: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
+  customerMobile?: string;
 };
 
 export type BackendInvoice = ApiInvoice & {

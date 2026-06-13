@@ -54,14 +54,11 @@ export type {
 
 export type {
   CreateInvoiceRequest,
-  Invoice,
   BackendInvoice,
-  InvoiceLineItem,
   InvoiceListParams,
   InvoiceListPage,
   InvoiceListResult,
   InvoiceStatus,
-  UpdateInvoiceRequest,
 } from "./types/invoice.types";
 
 export { inventoryService } from "./inventory.service";

@@ -6,7 +6,7 @@ export function getReportsData() {
   const invoices = getAllInvoices();
   const paidInvoices = invoices.filter((invoice) => invoice.status === "PAID");
   const pendingInvoices = invoices.filter(
-    (invoice) => invoice.status === "OVERDUE",
+    (invoice) => invoice.status === "OVERDUE" || invoice.status === "DUE",
   );
 
   const revenue = paidInvoices.reduce(

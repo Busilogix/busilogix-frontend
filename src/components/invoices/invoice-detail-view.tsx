@@ -198,7 +198,7 @@ function useInvoiceActions(
     await performAction(
       "mark-paid",
       async () => {
-        const updated = await invoiceService.update(invoice.id, { status: "PAID" });
+        const updated = await invoiceService.markAsPaid(invoice.id);
         setInvoice(mapApiInvoiceToDetailRecord(updated));
       },
       "Invoice marked as paid",

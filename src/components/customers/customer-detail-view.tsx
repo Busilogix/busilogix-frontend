@@ -49,12 +49,13 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
         if (!active) return;
         setCustomer(mapApiCustomerToRecord(apiCustomer));
 
-        const res = await invoiceService.list({ size: 200 });
+        const res = await invoiceService.list({
+          size: 200,
+          customerMobile: apiCustomer.mobile,
+        });
         if (!active) return;
 
-        const customerInvoices = res.items.filter(
-          (inv) => inv.customer?.id === customerId,
-        );
+        const customerInvoices = res.items;
 
         const mappedInvoices = customerInvoices.map(
           (inv): InvoiceDetailRecord => ({
@@ -107,7 +108,7 @@ export function CustomerDetailView({ customerId }: CustomerDetailViewProps) {
       .reduce((sum, invoice) => sum + invoice.total_amount, 0);
     const pending = invoices
       .filter(
-        (invoice) => invoice.status === "OVERDUE",
+        (invoice) => invoice.status === "OVERDUE" || invoice.status === "DUE",
       )
       .reduce((sum, invoice) => sum + invoice.total_amount, 0);
 

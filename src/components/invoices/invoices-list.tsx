@@ -29,6 +29,7 @@ const INVOICES_PAGE_SIZE = 10;
 const INVOICE_STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "DRAFT", label: "Draft" },
+  { value: "DUE", label: "Due" },
   { value: "PAID", label: "Paid" },
   { value: "OVERDUE", label: "Overdue" },
   { value: "CANCELLED", label: "Cancelled" },
@@ -170,7 +171,7 @@ export function InvoicesList() {
   }
 
   async function performMarkPaid(invoice: InvoiceListRecord) {
-    await invoiceService.update(invoice.id, { status: "PAID" });
+    await invoiceService.markAsPaid(invoice.id);
     refreshInvoices();
     toast.success("Invoice marked as paid", { description: `${invoice.invoice_number} is now included in total revenue.` });
   }
