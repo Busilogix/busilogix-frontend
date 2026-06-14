@@ -2,6 +2,7 @@
 
 import { AuthBrandPanel, AuthGuard } from "@/components/auth";
 import { StoreSetupForm } from "@/components/store-setup/store-setup-form";
+import { AuthSupportButton } from "@/components/support/auth-support-button";
 
 export default function StoreSetupPage() {
   return (
@@ -15,7 +16,8 @@ export default function StoreSetupPage() {
               "radial-gradient(ellipse at top right, oklch(0.96 0.025 252 / 0.6), transparent 60%), oklch(0.985 0.01 250)",
           }}
         >
-          <main className="flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8 lg:px-16">
+          <AuthSupportButton />
+          <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
             <StoreSetupForm />
           </main>
           <p className="pb-5 text-center text-[11px] text-muted-foreground/70">

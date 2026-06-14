@@ -113,3 +113,8 @@ export type {
   ProductListResult,
 } from "./types/product.types";
 
+export { supportService } from "./support.service";
+export type {
+  SupportRequestPayload,
+  SupportMutationResponse,
+} from "./types/support.types";
