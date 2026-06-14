@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bell, Building2, CheckCircle2, LifeBuoy } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/hooks/use-store";
@@ -23,9 +24,32 @@ import { SupportModal } from "../support/support-modal";
 
 export function AppNavbar() {
   const { store } = useStore();
+  const pathname = usePathname();
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const storeName = store?.name || "";
   const logoUrl = store?.logoUrl;
+
+  const getPageTitle = (path: string) => {
+    if (!path) return "";
+    if (path.startsWith("/dashboard")) return "Dashboard";
+    if (path.startsWith("/customers/new")) return "New Customer";
+    if (path.includes("/customers/") && path.endsWith("/edit")) return "Edit Customer";
+    if (path.startsWith("/customers/")) return "Customer Details";
+    if (path.startsWith("/customers")) return "Customers";
+    if (path.startsWith("/invoices/new")) return "New Invoice";
+    if (path.includes("/invoices/") && path.endsWith("/edit")) return "Edit Invoice";
+    if (path.startsWith("/invoices/")) return "Invoice Details";
+    if (path.startsWith("/invoices")) return "Invoices";
+    if (path.includes("/products/") && path.endsWith("/edit")) return "Edit Product";
+    if (path.startsWith("/products")) return "Products";
+    if (path.startsWith("/inventory")) return "Inventory";
+    if (path.startsWith("/reports")) return "Reports";
+    if (path.startsWith("/settings")) return "Settings";
+    if (path.startsWith("/store-setup")) return "Store Setup";
+    return "";
+  };
+
+  const pageTitle = getPageTitle(pathname || "");
 
   return (
     <header className="sticky top-0 z-40 shrink-0 bg-background/40 backdrop-blur-sm">
@@ -60,6 +84,14 @@ export function AppNavbar() {
               {storeName}
             </p>
           </Link>
+
+          {pageTitle && (
+            <div className="flex items-center gap-2 border-l pl-3 border-slate-200/60 dark:border-slate-800/60 ml-1 select-none">
+              <span className="text-xs sm:text-sm font-semibold tracking-tight text-slate-500 dark:text-slate-400">
+                {pageTitle}
+              </span>
+            </div>
+          )}
 
 
 

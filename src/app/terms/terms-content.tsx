@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Scale, UserCheck, ShieldCheck, Receipt, XCircle, AlertTriangle, Mail } from "lucide-react";
+import { ArrowLeft, Home, Scale, UserCheck, ShieldCheck, Receipt, XCircle, AlertTriangle, Mail } from "lucide-react";
 
 import { useAuth } from "@/context/auth-provider";
 import { AppLogo } from "@/components/layout/app-logo";
@@ -30,13 +30,22 @@ export function TermsContent() {
               Busilogix
             </span>
           </div>
-          <Link
-            href={isAuthenticated ? "/dashboard" : "/login"}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200/60 dark:border-slate-800/60 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 shadow-sm animate-fade-in"
-          >
-            <ArrowLeft className="size-3.5" />
-            {isAuthenticated ? "Back to Dashboard" : "Back to Login"}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200/60 dark:border-slate-800/60 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 shadow-sm"
+            >
+              <Home className="size-3.5" />
+              Home
+            </Link>
+            <Link
+              href={isAuthenticated ? "/dashboard" : "/login"}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200/60 dark:border-slate-800/60 rounded-xl px-3 py-1.5 bg-white dark:bg-slate-900 shadow-sm animate-fade-in"
+            >
+              <ArrowLeft className="size-3.5" />
+              {isAuthenticated ? "Dashboard" : "Login"}
+            </Link>
+          </div>
         </div>
       </header>
 

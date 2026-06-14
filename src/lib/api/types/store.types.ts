@@ -57,3 +57,26 @@ export type UpdatePaymentInfoRequest = {
 export type StoreMutationResponse = {
   message: string;
 };
+
+export type PendingAction = {
+  code: string;
+  title: string;
+  description: string;
+};
+
+export type StoreDashboard = {
+  name: string;
+  email: string;
+  mobile: string;
+  address: ApiStoreAddress;
+  logoUrl?: string;
+  logoConfigured: boolean;
+  gstNumber: string;
+  gstConfigured: boolean;
+  paymentConfigured: boolean;
+  profileCompletionPercentage: number;
+  profileStatus: string;
+  profileComplete: boolean;
+  createdAt: string;
+  pendingActions: PendingAction[];
+};
