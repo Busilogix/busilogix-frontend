@@ -340,29 +340,31 @@ export function InventoryView() {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Main Ledger Logs Section */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Tab Selector */}
-              <div className="flex border-b border-border/40 space-x-6 mb-2">
+              {/* Modern Segmented Control Tab Selector */}
+              <div className="flex p-1 bg-muted/30 rounded-xl max-w-fit mb-4 border border-border/40 shadow-inner">
                 <button
                   onClick={() => setActiveTab("ledger")}
                   className={cn(
-                    "pb-3 text-xs font-black uppercase tracking-wider transition-all duration-200 border-b-2",
+                    "px-5 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-2",
                     activeTab === "ledger"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "bg-background text-primary shadow-sm ring-1 ring-border/50"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
+                  <ClipboardList className="size-3.5" />
                   Ledger Logs
                 </button>
                 <button
                   onClick={() => setActiveTab("uploads")}
                   className={cn(
-                    "pb-3 text-xs font-black uppercase tracking-wider transition-all duration-200 border-b-2",
+                    "px-5 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-2",
                     activeTab === "uploads"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "bg-background text-primary shadow-sm ring-1 ring-border/50"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  Bulk Upload Audits
+                  <UploadCloud className="size-3.5" />
+                  Bulk Audits
                 </button>
               </div>
 
@@ -571,15 +573,18 @@ export function InventoryView() {
                 </>
               ) : (
                 <>
-                  <Card className="surface-card rounded-2xl border border-primary/5 bg-gradient-to-br from-card via-card to-primary/[0.005] shadow-sm hover:border-primary/10 hover:shadow-md hover:shadow-primary/[0.01] transition-all duration-300">
-                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 px-5 py-4 bg-muted/5">
+                  <Card className="surface-card rounded-2xl border border-primary/5 bg-gradient-to-br from-card via-card to-primary/[0.005] shadow-lg hover:border-primary/10 transition-all duration-300 overflow-hidden relative">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/0 via-primary/20 to-primary/0" />
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 px-6 py-5 bg-muted/5 relative z-10">
                       <div>
-                        <CardTitle className="text-sm font-black tracking-tight text-foreground flex items-center gap-2">
-                          <UploadCloud className="size-4 text-primary animate-pulse" />
+                        <CardTitle className="text-sm font-black tracking-tight text-foreground flex items-center gap-2.5">
+                          <div className="p-1.5 bg-primary/10 rounded-md border border-primary/20 shadow-inner">
+                            <UploadCloud className="size-4 text-primary" />
+                          </div>
                           Bulk Upload Audits
                         </CardTitle>
-                        <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                          Audit log of bulk product catalog uploads and processing results
+                        <CardDescription className="text-xs text-muted-foreground mt-1.5 font-medium">
+                          Comprehensive security and processing log for all catalog imports.
                         </CardDescription>
                       </div>
                     </CardHeader>
@@ -598,78 +603,101 @@ export function InventoryView() {
                           ))}
                         </div>
                       ) : uploads.length === 0 ? (
-                        <div className="py-16 text-center text-sm text-muted-foreground space-y-2">
-                          <UploadCloud className="size-8 text-muted-foreground/45 mx-auto" />
-                          <p className="font-bold">No uploads available</p>
-                          <p className="text-xs max-w-xs mx-auto text-muted-foreground/75">No bulk upload operations have been recorded yet.</p>
+                        <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50 pointer-events-none" />
+                          <div className="p-4 bg-primary/10 rounded-full ring-8 ring-primary/5 mb-2 shadow-inner">
+                            <UploadCloud className="size-8 text-primary animate-bounce" style={{ animationDuration: '3s' }} />
+                          </div>
+                          <div>
+                            <p className="text-base font-black text-foreground tracking-tight">No upload history</p>
+                            <p className="text-xs max-w-[250px] mx-auto text-muted-foreground mt-1">
+                              When you import products via CSV or Excel, the audit trail will appear here.
+                            </p>
+                          </div>
                         </div>
                       ) : (
                         <>
                           {/* Desktop Table View */}
                           <div className="hidden md:block [&_[data-slot=table-container]]:overflow-x-hidden">
                             <Table>
-                              <TableHeader className="bg-muted/10">
+                              <TableHeader className="bg-muted/30 border-b border-border/50">
                                 <TableRow className="hover:bg-transparent">
-                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-5">Date & Time</TableHead>
-                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">File Info</TableHead>
-                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Status</TableHead>
-                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3 text-center">Processed</TableHead>
-                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-3">Uploaded By</TableHead>
-                                  <TableHead className="text-[10px] font-black uppercase tracking-wider text-muted-foreground py-3 px-4">Remarks / Error</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground py-4 px-5">Timestamp</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground py-4 px-3">Document Info</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground py-4 px-3 text-center">Outcome</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground py-4 px-3 text-center">Lines Read</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground py-4 px-3">Actor</TableHead>
+                                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground py-4 px-4">System Remarks</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {uploads.map((audit) => (
-                                  <TableRow key={audit.id} className="hover:bg-muted/30 transition-colors duration-150 border-b border-border/40 last:border-b-0">
-                                    <TableCell className="py-3 px-5 text-xs text-foreground font-medium tabular-nums">
-                                      <span className="font-semibold block">{new Date(audit.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
-                                      <span className="text-[10px] text-muted-foreground/75 block mt-0.5">
-                                        {new Date(audit.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  <TableRow key={audit.id} className="group hover:bg-primary/[0.02] transition-colors duration-300 border-b border-border/40 last:border-0 cursor-default relative overflow-hidden">
+                                    <TableCell className="py-4 px-5 text-xs text-foreground font-medium tabular-nums relative">
+                                      {/* Highlight Bar */}
+                                      <div className={cn(
+                                        "absolute inset-y-0 left-0 w-[3px] transition-opacity duration-300 opacity-0 group-hover:opacity-100",
+                                        audit.status === "SUCCESS" ? "bg-emerald-500" : "bg-rose-500"
+                                      )} />
+                                      <span className="font-black text-[11px] uppercase tracking-wider block text-foreground/80">
+                                        {new Date(audit.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground block mt-0.5 font-semibold">
+                                        {new Date(audit.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                       </span>
                                     </TableCell>
-                                    <TableCell className="py-3 px-3 whitespace-normal">
-                                      <div className="font-bold text-xs text-foreground tracking-tight flex items-center gap-1.5">
-                                        <FileText className="size-3.5 text-muted-foreground flex-shrink-0" />
-                                        {audit.filename}
-                                      </div>
-                                      <div className="text-[9px] text-muted-foreground font-mono mt-0.5 tracking-wider">
-                                        {formatFileSize(audit.fileSize)}
+                                    <TableCell className="py-4 px-3 whitespace-normal">
+                                      <div className="flex items-start gap-3">
+                                        <div className="p-2 bg-primary/5 rounded-lg border border-primary/10 group-hover:bg-primary/10 transition-colors">
+                                          <FileText className="size-4 text-primary" />
+                                        </div>
+                                        <div>
+                                          <p className="font-bold text-xs text-foreground tracking-tight leading-none mb-1 group-hover:text-primary transition-colors duration-200">
+                                            {audit.filename}
+                                          </p>
+                                          <p className="text-[10px] text-muted-foreground font-medium tracking-wide flex items-center gap-1.5">
+                                            <span className="inline-block size-1.5 rounded-full bg-muted-foreground/30" />
+                                            {formatFileSize(audit.fileSize)}
+                                          </p>
+                                        </div>
                                       </div>
                                     </TableCell>
-                                    <TableCell className="py-3 px-3 text-center">
-                                      <Badge
-                                        className={cn(
-                                          "text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm select-none uppercase tracking-wide inline-flex items-center gap-1",
-                                          audit.status === "SUCCESS"
-                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                                        )}
-                                        variant="outline"
-                                      >
+                                    <TableCell className="py-4 px-3 text-center">
+                                      <div className={cn(
+                                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border shadow-sm transition-all duration-300",
+                                        audit.status === "SUCCESS"
+                                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 group-hover:border-emerald-500/40 group-hover:bg-emerald-500/20"
+                                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 group-hover:border-rose-500/40 group-hover:bg-rose-500/20"
+                                      )}>
                                         {audit.status === "SUCCESS" ? (
-                                          <CheckCircle2 className="size-3" />
+                                          <CheckCircle2 className="size-3.5" />
                                         ) : (
-                                          <XCircle className="size-3" />
+                                          <XCircle className="size-3.5" />
                                         )}
                                         {audit.status}
-                                      </Badge>
+                                      </div>
                                     </TableCell>
-                                    <TableCell className="py-3 px-3 text-center">
+                                    <TableCell className="py-4 px-3 text-center">
                                       <span className="text-xs font-black tabular-nums text-foreground">
                                         {audit.processedCount}
                                       </span>
                                     </TableCell>
-                                    <TableCell className="py-3 px-3 text-xs font-medium text-foreground">
+                                    <TableCell className="py-4 px-3 text-xs font-semibold text-muted-foreground">
                                       {audit.uploadedBy}
                                     </TableCell>
-                                    <TableCell className="py-3 px-4 text-xs text-muted-foreground/90 italic font-medium whitespace-normal max-w-[200px]" title={audit.errorMessage || ""}>
+                                    <TableCell className="py-4 px-4 text-xs font-medium whitespace-normal max-w-[200px]">
                                       {audit.status === "SUCCESS" ? (
-                                        <span className="text-emerald-500 dark:text-emerald-400">Processed successfully</span>
+                                        <div className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-500 bg-emerald-500/5 px-2 py-1 rounded-md border border-emerald-500/10">
+                                          <CheckCircle2 className="size-3" />
+                                          <span className="opacity-90">Processed without errors</span>
+                                        </div>
                                       ) : (
-                                        <span className="text-rose-500 dark:text-rose-400 font-semibold flex items-start gap-1">
+                                        <div className="flex items-start gap-1.5 text-rose-600 dark:text-rose-500 bg-rose-500/5 px-2.5 py-1.5 rounded-md border border-rose-500/10">
                                           <AlertCircle className="size-3.5 mt-0.5 flex-shrink-0" />
-                                          {audit.errorMessage || "Unknown error"}
-                                        </span>
+                                          <span className="line-clamp-2 text-[11px] leading-tight opacity-90" title={audit.errorMessage || ""}>
+                                            {audit.errorMessage || "Unknown validation error"}
+                                          </span>
+                                        </div>
                                       )}
                                     </TableCell>
                                   </TableRow>
@@ -679,39 +707,58 @@ export function InventoryView() {
                           </div>
 
                           {/* Mobile Card List View */}
-                          <div className="divide-y divide-border/40 md:hidden">
+                          <div className="divide-y divide-border/40 md:hidden bg-muted/5">
                             {uploads.map((audit) => (
-                              <div key={audit.id} className="p-4 space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] text-muted-foreground font-semibold">
-                                    {new Date(audit.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {new Date(audit.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                  </span>
+                              <div key={audit.id} className="p-5 space-y-3 relative overflow-hidden group hover:bg-muted/10 transition-colors">
+                                {/* Side Indicator */}
+                                <div className={cn(
+                                  "absolute inset-y-0 left-0 w-1",
+                                  audit.status === "SUCCESS" ? "bg-emerald-500/50" : "bg-rose-500/50"
+                                )} />
+                                
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] text-muted-foreground font-black uppercase tracking-wider">
+                                      {new Date(audit.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {new Date(audit.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                    </span>
+                                    <p className="font-black text-xs text-foreground tracking-tight flex items-center gap-1.5">
+                                      <FileText className="size-3.5 text-muted-foreground" />
+                                      {audit.filename}
+                                    </p>
+                                  </div>
                                   <Badge
                                     className={cn(
-                                      "text-[8px] font-bold px-1.5 py-0 rounded-full border shadow-sm uppercase tracking-wide inline-flex items-center gap-0.5",
+                                      "text-[9px] font-black px-2 py-0.5 rounded-md border shadow-sm uppercase tracking-wide inline-flex items-center gap-1",
                                       audit.status === "SUCCESS"
                                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                         : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                                     )}
                                     variant="outline"
                                   >
+                                    {audit.status === "SUCCESS" ? <CheckCircle2 className="size-3" /> : <XCircle className="size-3" />}
                                     {audit.status}
                                   </Badge>
                                 </div>
-                                <div>
-                                  <p className="font-bold text-xs text-foreground tracking-tight flex items-center gap-1">
-                                    <FileText className="size-3 text-muted-foreground" />
-                                    {audit.filename}
-                                  </p>
-                                  <p className="text-[9px] text-muted-foreground mt-0.5">{formatFileSize(audit.fileSize)}</p>
+                                
+                                <div className="grid grid-cols-2 gap-2 text-[10px] text-muted-foreground bg-background rounded-lg p-2.5 border border-border/50 shadow-inner">
+                                  <div>
+                                    <p className="uppercase tracking-wider text-[8px] opacity-70 font-bold mb-0.5">Size</p>
+                                    <p className="font-semibold text-foreground">{formatFileSize(audit.fileSize)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="uppercase tracking-wider text-[8px] opacity-70 font-bold mb-0.5">Processed</p>
+                                    <p className="font-semibold text-foreground">{audit.processedCount} items</p>
+                                  </div>
+                                  <div className="col-span-2">
+                                    <p className="uppercase tracking-wider text-[8px] opacity-70 font-bold mb-0.5">Actor</p>
+                                    <p className="font-semibold text-foreground">{audit.uploadedBy}</p>
+                                  </div>
                                 </div>
-                                <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1 border-t border-border/20">
-                                  <span>Uploaded by: <strong className="text-foreground">{audit.uploadedBy}</strong></span>
-                                  <span>Processed: <strong className="text-foreground">{audit.processedCount}</strong></span>
-                                </div>
-                                {audit.errorMessage && (
-                                  <div className="text-[9px] text-rose-500 bg-rose-500/5 border border-rose-500/10 rounded p-1.5 mt-1">
-                                    <strong>Error:</strong> {audit.errorMessage}
+                                
+                                {audit.status === "FAILED" && audit.errorMessage && (
+                                  <div className="flex items-start gap-1.5 text-[10px] text-rose-600 dark:text-rose-400 bg-rose-500/5 border border-rose-500/10 rounded-lg p-2 mt-2">
+                                    <AlertCircle className="size-3.5 mt-0.5 flex-shrink-0" />
+                                    <span className="font-medium leading-relaxed">{audit.errorMessage}</span>
                                   </div>
                                 )}
                               </div>
