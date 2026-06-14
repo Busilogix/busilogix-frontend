@@ -83,7 +83,8 @@ export function LogoUploader({ value, onChange, disabled, compact = false }: Log
               fill
               className="object-contain"
               sizes="80px"
-              priority
+              loading="eager"
+              fetchPriority="high"
             />
             {!disabled && !isUploading && (
               <button
