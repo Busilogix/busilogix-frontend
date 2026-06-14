@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { LogoUploader } from "@/components/ui/logo-uploader";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { AppLogo } from "@/components/layout/app-logo";
 import { useAuth } from "@/context/auth-provider";
 import { isApiError } from "@/lib/api/errors";
 import { storeService } from "@/lib/api/store.service";
@@ -97,24 +98,33 @@ export function StoreSetupForm() {
   }
 
   return (
-    <div className="w-full max-w-xl px-4 py-8">
-      <Card className="border border-slate-200/80 shadow-xl shadow-slate-950/8 ring-1 ring-black/5">
-        <CardHeader className="space-y-1.5 border-b pb-5">
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+    <div className="w-full max-w-[700px] py-6 sm:py-8">
+      <div className="mb-6 flex justify-center lg:hidden">
+        <AppLogo variant="auth" href="/dashboard" />
+      </div>
+
+      <Card className="relative overflow-hidden border-none shadow-2xl shadow-indigo-500/5 bg-white/70 backdrop-blur-xl ring-1 ring-slate-900/5 sm:rounded-[2rem]">
+        {/* Subtle decorative gradient background */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl opacity-60 pointer-events-none" aria-hidden />
+        
+        <CardHeader className="space-y-1.5 border-b border-slate-200/50 pb-6 pt-8 px-6 sm:px-8">
+          <CardTitle className="text-[22px] font-bold tracking-tight bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent">
             Set up your store
           </CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
+          <CardDescription className="text-sm text-slate-500 font-medium">
             Please register your business details to configure your workspace and start billing.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-            <div className="space-y-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-primary/90">
-                <Building2 className="size-4" />
-                Company Profile
+        <CardContent className="pt-6 px-6 sm:px-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-7" noValidate>
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shadow-inner">
+                  <Building2 className="size-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">Company Profile</h3>
               </div>
-              <FieldGroup className="gap-4">
+              <FieldGroup className="gap-5">
                 <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
                   <Field data-invalid={!!errors.logo_url || undefined}>
                     <FieldLabel>Logo</FieldLabel>
@@ -185,12 +195,14 @@ export function StoreSetupForm() {
               </FieldGroup>
             </div>
 
-            <div className="border-t border-slate-100 pt-6">
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-primary/90">
-                <MapPin className="size-4" />
-                Business Address
+            <div className="border-t border-slate-200/50 pt-8">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 ring-1 ring-indigo-500/20 shadow-inner">
+                  <MapPin className="size-5" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">Business Address</h3>
               </div>
-              <FieldGroup className="gap-4">
+              <FieldGroup className="gap-5">
                 <Field data-invalid={!!errors.address_line1 || undefined}>
                   <FieldLabel htmlFor="address_line1">Address line 1</FieldLabel>
                   <Input
@@ -250,12 +262,12 @@ export function StoreSetupForm() {
               </FieldGroup>
             </div>
 
-            <div className="flex flex-col-reverse gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col-reverse gap-4 pt-6 mt-6 sm:flex-row sm:items-center sm:justify-between border-t border-slate-200/50 pb-4">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={logout}
-                className="flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
+                className="flex items-center justify-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100/60 rounded-xl transition-colors font-semibold h-12 px-6"
                 disabled={isSaving}
               >
                 <LogOut className="size-4" />
@@ -265,15 +277,15 @@ export function StoreSetupForm() {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="w-full font-semibold shadow-sm sm:w-auto px-6"
+                className="w-full sm:w-auto h-12 px-8 rounded-xl font-bold text-white bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 shadow-[0_8px_16px_-6px_rgba(79,70,229,0.4)] hover:shadow-[0_12px_20px_-6px_rgba(79,70,229,0.5)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="animate-spin size-4" aria-hidden />
+                    <Loader2 className="animate-spin size-5 mr-2.5" aria-hidden />
                     Creating store...
                   </>
                 ) : (
-                  "Create store"
+                  "Create your store"
                 )}
               </Button>
             </div>

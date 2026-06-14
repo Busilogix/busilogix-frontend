@@ -1,5 +1,6 @@
 import { AuthBrandPanel } from "@/components/auth";
 import { GuestGuard } from "@/components/auth/guest-guard";
+import { AuthSupportButton } from "@/components/support/auth-support-button";
 
 export default function AuthLayout({
   children,
@@ -17,6 +18,7 @@ export default function AuthLayout({
               "radial-gradient(ellipse at top right, oklch(0.96 0.025 252 / 0.6), transparent 60%), oklch(0.985 0.01 250)",
           }}
         >
+          <AuthSupportButton />
           <main className="flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8 lg:px-16">
             {children}
           </main>

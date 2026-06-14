@@ -6,6 +6,7 @@ import {
   Users,
   Package,
   Boxes,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 

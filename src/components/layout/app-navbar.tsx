@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, Building2, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { Bell, Building2, CheckCircle2, LifeBuoy } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,9 +19,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { SupportModal } from "../support/support-modal";
 
 export function AppNavbar() {
   const { store } = useStore();
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const storeName = store?.name || "";
   const logoUrl = store?.logoUrl;
 
@@ -62,6 +65,16 @@ export function AppNavbar() {
 
           <div className="flex-1" aria-hidden />
 
+          <Button
+            variant="default"
+            className="h-9 w-9 sm:w-auto p-0 sm:px-3 gap-0 sm:gap-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+            onClick={() => setIsSupportModalOpen(true)}
+            aria-label="Contact Support"
+          >
+            <LifeBuoy className="size-4" />
+            <span className="hidden sm:inline font-semibold text-xs tracking-wide">Support</span>
+          </Button>
+
           <Popover>
             <PopoverTrigger
               className="relative size-9 shrink-0 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-foreground transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -92,6 +105,11 @@ export function AppNavbar() {
           </Popover>
         </div>
       </div>
+
+      <SupportModal
+        open={isSupportModalOpen}
+        onOpenChange={setIsSupportModalOpen}
+      />
     </header>
   );
 }
