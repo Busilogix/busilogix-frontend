@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Building2 } from "lucide-react";
+import { Bell, Building2, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,6 +13,11 @@ import {
   shellContentClassName,
   shellHeaderSurfaceClassName,
 } from "./shell-content";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export function AppNavbar() {
   const { store } = useStore();
@@ -57,15 +62,34 @@ export function AppNavbar() {
 
           <div className="flex-1" aria-hidden />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative size-9 shrink-0 rounded-xl text-muted-foreground hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-foreground transition-all duration-200 group"
-            aria-label="Notifications"
-          >
-            <Bell className="size-[18px] transition-transform duration-300 group-hover:rotate-12" />
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-white dark:ring-slate-900 animate-pulse" />
-          </Button>
+          <Popover>
+            <PopoverTrigger
+              className="relative size-9 shrink-0 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-foreground transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Notifications"
+            >
+              <Bell className="size-[18px] transition-transform duration-300 group-hover:rotate-12" />
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              sideOffset={8}
+              className="w-80 p-0 shadow-lg rounded-xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between border-b px-4 py-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <span className="font-semibold text-sm">Notifications</span>
+              </div>
+              <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-3">
+                  <Bell className="size-6 text-slate-400 dark:text-slate-500" />
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  No new notifications
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">
+                  When you have notifications, they will appear here.
+                </p>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </header>
