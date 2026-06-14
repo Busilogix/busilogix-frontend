@@ -156,6 +156,25 @@ export function SettingsOverviewCards({
             }
           />
         </div>
+
+        {summary.pendingActions && summary.pendingActions.length > 0 && (
+          <div className="mt-5 border-t pt-5">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Pending setup actions</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {summary.pendingActions.map((action) => (
+                <div key={action.code} className="flex items-start gap-2.5 rounded-xl border border-amber-100 bg-amber-50/40 p-3 hover:border-amber-250 transition-colors">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold mt-0.5">
+                    !
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">{action.title}</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{action.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

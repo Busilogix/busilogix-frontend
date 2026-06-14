@@ -7,12 +7,29 @@ import type {
   StoreMutationResponse,
   UpdatePaymentInfoRequest,
   UpdateStoreRequest,
+  StoreDashboard,
 } from "./types/store.types";
 import { parseAuthResponse } from "./utils/auth-response";
 
 const STORES_BASE = "/stores";
 
 class StoreService {
+  async getDashboard(): Promise<StoreDashboard> {
+    const response = await apiClient.get<BackendEnvelope<StoreDashboard>>(
+      `${STORES_BASE}/dashboard`,
+    );
+
+    const { data } = parseAuthResponse(response);
+
+    if (!data) {
+      throw new ApiError("Dashboard response did not include data.", {
+        statusCode: response.status,
+        errorCode: "INVALID_RESPONSE",
+      });
+    }
+
+    return data;
+  }
   async getMe(): Promise<ApiStore> {
     const response = await apiClient.get<BackendEnvelope<ApiStore>>(
       `${STORES_BASE}/me`,

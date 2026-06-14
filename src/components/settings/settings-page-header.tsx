@@ -20,9 +20,12 @@ export function SettingsPageHeader() {
 
   const loadSummary = useCallback(async () => {
     try {
-      const store = await storeService.getMe();
+      const [store, dashboard] = await Promise.all([
+        storeService.getMe(),
+        storeService.getDashboard(),
+      ]);
       setHasStore(true);
-      setSummary(getStoreSummary(store));
+      setSummary(getStoreSummary(store, dashboard));
     } catch (error) {
       if (isApiError(error) && error.statusCode === 404) {
         setHasStore(false);

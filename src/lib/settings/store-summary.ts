@@ -1,4 +1,4 @@
-import type { ApiStore } from "@/lib/api/types/store.types";
+import type { ApiStore, StoreDashboard, PendingAction } from "@/lib/api/types/store.types";
 
 export type StoreSummary = {
   companyName: string;
@@ -11,6 +11,7 @@ export type StoreSummary = {
   hasLogo: boolean;
   setupSteps: SetupStep[];
   nextAction: string;
+  pendingActions?: PendingAction[];
 };
 
 export type SetupStep = {
@@ -156,24 +157,42 @@ export function getEmptyStoreSummary(): StoreSummary {
     hasLogo: false,
     setupSteps,
     nextAction: getNextAction(null, setupSteps),
+    pendingActions: [],
   };
 }
 
-export function getStoreSummary(store: ApiStore): StoreSummary {
-  const paymentConfigured = isPaymentConfigured(store);
+export function getStoreSummary(
+  store: ApiStore,
+  dashboard?: StoreDashboard,
+): StoreSummary {
+  const paymentConfigured = dashboard ? dashboard.paymentConfigured : isPaymentConfigured(store);
   const setupSteps = getSetupSteps(store);
   const completedSteps = setupSteps.filter((step) => step.done).length;
 
   return {
-    companyName: (store.name || "").trim(),
-    gstNumber: (store.gstNumber || "").trim(),
+    companyName: (dashboard?.name || store.name || "").trim(),
+    gstNumber: (dashboard?.gstNumber || store.gstNumber || "").trim(),
     paymentConfigured,
-    profileComplete: Math.round((completedSteps / setupSteps.length) * 100),
-    location: formatLocation(store),
-    contactLine: formatContactLine(store),
+    profileComplete: dashboard
+      ? dashboard.profileCompletionPercentage
+      : Math.round((completedSteps / setupSteps.length) * 100),
+    location: dashboard
+      ? [dashboard.address.city?.trim(), dashboard.address.state?.trim()]
+          .filter(Boolean)
+          .join(", ") || "Location not added"
+      : formatLocation(store),
+    contactLine: dashboard
+      ? [dashboard.email?.trim(), dashboard.mobile?.trim()]
+          .filter(Boolean)
+          .join(" · ") || "Add email and phone for invoices"
+      : formatContactLine(store),
     paymentPreview: formatPaymentPreview(store),
-    hasLogo: Boolean(store.logoUrl?.trim()),
+    hasLogo: dashboard ? dashboard.logoConfigured : Boolean(store.logoUrl?.trim()),
     setupSteps,
-    nextAction: getNextAction(store, setupSteps),
+    nextAction:
+      dashboard?.pendingActions && dashboard.pendingActions.length > 0
+        ? dashboard.pendingActions[0].description
+        : getNextAction(store, setupSteps),
+    pendingActions: dashboard?.pendingActions || [],
   };
 }
