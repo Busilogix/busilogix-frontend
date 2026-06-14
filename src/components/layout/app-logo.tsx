@@ -69,7 +69,8 @@ export function AppLogo({
         height={640}
         sizes={styles.sizes}
         className={styles.image}
-        priority={priority}
+        loading="eager"
+        fetchPriority="high"
       />
     </span>
   );
