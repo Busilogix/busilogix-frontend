@@ -1,43 +1,79 @@
 const stats = [
-  { id: 1, name: "Free during Open Beta", value: "100%", gradient: "from-blue-500/20 to-indigo-500/10" },
-  { id: 2, name: "Setup to first invoice", value: "< 60s", gradient: "from-emerald-500/20 to-teal-500/10" },
-  { id: 3, name: "Credit card required", value: "Zero", gradient: "from-purple-500/20 to-pink-500/10" },
+  {
+    id: 1,
+    value: "100%",
+    name: "Free for Beta Members",
+    sub: "No credit card, no limits",
+    gradient: "from-blue-500/25 to-indigo-500/10",
+    accent: "text-blue-400",
+    border: "border-blue-500/20",
+  },
+  {
+    id: 2,
+    value: "< 60s",
+    name: "Setup to First Invoice",
+    sub: "The fastest onboarding in the industry",
+    gradient: "from-emerald-500/25 to-teal-500/10",
+    accent: "text-emerald-400",
+    border: "border-emerald-500/20",
+  },
+  {
+    id: 3,
+    value: "Zero",
+    name: "Credit Card Required",
+    sub: "Start immediately, pay nothing",
+    gradient: "from-purple-500/25 to-pink-500/10",
+    accent: "text-purple-400",
+    border: "border-purple-500/20",
+  },
 ];
 
 export function StatsSection() {
   return (
-    <section className="bg-slate-950 py-24 sm:py-32 relative overflow-hidden">
-      {/* Abstract dark mode background gradients */}
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-indigo-50/5 via-slate-950 to-slate-950" />
-      <div className="absolute bottom-0 left-0 -mb-20 -ml-20 h-80 w-80 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" aria-hidden />
+    <section className="relative py-28 sm:py-36 overflow-hidden bg-[#060812]">
+      {/* Background */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+        }}
+      />
+      <div className="pointer-events-none absolute top-1/2 left-0 -translate-y-1/2 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/2 right-0 -translate-y-1/2 h-80 w-80 rounded-full bg-blue-500/8 blur-3xl" />
 
       <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
-        <div className="mx-auto max-w-2xl lg:max-w-none text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Transparent, zero-friction access
+        <div className="text-center mb-20">
+          <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+            Built for{" "}
+            <span
+              className="text-transparent bg-clip-text"
+              style={{ backgroundImage: "linear-gradient(130deg, #a5b4fc 0%, #34d399 100%)" }}
+            >
+              growing businesses
+            </span>
           </h2>
-          <p className="mt-4 text-base sm:text-lg leading-8 text-slate-400 max-w-xl mx-auto">
-            We are currently in open beta. Experience a modern platform with no upfront costs, no hidden fees, and no artificial limits.
+          <p className="mt-5 text-lg text-slate-400 max-w-xl mx-auto">
+            We're in open beta — join now and get full access at no cost while we build the best business operations platform on the market.
           </p>
-          
-          <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-3 max-w-5xl mx-auto">
-            {stats.map((stat) => (
-              <div
-                key={stat.id}
-                className="relative flex flex-col justify-center items-center rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 backdrop-blur-md overflow-hidden group hover:border-slate-700/80 transition-all duration-300 shadow-2xl"
-              >
-                {/* Glow on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-300 pointer-events-none`} />
+        </div>
 
-                <dd className="text-4xl font-black tracking-tight text-white sm:text-5xl mb-2 relative z-10 bg-clip-text">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 max-w-5xl mx-auto">
+          {stats.map((stat) => (
+            <div
+              key={stat.id}
+              className={`relative flex flex-col items-center rounded-3xl border ${stat.border} bg-white/4 p-10 backdrop-blur-md overflow-hidden group hover:bg-white/6 hover:border-opacity-40 transition-all duration-300`}
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-30 group-hover:opacity-50 transition-opacity duration-300 pointer-events-none`} />
+              <div className="relative z-10 text-center">
+                <p className={`text-5xl sm:text-6xl font-black tracking-tight ${stat.accent} mb-3`}>
                   {stat.value}
-                </dd>
-                <dt className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-400 relative z-10">
-                  {stat.name}
-                </dt>
+                </p>
+                <p className="text-sm font-bold text-white mb-1.5">{stat.name}</p>
+                <p className="text-xs text-slate-500">{stat.sub}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

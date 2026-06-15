@@ -1,89 +1,126 @@
-import { Store, ShoppingBag, Send, TrendingUp } from "lucide-react";
+import { Store, ShoppingBag, Send, TrendingUp, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 const steps = [
   {
     id: 1,
     name: "Setup Your Workspace",
-    description: "Create your account and register your business details. Set up your logo, address, and taxation credentials in seconds.",
+    description: "Register your business details, logo, and tax credentials in minutes. Your workspace is ready instantly.",
     icon: Store,
-    gradient: "from-indigo-500 to-blue-500",
+    color: "text-indigo-400",
+    bg: "bg-indigo-500/10 border-indigo-500/20",
+    lineGradient: "from-indigo-500 to-blue-500",
   },
   {
     id: 2,
     name: "Add Your Products",
-    description: "Import or manually add your inventory. Track prices, stock levels, and SKUs to ensure you never run out of top sellers.",
+    description: "Import or manually add your inventory. Track prices, stock levels, and SKUs with ease.",
     icon: ShoppingBag,
-    gradient: "from-blue-500 to-teal-500",
+    color: "text-blue-400",
+    bg: "bg-blue-500/10 border-blue-500/20",
+    lineGradient: "from-blue-500 to-teal-500",
   },
   {
     id: 3,
     name: "Bill Your Customers",
-    description: "Create professional invoices for your clients. Add line items, apply discounts, and instantly generate PDFs or email receipts.",
+    description: "Create professional invoices, add line items, apply discounts, and instantly generate PDFs.",
     icon: Send,
-    gradient: "from-teal-500 to-purple-500",
+    color: "text-teal-400",
+    bg: "bg-teal-500/10 border-teal-500/20",
+    lineGradient: "from-teal-500 to-purple-500",
   },
   {
     id: 4,
     name: "Track Revenue",
-    description: "Watch your business grow. Access real-time dashboards to see outstanding balances, paid invoices, and revenue analytics.",
+    description: "Access real-time dashboards to see outstanding balances, paid invoices, and revenue analytics.",
     icon: TrendingUp,
-    gradient: "from-purple-500 to-indigo-500",
+    color: "text-purple-400",
+    bg: "bg-purple-500/10 border-purple-500/20",
+    lineGradient: "from-purple-500 to-indigo-500",
   },
 ];
 
 export function WorkflowSection() {
   return (
-    <section id="how-it-works" className="py-24 sm:py-32 bg-white relative">
-      {/* Decorative gradients */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" aria-hidden />
-      
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-base font-semibold leading-7 text-indigo-600">Streamlined Workflow</h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            From zero to operational in minutes
-          </p>
-          <p className="mt-6 text-lg leading-8 text-slate-600">
-            We've eliminated the setup friction. Follow four simple steps to get your entire commercial operation running on Busilogix.
+    <section id="how-it-works" className="relative py-28 sm:py-36 overflow-hidden bg-[#060812]">
+      {/* Background */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+        }}
+      />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[800px] rounded-full bg-indigo-600/10 blur-[120px]" />
+
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10">
+        {/* Header */}
+        <div className="mx-auto max-w-2xl text-center mb-20">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/8 border border-white/15 px-3.5 py-1.5 text-xs font-bold text-indigo-300 mb-5">
+            Streamlined Workflow
+          </span>
+          <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl leading-[1.1]">
+            From zero to operational{" "}
+            <span
+              className="text-transparent bg-clip-text"
+              style={{ backgroundImage: "linear-gradient(130deg, #a5b4fc 0%, #60a5fa 100%)" }}
+            >
+              in minutes
+            </span>
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-slate-400">
+            We've eliminated setup friction. Four simple steps to get your entire commercial operation running.
           </p>
         </div>
 
-        <div className="mx-auto mt-16 max-w-5xl lg:mt-24 relative">
-          {/* Connecting Line (Desktop) */}
-          <div className="hidden lg:block absolute top-[52px] left-16 right-16 h-0.5 bg-slate-100" aria-hidden="true">
-            <div className="h-full bg-gradient-to-r from-indigo-500/20 via-teal-500/20 to-purple-500/20 w-full" />
+        {/* Steps */}
+        <div className="relative max-w-5xl mx-auto">
+          {/* Connecting line (desktop) */}
+          <div className="hidden lg:block absolute top-10 left-[10%] right-[10%] h-px" aria-hidden>
+            <div className="h-full bg-gradient-to-r from-indigo-500/30 via-teal-500/30 to-purple-500/30" />
+            <div className="absolute left-0 right-0 top-0 h-full bg-gradient-to-r from-indigo-500/20 via-teal-500/20 to-purple-500/20 blur-sm" />
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-4 relative z-10">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-4 relative z-10">
             {steps.map((step) => (
               <div
                 key={step.id}
-                className="relative flex flex-col items-center text-center group bg-white border border-slate-100 hover:border-slate-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300"
+                className="group relative flex flex-col items-center text-center bg-white/4 border border-white/8 hover:border-white/15 rounded-3xl p-7 transition-all duration-300 hover:bg-white/6 hover:shadow-2xl hover:shadow-black/30 hover:-translate-y-1"
               >
-                <div className="mb-6 relative">
-                  {/* Outer glowing ring */}
-                  <div className="absolute inset-0 rounded-full bg-slate-100/40 blur-md group-hover:blur-lg transition-all" />
-                  
-                  {/* Step icon container */}
-                  <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-slate-100 group-hover:scale-105 transition-transform duration-300">
-                    <step.icon className="h-8 w-8 text-indigo-600" />
-                    
-                    {/* Step number badge with gradient */}
-                    <div className={`absolute -top-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-bold shadow-md ring-2 ring-white bg-gradient-to-tr ${step.gradient}`}>
-                      {step.id}
-                    </div>
+                {/* Icon */}
+                <div className="relative mb-6">
+                  <div className={`flex size-20 items-center justify-center rounded-2xl border ${step.bg} transition-transform duration-300 group-hover:scale-110`}>
+                    <step.icon className={cn("size-8", step.color)} />
+                  </div>
+                  {/* Step badge */}
+                  <div className="absolute -top-2 -right-2 flex size-7 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 text-white text-[10px] font-black shadow-lg shadow-indigo-500/30 ring-2 ring-[#060812]">
+                    {step.id}
                   </div>
                 </div>
-                
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{step.name}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  {step.description}
-                </p>
+
+                <h3 className="text-sm font-bold text-white mb-2.5">{step.name}</h3>
+                <p className="text-[13px] text-slate-400 leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
         </div>
+
+        {/* CTA */}
+        <div className="mt-16 text-center">
+          <Link
+            href="/signup"
+            className="group inline-flex items-center gap-2 text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            Start your journey today
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
       </div>
     </section>
   );
+}
+
+// cn utility inline since this is a server component without the import
+function cn(...classes: (string | boolean | undefined | null)[]) {
+  return classes.filter(Boolean).join(" ");
 }
