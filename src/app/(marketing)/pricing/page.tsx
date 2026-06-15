@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 
 const faqs = [
   {
-    q: "Is it really free forever?",
-    a: "Yes. All accounts registered during our Open Beta period will have their core modules (Smart Invoicing, Customer CRM, Inventory Management) grandfathered into the free tier permanently.",
+    q: "Is it free for beta users?",
+    a: "Yes. All accounts registered during our Open Beta period get full access to core modules (Smart Invoicing, Customer CRM, Inventory Management) at no cost for the duration of the beta.",
   },
   {
     q: "What are the limitations during beta?",
@@ -66,7 +66,7 @@ export default function PricingPage() {
               
               <div className="mt-6 flex items-baseline gap-x-1">
                 <span className="text-5xl font-black">$0</span>
-                <span className="text-sm font-semibold text-slate-400">/ forever</span>
+                <span className="text-sm font-semibold text-slate-400">/ during beta</span>
               </div>
 
               <ul className="mt-8 space-y-3.5 text-xs text-slate-300">
@@ -90,7 +90,7 @@ export default function PricingPage() {
                 Create free account
               </Link>
               <p className="mt-4 text-[10px] text-slate-500 text-center leading-relaxed">
-                *No credit card required. Free tier access is guaranteed permanently for core features.
+                *No credit card required. Free for all beta users while in Open Beta.
               </p>
             </div>
           </div>

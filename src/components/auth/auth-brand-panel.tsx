@@ -62,7 +62,7 @@ export function AuthBrandPanel() {
 
       <div className="relative flex flex-1 flex-col justify-between p-10 xl:p-14">
         <div className="inline-flex rounded-xl bg-white w-fit px-3 py-2 shadow-lg shadow-black/20">
-          <AppLogo variant="panel" asLink={false} />
+          <AppLogo variant="panel" href="/" />
         </div>
 
         <div className="space-y-8">

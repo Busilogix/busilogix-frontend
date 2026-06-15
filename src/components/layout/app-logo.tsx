@@ -37,9 +37,9 @@ const variantStyles: Record<
   },
   navbar: {
     wrapper:
-      "relative block w-9 shrink-0 overflow-hidden aspect-[20/13] leading-none",
-    image: "block h-auto w-full",
-    sizes: "36px",
+      "relative block w-10 shrink-0 overflow-hidden aspect-square leading-none rounded-xl",
+    image: "block h-auto w-full object-contain",
+    sizes: "40px",
   },
 };
 

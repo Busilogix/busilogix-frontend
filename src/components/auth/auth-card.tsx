@@ -29,7 +29,7 @@ export function AuthCard({
   return (
     <div className={cn("w-full max-w-[480px]", className)}>
       <div className="mb-5 flex justify-center lg:hidden">
-        <AppLogo variant="auth" href="/login" />
+        <AppLogo variant="auth" href="/" />
       </div>
 
       <Card className="shadow-lg shadow-slate-950/8 ring-1 ring-black/5">
