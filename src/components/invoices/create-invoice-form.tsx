@@ -422,11 +422,13 @@ export function CreateInvoiceForm() {
           taxPercentage: data.taxPercentage,
           taxType: data.taxType,
         });
-        saveRecentBillingCustomer({
-          ...data.customer,
-          email: data.customer.email ?? "",
-        });
-        setRecentCustomers(loadRecentBillingCustomers());
+        if (!isCounterSaleCustomer(data.customer)) {
+          saveRecentBillingCustomer({
+            ...data.customer,
+            email: data.customer.email ?? "",
+          });
+          setRecentCustomers(loadRecentBillingCustomers());
+        }
 
         toast.success("Invoice created", {
           description: message || invoice.invoiceNumber,
