@@ -84,8 +84,11 @@ export const createInvoiceFormSchema = z
         .min(2, "Customer name must be at least 2 characters"),
       email: z
         .string()
-        .min(1, "Email is required")
-        .email("Enter a valid email address"),
+        .optional()
+        .refine(
+          (val) => !val || val.trim() === "" || z.string().email().safeParse(val).success,
+          "Enter a valid email address",
+        ),
       mobile: z
         .string()
         .min(1, "Mobile is required")
@@ -162,8 +165,11 @@ export const invoiceFormSchema = z
       .min(2, "Customer name must be at least 2 characters"),
     customer_email: z
       .string()
-      .min(1, "Email is required")
-      .email("Enter a valid email address"),
+      .optional()
+      .refine(
+        (val) => !val || val.trim() === "" || z.string().email().safeParse(val).success,
+        "Enter a valid email address",
+      ),
     customer_phone: z
       .string()
       .min(1, "Phone is required")
