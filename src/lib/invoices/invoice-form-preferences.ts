@@ -28,9 +28,6 @@ export function loadInvoiceTaxPreferences(): Partial<InvoiceTaxPreferences> {
       ...(typeof parsed.taxPercentage === "number"
         ? { taxPercentage: parsed.taxPercentage }
         : {}),
-      ...(parsed.taxType === "INTRA_STATE" || parsed.taxType === "INTER_STATE"
-        ? { taxType: parsed.taxType }
-        : {}),
       ...(typeof parsed.discountAmount === "number"
         ? { discountAmount: parsed.discountAmount }
         : {}),
