@@ -113,9 +113,7 @@ export function CreateInvoiceForm() {
   const [addQuantity, setAddQuantity] = useState(1);
   const [recentProductIds, setRecentProductIds] = useState<string[]>([]);
   const [isAddressOpen, setIsAddressOpen] = useState(false);
-  const [isDiscountOpen, setIsDiscountOpen] = useState(
-    () => (loadInvoiceTaxPreferences().discountAmount ?? 0) > 0,
-  );
+  const [isDiscountOpen, setIsDiscountOpen] = useState(false);
   const [isTaxOpen, setIsTaxOpen] = useState(false);
   const [highlightedCartIndex, setHighlightedCartIndex] = useState<
     number | null
@@ -355,9 +353,8 @@ export function CreateInvoiceForm() {
     saveInvoiceTaxPreferences({
       taxPercentage: Number(taxPercentage) || 0,
       taxType,
-      discountAmount: Number(discountAmount) || 0,
     });
-  }, [taxPercentage, taxType, discountAmount]);
+  }, [taxPercentage, taxType]);
 
   useEffect(() => {
     let cancelled = false;
@@ -424,7 +421,6 @@ export function CreateInvoiceForm() {
         saveInvoiceTaxPreferences({
           taxPercentage: data.taxPercentage,
           taxType: data.taxType,
-          discountAmount: data.discountAmount,
         });
         saveRecentBillingCustomer({
           ...data.customer,
