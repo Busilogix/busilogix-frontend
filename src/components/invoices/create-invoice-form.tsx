@@ -422,7 +422,10 @@ export function CreateInvoiceForm() {
           taxType: data.taxType,
           discountAmount: data.discountAmount,
         });
-        saveRecentBillingCustomer(data.customer);
+        saveRecentBillingCustomer({
+          ...data.customer,
+          email: data.customer.email ?? "",
+        });
         setRecentCustomers(loadRecentBillingCustomers());
 
         toast.success("Invoice created", {

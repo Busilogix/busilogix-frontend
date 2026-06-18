@@ -42,7 +42,7 @@ export function buildInvoiceDetailFromForm(
     invoice_number: data.invoice_number,
     customer_id: `cust_${Date.now().toString(36)}`,
     customer_name: data.customer_name,
-    customer_email: data.customer_email,
+    customer_email: data.customer_email ?? "",
     customer_phone: data.customer_phone,
     status: options?.status ?? "DRAFT",
     issue_date: data.issue_date,
