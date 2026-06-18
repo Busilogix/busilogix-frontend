@@ -80,12 +80,20 @@ function mapApiInvoiceToDetailRecord(apiInvoice: BackendInvoice): InvoiceDetailR
 const LOAD_DELAY_MS = 600;
 const ACTION_DELAY_MS = 800;
 
+type TaxBreakdown = {
+  cgst: number;
+  sgst: number;
+  igst: number;
+  discount: number;
+};
+
 type InvoiceDetailViewProps = {
   invoiceId: string;
 };
 
 function useInvoiceDetail(invoiceId: string) {
   const [invoice, setInvoice] = useState<InvoiceDetailRecord | null>(null);
+  const [taxBreakdown, setTaxBreakdown] = useState<TaxBreakdown>({ cgst: 0, sgst: 0, igst: 0, discount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -105,6 +113,12 @@ function useInvoiceDetail(invoiceId: string) {
         const data = await invoiceService.getById(invoiceId);
         if (active) {
           setInvoice(mapApiInvoiceToDetailRecord(data));
+          setTaxBreakdown({
+            cgst: data.cgstAmount || 0,
+            sgst: data.sgstAmount || 0,
+            igst: data.igstAmount || 0,
+            discount: data.discountAmount || 0,
+          });
           setIsLoading(false);
         }
       } catch (err: any) {
@@ -134,6 +148,8 @@ function useInvoiceDetail(invoiceId: string) {
   return {
     invoice,
     setInvoice,
+    taxBreakdown,
+    setTaxBreakdown,
     isLoading,
     notFound,
   };
@@ -142,6 +158,7 @@ function useInvoiceDetail(invoiceId: string) {
 function useInvoiceActions(
   invoice: InvoiceDetailRecord | null,
   setInvoice: React.Dispatch<React.SetStateAction<InvoiceDetailRecord | null>>,
+  setTaxBreakdown: React.Dispatch<React.SetStateAction<TaxBreakdown>>,
 ) {
   const [pendingAction, setPendingAction] = useState<"download" | "email" | "mark-paid" | "cancel" | null>(null);
 
@@ -200,6 +217,12 @@ function useInvoiceActions(
       async () => {
         const updated = await invoiceService.markAsPaid(invoice.id);
         setInvoice(mapApiInvoiceToDetailRecord(updated));
+        setTaxBreakdown({
+          cgst: updated.cgstAmount || 0,
+          sgst: updated.sgstAmount || 0,
+          igst: updated.igstAmount || 0,
+          discount: updated.discountAmount || 0,
+        });
       },
       "Invoice marked as paid",
       `${invoice.invoice_number} is now counted as revenue.`
@@ -213,6 +236,12 @@ function useInvoiceActions(
       async () => {
         const updated = await invoiceService.cancel(invoice.id);
         setInvoice(mapApiInvoiceToDetailRecord(updated));
+        setTaxBreakdown({
+          cgst: updated.cgstAmount || 0,
+          sgst: updated.sgstAmount || 0,
+          igst: updated.igstAmount || 0,
+          discount: updated.discountAmount || 0,
+        });
       },
       "Invoice cancelled",
       `${invoice.invoice_number} has been cancelled.`
@@ -230,14 +259,14 @@ function useInvoiceActions(
 }
 
 export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
-  const { invoice, setInvoice, isLoading, notFound } = useInvoiceDetail(invoiceId);
+  const { invoice, setInvoice, taxBreakdown, setTaxBreakdown, isLoading, notFound } = useInvoiceDetail(invoiceId);
   const {
     busy,
     handleDownloadPdf,
     handleEmailAction,
     handleMarkPaid,
     handleCancel,
-  } = useInvoiceActions(invoice, setInvoice);
+  } = useInvoiceActions(invoice, setInvoice, setTaxBreakdown);
 
   function exportInvoiceCsv() {
     if (!invoice) return;
@@ -358,9 +387,8 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="pl-4">Item</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Tax</TableHead>
-                    <TableHead className="text-right pr-4">Total</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right pr-4">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -369,7 +397,6 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
                       <TableCell className="pl-4 font-medium">{item.item_name}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{item.quantity}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(item.unit_price, invoice.currency)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">{item.tax_percentage}%</TableCell>
                       <TableCell className="text-right tabular-nums font-semibold pr-4">{formatCurrency(item.line_total, invoice.currency)}</TableCell>
                     </TableRow>
                   ))}
@@ -382,10 +409,36 @@ export function InvoiceDetailView({ invoiceId }: InvoiceDetailViewProps) {
                 <span>Subtotal</span>
                 <span className="tabular-nums">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
               </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Tax</span>
-                <span className="tabular-nums">{formatCurrency(invoice.tax_amount, invoice.currency)}</span>
-              </div>
+              {taxBreakdown.discount > 0 && (
+                <div className="flex justify-between text-sm text-emerald-600 dark:text-emerald-400">
+                  <span>Discount</span>
+                  <span className="tabular-nums">− {formatCurrency(taxBreakdown.discount, invoice.currency)}</span>
+                </div>
+              )}
+              {taxBreakdown.cgst > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>CGST</span>
+                  <span className="tabular-nums">{formatCurrency(taxBreakdown.cgst, invoice.currency)}</span>
+                </div>
+              )}
+              {taxBreakdown.sgst > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>SGST</span>
+                  <span className="tabular-nums">{formatCurrency(taxBreakdown.sgst, invoice.currency)}</span>
+                </div>
+              )}
+              {taxBreakdown.igst > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>IGST</span>
+                  <span className="tabular-nums">{formatCurrency(taxBreakdown.igst, invoice.currency)}</span>
+                </div>
+              )}
+              {taxBreakdown.cgst === 0 && taxBreakdown.sgst === 0 && taxBreakdown.igst === 0 && invoice.tax_amount > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Tax</span>
+                  <span className="tabular-nums">{formatCurrency(invoice.tax_amount, invoice.currency)}</span>
+                </div>
+              )}
               <Separator />
               <div className="flex justify-between font-semibold">
                 <span>Grand Total</span>

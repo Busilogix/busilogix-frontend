@@ -31,6 +31,6 @@ export function isCounterSaleCustomer(
   return (
     customer.mobile.trim() === COUNTER_SALE_CUSTOMER.mobile &&
     customer.name.trim() === COUNTER_SALE_CUSTOMER.name &&
-    customer.email.trim() === COUNTER_SALE_CUSTOMER.email
+    customer.email?.trim() === COUNTER_SALE_CUSTOMER.email
   );
 }

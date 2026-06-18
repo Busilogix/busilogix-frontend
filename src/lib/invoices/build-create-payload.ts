@@ -12,7 +12,7 @@ export function buildCreateInvoicePayload(
   return {
     customer: {
       name: isWalkIn ? null : data.customer.name.trim(),
-      email: isWalkIn ? null : data.customer.email.trim(),
+      email: isWalkIn ? null : (data.customer.email?.trim() || null),
       mobile: data.customer.mobile.trim(),
       ...(address ? { address } : {}),
     },
