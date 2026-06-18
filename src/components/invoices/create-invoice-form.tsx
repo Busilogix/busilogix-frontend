@@ -124,6 +124,7 @@ export function CreateInvoiceForm() {
   const mobileInputRef = useRef<HTMLInputElement | null>(null);
   const quickAddInputRef = useRef<HTMLInputElement | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const totalsRef = useRef<ReturnType<typeof calculateCreateInvoiceTotals> | null>(null);
 
   const [defaultValues] = useState(() => ({
     ...createDefaultCreateInvoiceValues(),
@@ -407,6 +408,9 @@ export function CreateInvoiceForm() {
     [watchedItems, products, taxPercentage, discountAmount],
   );
 
+  // Keep totalsRef in sync so discount validate callback reads fresh values
+  totalsRef.current = totals;
+
   const onSubmit = useCallback(
     async (data: CreateInvoiceFormInput) => {
       setSubmitError(null);
@@ -487,7 +491,8 @@ export function CreateInvoiceForm() {
     !isLoadingProducts &&
     products.length > 0 &&
     customerComplete &&
-    itemsComplete;
+    itemsComplete &&
+    !errors.discountAmount;
 
   return (
     <form
@@ -948,7 +953,9 @@ export function CreateInvoiceForm() {
                           disabled={isSubmitting}
                         >
                           <SelectTrigger id="tax-type" className="h-10 w-full">
-                            <SelectValue />
+                            <SelectValue>
+                              {field.value === "INTRA_STATE" ? "Intra-state" : "Inter-state"}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="INTRA_STATE">
@@ -1014,35 +1021,62 @@ export function CreateInvoiceForm() {
                       id="discount-amount"
                       type="number"
                       min={0}
+                      max={totals.subtotal > 0 ? Math.max(0, totals.subtotal - 0.01) : undefined}
                       step={0.01}
                       placeholder="0"
                       disabled={isSubmitting}
-                      {...register("discountAmount", { valueAsNumber: true })}
+                      {...register("discountAmount", {
+                        valueAsNumber: true,
+                        onChange: (e) => {
+                          const raw = parseFloat(e.target.value);
+                          const sub = totalsRef.current?.subtotal ?? 0;
+                          if (Number.isFinite(raw) && sub > 0 && raw >= sub) {
+                            const clamped = Math.max(0, sub - 0.01);
+                            setValue("discountAmount", parseFloat(clamped.toFixed(2)), {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                            e.target.value = clamped.toFixed(2);
+                          }
+                        },
+                        validate: (val) => {
+                          const amount = Number.isFinite(val) ? val : 0;
+                          const subtotal = totalsRef.current?.subtotal ?? 0;
+                          if (subtotal > 0 && amount >= subtotal) {
+                            return `Discount must be less than the subtotal (₹${subtotal.toFixed(2)})`;
+                          }
+                          return true;
+                        },
+                      })}
                     />
                     <FieldError errors={[errors.discountAmount]} />
                   </Field>
                   <div className="flex flex-wrap gap-2">
-                    {[50, 100, 200, 500].map((preset) => (
-                      <Button
-                        key={preset}
-                        type="button"
-                        size="sm"
-                        variant={
-                          Number(discountAmount) === preset
-                            ? "default"
-                            : "outline"
-                        }
-                        disabled={isSubmitting}
-                        onClick={() =>
-                          setValue("discountAmount", preset, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          })
-                        }
-                      >
-                        ₹{preset}
-                      </Button>
-                    ))}
+                    {[50, 100, 200, 500].map((preset) => {
+                      const maxDiscount = totals.subtotal > 0 ? Math.max(0, totals.subtotal - 0.01) : Infinity;
+                      const isDisabled = isSubmitting || preset > maxDiscount;
+                      return (
+                        <Button
+                          key={preset}
+                          type="button"
+                          size="sm"
+                          variant={
+                            Number(discountAmount) === preset
+                              ? "default"
+                              : "outline"
+                          }
+                          disabled={isDisabled}
+                          onClick={() =>
+                            setValue("discountAmount", preset, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                          }
+                        >
+                          ₹{preset}
+                        </Button>
+                      );
+                    })}
                     <Button
                       type="button"
                       size="sm"

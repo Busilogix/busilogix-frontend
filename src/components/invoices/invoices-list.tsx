@@ -28,7 +28,6 @@ const INVOICES_PAGE_SIZE = 10;
 
 const INVOICE_STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
-  { value: "DRAFT", label: "Draft" },
   { value: "DUE", label: "Due" },
   { value: "PAID", label: "Paid" },
   { value: "OVERDUE", label: "Overdue" },
@@ -291,7 +290,9 @@ export function InvoicesList() {
               aria-label="Filter by status"
             >
               <Filter className="size-4 shrink-0 text-muted-foreground" />
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Status">
+                {INVOICE_STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label ?? "Status"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {INVOICE_STATUS_OPTIONS.map((option) => (

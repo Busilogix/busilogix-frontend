@@ -81,6 +81,17 @@ function formatActionLabel(action: string) {
   return action.replace(/_/g, " ");
 }
 
+const INVENTORY_ACTION_LABELS: Record<string, string> = {
+  ALL: "All Actions",
+  PRODUCT_CREATED: "Product Created",
+  STOCK_ADDED: "Stock Added",
+  STOCK_SOLD: "Stock Sold",
+  STOCK_ADJUSTED: "Stock Adjusted",
+  PRICE_UPDATED: "Price Updated",
+  PRODUCT_DELETED: "Product Deleted",
+  BULK_IMPORTED: "Bulk Imported",
+};
+
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
@@ -392,7 +403,9 @@ export function InventoryView() {
                           }}
                         >
                           <SelectTrigger className="h-9 w-full sm:w-44 bg-background">
-                            <SelectValue placeholder="Filter by action" />
+                            <SelectValue placeholder="Filter by action">
+                              {INVENTORY_ACTION_LABELS[actionFilter] ?? actionFilter}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="ALL">All Actions</SelectItem>
