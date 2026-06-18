@@ -5,7 +5,6 @@ const STORAGE_KEY = "busilogix-invoice-tax-preferences";
 export type InvoiceTaxPreferences = {
   taxPercentage: number;
   taxType: InvoiceTaxType;
-  discountAmount: number;
 };
 
 export const GST_PRESETS = [0, 5, 12, 18, 28] as const;
@@ -27,9 +26,6 @@ export function loadInvoiceTaxPreferences(): Partial<InvoiceTaxPreferences> {
     return {
       ...(typeof parsed.taxPercentage === "number"
         ? { taxPercentage: parsed.taxPercentage }
-        : {}),
-      ...(typeof parsed.discountAmount === "number"
-        ? { discountAmount: parsed.discountAmount }
         : {}),
     };
   } catch {
