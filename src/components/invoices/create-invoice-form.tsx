@@ -167,7 +167,7 @@ export function CreateInvoiceForm() {
   );
 
   const customerComplete = Boolean(
-    customerMobile?.trim() && customerName?.trim() && customerEmail?.trim(),
+    customerMobile?.trim() && customerName?.trim(),
   );
   const itemsComplete = cartItemCount > 0;
   const isCounterSale = isCounterSaleCustomer({
@@ -648,7 +648,12 @@ export function CreateInvoiceForm() {
                     </Field>
 
                     <Field data-invalid={!!errors.customer?.email || undefined}>
-                      <FieldLabel htmlFor="customer-email">Email</FieldLabel>
+                      <FieldLabel htmlFor="customer-email">
+                        Email{" "}
+                        <span className="font-normal text-muted-foreground">
+                          (optional)
+                        </span>
+                      </FieldLabel>
                       <Input
                         id="customer-email"
                         type="email"

@@ -222,7 +222,10 @@ function EditInvoiceForm({ invoiceId }: { invoiceId?: string }) {
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field data-invalid={!!errors.customer_email || undefined}>
                     <FieldLabel htmlFor="customer_email">
-                      Customer email
+                      Customer email{" "}
+                      <span className="font-normal text-muted-foreground">
+                        (optional)
+                      </span>
                     </FieldLabel>
                     <FieldDescription>
                       Used when you send the invoice by email.
